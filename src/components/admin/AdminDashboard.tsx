@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
@@ -60,11 +60,35 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
          <Card>
-          <CardHeader>
-            <CardTitle>Coming Soon</CardTitle>
-            <CardDescription>More admin features will be added here, like review and promotion management.</CardDescription>
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Review Management
+            </CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
+            <CardDescription>
+                Approve and manage customer reviews.
+            </CardDescription>
+             <Button variant="secondary" disabled className="mt-4">
+                Coming Soon
+            </Button>
+          </CardContent>
+        </Card>
+         <Card>
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Promotions
+            </CardTitle>
+            <Megaphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+                Create and manage sales promotions.
+            </CardDescription>
+             <Button variant="secondary" disabled className="mt-4">
+                Coming Soon
+            </Button>
           </CardContent>
         </Card>
        </div>
