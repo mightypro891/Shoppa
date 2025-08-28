@@ -7,7 +7,8 @@ const products: Product[] = [
     price: 15.0,
     image: 'https://picsum.photos/400/300?random=1',
     description: 'Crisp, sour, and fine-grained, perfect for soaking or making Eba.',
-    aiHint: 'grain powder'
+    aiHint: 'grain powder',
+    tags: ['grains', 'swallows']
   },
   {
     id: '2',
@@ -15,7 +16,8 @@ const products: Product[] = [
     price: 25.0,
     image: 'https://picsum.photos/400/300?random=2',
     description: 'A smooth, fluffy swallow made from yam flour. A staple for any soup.',
-    aiHint: 'yam flour'
+    aiHint: 'yam flour',
+    tags: ['swallows']
   },
   {
     id: '3',
@@ -23,7 +25,8 @@ const products: Product[] = [
     price: 12.5,
     image: 'https://picsum.photos/400/300?random=3',
     description: 'Ground melon seeds, the essential ingredient for the iconic Egusi soup.',
-    aiHint: 'ground seeds'
+    aiHint: 'ground seeds',
+    tags: ['grains']
   },
   {
     id: '4',
@@ -31,7 +34,8 @@ const products: Product[] = [
     price: 18.0,
     image: 'https://picsum.photos/400/300?random=4',
     description: 'Rich, flavorful, and red, this oil is the soul of Nigerian cooking.',
-    aiHint: 'red oil'
+    aiHint: 'red oil',
+    tags: ['oils']
   },
   {
     id: '5',
@@ -39,7 +43,8 @@ const products: Product[] = [
     price: 5.0,
     image: 'https://picsum.photos/400/300?random=5',
     description: 'Sweet and versatile, perfect for frying as dodo or boiling.',
-    aiHint: 'plantain'
+    aiHint: 'plantain',
+    tags: ['plantain']
   },
   {
     id: '6',
@@ -47,7 +52,8 @@ const products: Product[] = [
     price: 14.0,
     image: 'https://picsum.photos/400/300?random=6',
     description: 'Ground African bush mango seeds, known for creating a delicious draw soup.',
-    aiHint: 'ground seeds'
+    aiHint: 'ground seeds',
+    tags: ['grains', 'swallows']
   },
   {
     id: '7',
@@ -55,7 +61,8 @@ const products: Product[] = [
     price: 22.0,
     image: 'https://picsum.photos/400/300?random=7',
     description: 'A smoky, savory fish that adds deep flavor to soups and stews.',
-    aiHint: 'smoked fish'
+    aiHint: 'smoked fish',
+    tags: ['fishes']
   },
   {
     id: '8',
@@ -63,7 +70,8 @@ const products: Product[] = [
     price: 8.0,
     image: 'https://picsum.photos/400/300?random=8',
     description: 'The ultimate student comfort food. Quick, easy, and satisfying.',
-    aiHint: 'instant noodles'
+    aiHint: 'instant noodles',
+    tags: ['grains']
   },
 ];
 

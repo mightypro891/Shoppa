@@ -7,6 +7,7 @@ import { ShoppingCart } from 'lucide-react';
 
 export default async function Home() {
   const products = await getProducts();
+  const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="flex flex-col">
@@ -28,7 +29,7 @@ export default async function Home() {
             From Egusi to Garri, get all your essential Nigerian foodstuffs delivered to your doorstep. Perfect for students craving a taste of home.
           </p>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-            <Link href="#products">
+            <Link href="/products">
               Start Shopping
               <ShoppingCart className="ml-2 h-5 w-5" />
             </Link>
@@ -39,12 +40,17 @@ export default async function Home() {
       <section id="products" className="py-12 md:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-10 font-headline">
-            Our Products
+            Featured Products
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {products.map((product) => (
+            {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+          </div>
+           <div className="text-center mt-12">
+            <Button asChild size="lg">
+              <Link href="/products">View All Products</Link>
+            </Button>
           </div>
         </div>
       </section>
