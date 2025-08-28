@@ -18,13 +18,14 @@ const GoogleIcon = () => (
 
 export default function SignInForm() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
   useEffect(() => {
-    if (user) {
+    // Redirect only when loading is false and user is present
+    if (!loading && user) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
