@@ -5,7 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { ShieldAlert } from 'lucide-react';
+import { Button } from '../ui/button';
+import { ShieldAlert, Package } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { isAdmin, loading } = useAuth();
@@ -40,15 +42,32 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-       <Card>
-        <CardHeader>
-          <CardTitle>Welcome, Admin!</CardTitle>
-          <CardDescription>This is your control panel. You can manage products, view orders, and more.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>More features coming soon!</p>
-        </CardContent>
-      </Card>
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Product Management
+            </CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Add, edit, and manage your products.
+            </CardDescription>
+             <Button asChild className="mt-4">
+                <Link href="/admin/products">Go to Products</Link>
+            </Button>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader>
+            <CardTitle>Coming Soon</CardTitle>
+            <CardDescription>More admin features will be added here, like review and promotion management.</CardDescription>
+          </CardHeader>
+          <CardContent>
+          </CardContent>
+        </Card>
+       </div>
     </div>
   );
 }
