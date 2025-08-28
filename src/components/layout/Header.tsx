@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, UserPlus } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -123,9 +123,14 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <Button asChild>
-              <Link href="/auth/signin">Login</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+               <Button asChild>
+                <Link href="/auth/signin">Login</Link>
+              </Button>
+               <Button asChild variant="secondary" className="hidden sm:flex">
+                <Link href="/auth/signup">Sign Up</Link>
+              </Button>
+            </div>
           )}
         </nav>
       </div>

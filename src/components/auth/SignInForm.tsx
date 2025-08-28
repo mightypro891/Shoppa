@@ -2,12 +2,25 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
+import { Separator } from '../ui/separator';
+
+const formSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(1, { message: 'Password is required.' }),
+});
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -19,13 +32,38 @@ const GoogleIcon = () => (
 export default function SignInForm() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
   
   useEffect(() => {
-    // Redirect only when loading is false and user is present
     if (!loading && user) {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  const handleEmailSignIn = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      router.push('/');
+    } catch (error: any) {
+      toast({
+        title: 'Sign In Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
@@ -34,6 +72,11 @@ export default function SignInForm() {
       router.push('/');
     } catch (error) {
       console.error('Error signing in with Google', error);
+       toast({
+        title: 'Sign In Failed',
+        description: 'Could not sign in with Google. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -43,12 +86,63 @@ export default function SignInForm() {
         <CardTitle className="text-2xl">Welcome Back!</CardTitle>
         <CardDescription>Sign in to continue to your account.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button className="w-full" onClick={handleGoogleSignIn}>
+      <CardContent className="space-y-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleEmailSignIn)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
+            </Button>
+          </form>
+        </Form>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+        <Button className="w-full" variant="outline" onClick={handleGoogleSignIn}>
           <GoogleIcon />
           Sign in with Google
         </Button>
       </CardContent>
+      <CardFooter className="justify-center text-sm">
+        <p>
+          Don't have an account?{' '}
+          <Link href="/auth/signup" className="font-semibold text-primary hover:underline">
+            Sign Up
+          </Link>
+        </p>
+      </CardFooter>
     </Card>
   );
 }
