@@ -4,10 +4,18 @@ import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
+import type { Product } from '@/lib/types';
 
 export default async function Home() {
   const products = await getProducts();
-  const featuredProducts = products.slice(0, 4);
+  
+  const categories = ['grains', 'swallows', 'oils', 'fishes', 'spices', 'soups', 'plantain'];
+
+  const productsByCategory: { [key: string]: Product[] } = {};
+
+  categories.forEach(category => {
+    productsByCategory[category] = products.filter(p => p.tags?.includes(category));
+  });
 
   return (
     <div className="flex flex-col">
@@ -37,23 +45,28 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="products" className="py-12 md:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-10 font-headline">
-            Featured Products
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-           <div className="text-center mt-12">
-            <Button asChild size="lg">
-              <Link href="/products">View All Products</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+       {categories.map(category => (
+        productsByCategory[category].length > 0 && (
+          <section key={category} id={category} className="py-12 md:py-16 bg-background even:bg-secondary/20">
+            <div className="container mx-auto px-4">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize">
+                  {category}
+                </h2>
+                 <Button asChild variant="outline">
+                  <Link href={`/products/category/${category}`}>View All</Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                {productsByCategory[category].slice(0, 4).map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      ))}
+
     </div>
   );
 }
