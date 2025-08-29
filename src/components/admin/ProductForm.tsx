@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,13 +19,14 @@ import type { Product } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { addProduct } from '@/lib/data';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   image: z.any().refine(
-      (file) => (file instanceof FileList && file.length > 0) || typeof file === 'string', 
+      (val) => (val instanceof FileList && val.length > 0) || typeof val === 'string', 
       'Please upload an image.'
     ),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
@@ -56,24 +56,44 @@ export default function ProductForm({ product }: ProductFormProps) {
     },
   });
 
-  const onSubmit = (data: ProductFormValues) => {
+  const onSubmit = async (data: ProductFormValues) => {
     // In a real app, you would handle the file upload to a storage service
-    // and then save the URL to the database.
-    console.log('Submitting product data:', data);
+    // and then save the URL to the database. For this prototype, we'll
+    // create a temporary URL for the uploaded image.
     
-    // If data.image is a FileList, you would handle the upload here.
-    // For now, we'll just log it.
-    if (data.image instanceof FileList) {
-        console.log('Image file to upload:', data.image[0]);
+    let imageUrl = product?.image || 'https://picsum.photos/400/300?random=9'; // Default placeholder
+
+    if (data.image instanceof FileList && data.image.length > 0) {
+      // Create a blob URL to simulate image upload
+      imageUrl = URL.createObjectURL(data.image[0]);
+    } else if (typeof data.image === 'string') {
+      imageUrl = data.image;
+    }
+
+
+    const newProduct: Omit<Product, 'id'> = {
+      name: data.name,
+      price: data.price,
+      description: data.description,
+      image: imageUrl,
+      aiHint: data.aiHint,
+      tags: data.tags.split(',').map(tag => tag.trim()),
+    };
+
+    if (isEditing) {
+       // Update logic would go here
+      console.log('Updating product not yet implemented');
+    } else {
+      await addProduct(newProduct);
     }
 
     toast({
       title: isEditing ? 'Product Updated' : 'Product Created',
       description: `The product "${data.name}" has been saved.`,
     });
-    // For now, just redirect back to the product list
+
     router.push('/admin/products');
-    router.refresh(); // To see the changes in the list
+    router.refresh(); 
   };
 
   const imageRef = form.register("image");
@@ -125,22 +145,22 @@ export default function ProductForm({ product }: ProductFormProps) {
                     </FormItem>
                 )}
                 />
-                <FormField
+                 <FormField
                 control={form.control}
                 name="image"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
-                        <Input type="file" accept="image/*" {...imageRef} />
+                      <Input type="file" accept="image/*" {...imageRef} />
                     </FormControl>
                     <FormDescription>
                         {isEditing && typeof product?.image === 'string' && `Current image: ${product.image.split('/').pop()}`}
                     </FormDescription>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
                 <FormField
                 control={form.control}
                 name="aiHint"

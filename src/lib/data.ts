@@ -1,6 +1,8 @@
 import type { Product } from './types';
 
-const products: Product[] = [
+// This is a temporary in-memory store for our products.
+// In a real application, this would be a database.
+let products: Product[] = [
   {
     id: '1',
     name: 'Garri (Ijebu)',
@@ -77,13 +79,23 @@ const products: Product[] = [
 
 export async function getProducts(): Promise<Product[]> {
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 100));
   return products;
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
     const product = products.find((p) => p.id === id);
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 100));
     return product;
+}
+
+export async function addProduct(productData: Omit<Product, 'id'>): Promise<Product> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const newProduct: Product = {
+    ...productData,
+    id: (products.length + 1).toString(),
+  };
+  products.unshift(newProduct); // Add to the beginning of the array
+  return newProduct;
 }

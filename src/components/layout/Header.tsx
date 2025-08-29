@@ -16,10 +16,11 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '../ui/skeleton';
 
 export default function Header() {
   const { itemCount } = useCart();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
   const categories = ["fishes", "grains", "oils", "swallows", "plantain"];
 
@@ -89,8 +90,13 @@ export default function Header() {
               )}
             </Link>
           </Button>
-
-          {user ? (
+          
+          {loading ? (
+             <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-16 rounded-md" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+              </div>
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">

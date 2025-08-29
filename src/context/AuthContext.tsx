@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -42,7 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setIsAdmin(false);
       }
-      setLoading(false);
+      // A small delay to prevent flickering during initial load or refresh
+      setTimeout(() => setLoading(false), 200);
     });
     return () => unsubscribe();
   }, []);
@@ -51,13 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? (
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 };
