@@ -17,6 +17,7 @@ import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
+import { ModeToggle } from './ModeToggle';
 
 export default function Header() {
   const { itemCount } = useCart();
@@ -78,6 +79,8 @@ export default function Header() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <ModeToggle />
 
           <Button asChild variant="ghost" size="icon" className="relative">
             <Link href="/cart">
