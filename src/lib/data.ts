@@ -3,7 +3,7 @@ import type { Product } from './types';
 // This is a temporary in-memory store for our products.
 // In a real application, this would be a database.
 let products: Product[] = [
-  {
+    {
     id: '1',
     name: 'Garri (Ijebu)',
     price: 15.0,
@@ -28,7 +28,7 @@ let products: Product[] = [
     image: 'https://picsum.photos/400/300?random=3',
     description: 'Ground melon seeds, the essential ingredient for the iconic Egusi soup.',
     aiHint: 'ground seeds',
-    tags: ['grains']
+    tags: ['grains', 'soups']
   },
   {
     id: '4',
@@ -55,7 +55,7 @@ let products: Product[] = [
     image: 'https://picsum.photos/400/300?random=6',
     description: 'Ground African bush mango seeds, known for creating a delicious draw soup.',
     aiHint: 'ground seeds',
-    tags: ['grains', 'swallows']
+    tags: ['grains', 'soups']
   },
   {
     id: '7',
@@ -75,6 +75,24 @@ let products: Product[] = [
     aiHint: 'instant noodles',
     tags: ['grains']
   },
+  {
+    id: '9',
+    name: 'Ofada Rice',
+    price: 20.0,
+    image: 'https://picsum.photos/400/300?random=9',
+    description: 'A locally grown, aromatic short-grain rice with a unique, nutty flavor.',
+    aiHint: 'local rice',
+    tags: ['grains']
+  },
+  {
+    id: '10',
+    name: 'Atarodo (Scotch Bonnet)',
+    price: 4.5,
+    image: 'https://picsum.photos/400/300?random=10',
+    description: 'Fiery and fragrant peppers, essential for adding that signature Nigerian heat.',
+    aiHint: 'red peppers',
+    tags: ['spices']
+  }
 ];
 
 export async function getProducts(): Promise<Product[]> {
