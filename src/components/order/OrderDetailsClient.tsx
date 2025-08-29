@@ -7,6 +7,7 @@ import type { Order } from '@/lib/types';
 import OrderStatusTracker from './OrderStatusTracker';
 import { Skeleton } from '../ui/skeleton';
 import Image from 'next/image';
+import { Card, CardContent } from '../ui/card';
 
 interface OrderDetailsClientProps {
   orderId: string;
