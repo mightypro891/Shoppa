@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,7 +25,10 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
-  image: z.string().url('Must be a valid image URL.'),
+  image: z.any().refine(
+      (file) => (file instanceof FileList && file.length > 0) || typeof file === 'string', 
+      'Please upload an image.'
+    ),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please add at least one tag (comma separated).'),
 });
@@ -53,8 +57,16 @@ export default function ProductForm({ product }: ProductFormProps) {
   });
 
   const onSubmit = (data: ProductFormValues) => {
-    // In a real app, you would call an API to save the product
+    // In a real app, you would handle the file upload to a storage service
+    // and then save the URL to the database.
     console.log('Submitting product data:', data);
+    
+    // If data.image is a FileList, you would handle the upload here.
+    // For now, we'll just log it.
+    if (data.image instanceof FileList) {
+        console.log('Image file to upload:', data.image[0]);
+    }
+
     toast({
       title: isEditing ? 'Product Updated' : 'Product Created',
       description: `The product "${data.name}" has been saved.`,
@@ -63,6 +75,8 @@ export default function ProductForm({ product }: ProductFormProps) {
     router.push('/admin/products');
     router.refresh(); // To see the changes in the list
   };
+
+  const imageRef = form.register("image");
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -116,10 +130,13 @@ export default function ProductForm({ product }: ProductFormProps) {
                 name="image"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Image URL</FormLabel>
+                    <FormLabel>Upload Image</FormLabel>
                     <FormControl>
-                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                        <Input type="file" accept="image/*" {...imageRef} />
                     </FormControl>
+                    <FormDescription>
+                        {isEditing && typeof product?.image === 'string' && `Current image: ${product.image.split('/').pop()}`}
+                    </FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
