@@ -26,6 +26,8 @@ export const useAuth = () => {
   return context;
 };
 
+const adminEmails = ['oyedelepromise07@gmail.com', 'promiseoyedele07@gmail.com'];
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        setIsAdmin(user.email === 'oyedelepromise07@gmail.com');
+        setIsAdmin(adminEmails.includes(user.email || ''));
       } else {
         setUser(null);
         setIsAdmin(false);
