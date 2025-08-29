@@ -2,11 +2,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import OrderStatusTracker from "@/components/order/OrderStatusTracker";
 import { CheckCircle2 } from "lucide-react";
 import { Metadata } from 'next';
-import { getOrderById } from "@/lib/orders";
-import { notFound } from "next/navigation";
 import OrderDetailsClient from "@/components/order/OrderDetailsClient";
 
 export const metadata: Metadata = {
@@ -14,13 +11,9 @@ export const metadata: Metadata = {
   description: 'Your order has been placed successfully.',
 };
 
-export default async function OrderPage({ params }: { params: { id: string } }) {
-  const order = await getOrderById(params.id);
-
-  if (!order) {
-    notFound();
-  }
-
+// This page no longer needs to be async since data fetching is moved to the client.
+export default function OrderPage({ params }: { params: { id: string } }) {
+  
   return (
     <div className="container mx-auto px-4 py-8 md:py-16">
       <Card className="max-w-2xl mx-auto text-center">
@@ -37,7 +30,8 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           </p>
           
           <div className="text-left">
-            <h3 className="font-semibold text-lg mb-4">Order Status</h3>
+            <h3 className="font-semibold text-lg mb-4">Order Summary & Status</h3>
+            {/* The client component now handles all data fetching and display */}
             <OrderDetailsClient orderId={params.id} />
           </div>
 
