@@ -54,11 +54,26 @@ export default function SignInForm() {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       router.push('/');
     } catch (error: any) {
-      toast({
-        title: 'Sign In Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+        toast({
+          title: 'Sign In Failed',
+          description: (
+            <span>
+              Invalid credentials. Don't have an account?{' '}
+              <Link href="/auth/signup" className="font-bold text-white underline">
+                Sign Up
+              </Link>
+            </span>
+          ),
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Sign In Failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
