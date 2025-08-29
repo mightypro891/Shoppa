@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -15,15 +14,19 @@ import { useToast } from '@/hooks/use-toast';
 import { updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
+  phone: z.string().min(10, 'Please enter a valid phone number.'),
+  address: z.string().min(10, 'Please enter a full address.'),
+  city: z.string().min(2, 'Please enter a city.'),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfileClientPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile, saveUserProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -31,6 +34,9 @@ export default function ProfileClientPage() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: '',
+      phone: '',
+      address: '',
+      city: '',
     },
   });
 
@@ -41,22 +47,36 @@ export default function ProfileClientPage() {
     if (user) {
       form.reset({
         name: user.displayName || '',
+        phone: userProfile?.phone || '',
+        address: userProfile?.address || '',
+        city: userProfile?.city || '',
       });
     }
-  }, [user, loading, router, form]);
+  }, [user, loading, router, form, userProfile]);
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!auth.currentUser) return;
     try {
-      await updateProfile(auth.currentUser, {
-        displayName: data.name,
+      // Update Firebase Auth display name
+      if (auth.currentUser.displayName !== data.name) {
+        await updateProfile(auth.currentUser, {
+          displayName: data.name,
+        });
+      }
+      
+      // Save other profile info to our local storage "DB"
+      saveUserProfile({
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
       });
+
       toast({
         title: 'Profile Updated',
-        description: 'Your name has been successfully updated.',
+        description: 'Your information has been successfully updated.',
       });
-      // Force a refresh of the auth context to get the new name
-      router.refresh();
+      // Refresh to ensure all components have the latest user data
+      router.refresh(); 
     } catch (error: any) {
       toast({
         title: 'Update Failed',
@@ -80,29 +100,67 @@ export default function ProfileClientPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Update your display name.</CardDescription>
+                    <CardDescription>Update your display name and delivery details.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter your full name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
+                             <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Full Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter your full name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
                             />
                             <FormItem>
                                 <FormLabel>Email Address</FormLabel>
                                 <Input disabled value={user.email || 'No email associated'} />
                             </FormItem>
-
+                             <FormField
+                                control={form.control}
+                                name="phone"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Phone Number</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. +234 801 234 5678" {...field} />
+                                    </FormControl>
+                                     <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Street Address</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Your delivery address" {...field} />
+                                    </FormControl>
+                                     <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="city"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>City / Town</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Ogbomoso" {...field} />
+                                    </FormControl>
+                                     <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <div className="flex justify-end">
                                 <Button type="submit" disabled={form.formState.isSubmitting}>
                                 {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

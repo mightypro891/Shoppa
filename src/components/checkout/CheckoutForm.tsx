@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/context/CartContext';
@@ -13,14 +14,15 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { sendOrderConfirmationAction } from '@/app/actions';
 import { useAuth } from '@/context/AuthContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
+import { Textarea } from '../ui/textarea';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().min(10, 'Phone number seems too short'),
-  address: z.string().min(5, 'Address must be at least 5 characters'),
+  address: z.string().min(10, 'Address must be at least 10 characters'),
   city: z.string().min(2, 'City is required'),
 });
 
@@ -28,7 +30,7 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
   const { cartItems, cartTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,12 +39,24 @@ export default function CheckoutForm() {
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      name: user?.displayName || '',
+      name: '',
       phone: '',
       address: '',
       city: '',
     },
   });
+
+  useEffect(() => {
+    if(user || userProfile) {
+        form.reset({
+            name: user?.displayName || '',
+            phone: userProfile?.phone || '',
+            address: userProfile?.address || '',
+            city: userProfile?.city || '',
+        });
+    }
+  }, [user, userProfile, form]);
+
 
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!user || !user.email) {
@@ -139,7 +153,7 @@ export default function CheckoutForm() {
                   <FormItem>
                     <FormLabel>Street Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="123 Main St" {...field} />
+                      <Textarea placeholder="123 Main St" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

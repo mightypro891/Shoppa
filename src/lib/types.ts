@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -14,17 +15,25 @@ export interface CartItem extends Product {
 
 export type OrderStatus = 'Order Placed' | 'Preparing' | 'Out for Delivery' | 'Delivered';
 
+export interface CustomerDetails {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+}
+
 export interface Order {
   id: string;
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-  };
+  customer: CustomerDetails;
   cartItems: CartItem[];
   cartTotal: number;
   status: OrderStatus;
   createdAt: string;
+}
+
+export interface UserProfile {
+    phone: string;
+    address: string;
+    city: string;
 }
