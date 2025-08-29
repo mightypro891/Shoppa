@@ -3,41 +3,44 @@
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Package, CookingPot, Bike, Home } from "lucide-react";
+import type { OrderStatus } from "@/lib/types";
 
-const statuses = [
+const statusConfig: { name: OrderStatus, icon: JSX.Element }[] = [
   { name: 'Order Placed', icon: <Package className="h-5 w-5" /> },
   { name: 'Preparing', icon: <CookingPot className="h-5 w-5" /> },
   { name: 'Out for Delivery', icon: <Bike className="h-5 w-5" /> },
   { name: 'Delivered', icon: <Home className="h-5 w-5" /> },
 ];
 
-export default function OrderStatusTracker() {
-  const [currentStatusIndex, setCurrentStatusIndex] = useState(0);
+const statusIndexes: Record<OrderStatus, number> = {
+  'Order Placed': 0,
+  'Preparing': 1,
+  'Out for Delivery': 2,
+  'Delivered': 3,
+};
 
-  useEffect(() => {
-    if (currentStatusIndex < statuses.length - 1) {
-      const timer = setTimeout(() => {
-        setCurrentStatusIndex(prev => prev + 1);
-      }, 3000); // 3 seconds between status updates
-      return () => clearTimeout(timer);
-    }
-  }, [currentStatusIndex]);
 
-  const progressValue = (currentStatusIndex / (statuses.length - 1)) * 100;
+interface OrderStatusTrackerProps {
+  currentStatus: OrderStatus;
+}
+
+export default function OrderStatusTracker({ currentStatus }: OrderStatusTrackerProps) {
+  const currentStatusIndex = statusIndexes[currentStatus];
+  const progressValue = (currentStatusIndex / (statusConfig.length - 1)) * 100;
 
   return (
     <div className="w-full">
       <Progress value={progressValue} className="w-full h-2 mb-4" />
       <div className="flex justify-between">
-        {statuses.map((status, index) => (
+        {statusConfig.map((status, index) => (
           <div
             key={status.name}
-            className={`flex flex-col items-center text-center w-24 ${
+            className={`flex flex-col items-center text-center w-24 transition-colors duration-300 ${
               index <= currentStatusIndex ? 'text-primary font-semibold' : 'text-muted-foreground'
             }`}
           >
             <div
-              className={`flex items-center justify-center h-10 w-10 rounded-full border-2 ${
+              className={`flex items-center justify-center h-10 w-10 rounded-full border-2 transition-colors duration-300 ${
                 index <= currentStatusIndex ? 'bg-primary/10 border-primary' : 'bg-secondary border-border'
               }`}
             >

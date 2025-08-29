@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
@@ -56,6 +56,22 @@ export default function AdminDashboard() {
             </CardDescription>
              <Button asChild className="mt-4">
                 <Link href="/admin/products">Go to Products</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Order Management
+            </CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              View and update customer orders.
+            </CardDescription>
+             <Button asChild className="mt-4">
+                <Link href="/admin/orders">Go to Orders</Link>
             </Button>
           </CardContent>
         </Card>

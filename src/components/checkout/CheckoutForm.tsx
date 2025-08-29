@@ -4,7 +4,6 @@ import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +15,7 @@ import { sendOrderConfirmationAction } from '@/app/actions';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { createOrder } from '@/lib/orders';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -55,11 +55,16 @@ export default function CheckoutForm() {
     }
 
     setIsSubmitting(true);
-    const orderId = Math.random().toString(36).substr(2, 9);
     
     try {
+        const newOrder = await createOrder({
+            customer: { ...data, email: user.email },
+            cartItems,
+            cartTotal,
+        });
+
         await sendOrderConfirmationAction({
-            orderId,
+            orderId: newOrder.id,
             customer: {
                 name: data.name,
                 email: user.email,
@@ -74,7 +79,7 @@ export default function CheckoutForm() {
         });
         
         clearCart();
-        router.push(`/order/${orderId}`);
+        router.push(`/order/${newOrder.id}`);
 
     } catch (error) {
         toast({
