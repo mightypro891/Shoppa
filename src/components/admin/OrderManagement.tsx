@@ -98,7 +98,7 @@ export default function OrderManagement() {
                             <TableCell className="font-mono text-sm">#{order.id.substring(0, 5)}</TableCell>
                             <TableCell>{format(parseISO(order.createdAt), "MMM d, yyyy")}</TableCell>
                             <TableCell>{order.customer.name}</TableCell>
-                            <TableCell>${order.cartTotal.toFixed(2)}</TableCell>
+                            <TableCell>₦{order.cartTotal.toFixed(2)}</TableCell>
                             <TableCell>
                                 <Badge className={`text-white ${statusColors[order.status]}`}>{order.status}</Badge>
                             </TableCell>

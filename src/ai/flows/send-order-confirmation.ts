@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to handle sending order confirmation emails.
@@ -7,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { CartItem } from '@/lib/types';
 
 const OrderConfirmationInputSchema = z.object({
@@ -57,7 +58,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
         Thank you for your order! We've received it and are getting it ready for you.
 
         Order ID: ${orderId}
-        Total: $${cartTotal.toFixed(2)}
+        Total: ₦${cartTotal.toFixed(2)}
 
         Items:
         ${cartItems.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}
@@ -82,7 +83,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
 
         Order ID: ${orderId}
         Customer: ${customer.name} (${customer.email})
-        Total: $${cartTotal.toFixed(2)}
+        Total: ₦${cartTotal.toFixed(2)}
 
         Items:
         ${cartItems.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}

@@ -198,7 +198,7 @@ export default function CheckoutForm() {
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                   </div>
                 </div>
-                <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                <p className="font-semibold">₦{(item.price * item.quantity).toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -206,7 +206,7 @@ export default function CheckoutForm() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <p>Subtotal</p>
-              <p>${cartTotal.toFixed(2)}</p>
+              <p>₦{cartTotal.toFixed(2)}</p>
             </div>
             <div className="flex justify-between">
               <p>Shipping</p>
@@ -215,7 +215,7 @@ export default function CheckoutForm() {
             <hr className="my-2" />
             <div className="flex justify-between font-bold text-lg">
               <p>Total</p>
-              <p>${cartTotal.toFixed(2)}</p>
+              <p>₦{cartTotal.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>

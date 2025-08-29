@@ -80,7 +80,7 @@ export default function ProductManagement() {
                                 />
                             </TableCell>
                             <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell>${product.price.toFixed(2)}</TableCell>
+                            <TableCell>₦{product.price.toFixed(2)}</TableCell>
                             <TableCell>{product.tags?.join(', ')}</TableCell>
                             <TableCell className="text-right">
                             <Button asChild variant="ghost" size="icon">

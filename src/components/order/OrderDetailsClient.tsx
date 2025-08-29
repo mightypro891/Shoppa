@@ -69,12 +69,12 @@ export default function OrderDetailsClient({ orderId }: OrderDetailsClientProps)
                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
                     </div>
-                    <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-semibold">₦{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
                 <div className="border-t pt-4 mt-4 flex justify-between font-bold text-lg">
                     <p>Total</p>
-                    <p>${order.cartTotal.toFixed(2)}</p>
+                    <p>₦{order.cartTotal.toFixed(2)}</p>
                 </div>
             </CardContent>
         </Card>

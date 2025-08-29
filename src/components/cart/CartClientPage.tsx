@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/context/CartContext';
@@ -54,7 +55,7 @@ export default function CartClientPage() {
             </div>
             <div className="flex-grow">
               <h3 className="font-semibold">{item.name}</h3>
-              <p className="text-muted-foreground text-sm">${item.price.toFixed(2)}</p>
+              <p className="text-muted-foreground text-sm">₦{item.price.toFixed(2)}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
@@ -66,7 +67,7 @@ export default function CartClientPage() {
               </Button>
             </div>
             <div className="ml-4 text-right">
-              <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+              <p className="font-semibold">₦{(item.price * item.quantity).toFixed(2)}</p>
             </div>
             <Button variant="ghost" size="icon" className="ml-2 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.id)}>
               <Trash2 className="h-5 w-5" />
@@ -80,7 +81,7 @@ export default function CartClientPage() {
             <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
             <div className="flex justify-between mb-2">
               <p>Subtotal ({itemCount} items)</p>
-              <p>${cartTotal.toFixed(2)}</p>
+              <p>₦{cartTotal.toFixed(2)}</p>
             </div>
             <div className="flex justify-between mb-2">
               <p>Shipping</p>
@@ -89,7 +90,7 @@ export default function CartClientPage() {
             <hr className="my-4" />
             <div className="flex justify-between font-bold text-lg mb-6">
               <p>Total</p>
-              <p>${cartTotal.toFixed(2)}</p>
+              <p>₦{cartTotal.toFixed(2)}</p>
             </div>
             <Button onClick={handleCheckout} className="w-full" size="lg">
               Proceed to Checkout

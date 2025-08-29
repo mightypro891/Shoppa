@@ -68,7 +68,7 @@ export default async function ProductDetailPage({ params }: Props) {
           <p className="text-muted-foreground text-lg mb-6">{product.description}</p>
           
           <div className="text-4xl font-bold text-primary mb-6">
-            ${product.price.toFixed(2)}
+            ₦{product.price.toFixed(2)}
           </div>
 
           <div className="flex items-center gap-4">
