@@ -1,9 +1,10 @@
+
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'All Products - Naija Shoppa',
+    title: 'All Products - Lautech Shoppa',
     description: 'Browse all available Nigerian foodstuffs.',
 };
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { CartItem, Product } from '@/lib/types';
@@ -30,7 +31,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem('naija_shoppa_cart');
+      const savedCart = localStorage.getItem('lautech_shoppa_cart');
       if (savedCart) {
         setCartItems(JSON.parse(savedCart));
       }
@@ -42,7 +43,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('naija_shoppa_cart', JSON.stringify(cartItems));
+      localStorage.setItem('lautech_shoppa_cart', JSON.stringify(cartItems));
     } catch (error) {
       console.error('Failed to save cart to localStorage', error);
     }

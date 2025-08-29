@@ -1,8 +1,9 @@
+
 import CartClientPage from '@/components/cart/CartClientPage';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Shopping Cart - Naija Shoppa',
+  title: 'Shopping Cart - Lautech Shoppa',
   description: 'Review your items and proceed to checkout.',
 };
 

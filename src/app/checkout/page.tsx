@@ -1,8 +1,9 @@
+
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Checkout - Naija Shoppa',
+  title: 'Checkout - Lautech Shoppa',
   description: 'Enter your details to complete your order.',
 };
 

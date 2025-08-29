@@ -3,7 +3,7 @@ import ProductForm from "@/components/admin/ProductForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: 'Add Product - Naija Shoppa',
+    title: 'Add Product - Lautech Shoppa',
     description: 'Add a new product to the store.',
 };
 

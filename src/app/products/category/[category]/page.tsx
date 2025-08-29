@@ -1,3 +1,4 @@
+
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
 import { Metadata } from 'next';
@@ -10,7 +11,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = decodeURIComponent(params.category);
   return {
-    title: `${category.charAt(0).toUpperCase() + category.slice(1)} - Naija Shoppa`,
+    title: `${category.charAt(0).toUpperCase() + category.slice(1)} - Lautech Shoppa`,
     description: `Browse products in the ${category} category.`,
   }
 }

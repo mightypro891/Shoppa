@@ -3,8 +3,8 @@ import SignInForm from '@/components/auth/SignInForm';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sign In - Naija Shoppa',
-  description: 'Sign in to your Naija Shoppa account.',
+  title: 'Sign In - Lautech Shoppa',
+  description: 'Sign in to your Lautech Shoppa account.',
 };
 
 export default function SignInPage() {

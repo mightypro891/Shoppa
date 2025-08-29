@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Order Confirmed - Naija Shoppa',
+  title: 'Order Confirmed - Lautech Shoppa',
   description: 'Your order has been placed successfully.',
 };
 

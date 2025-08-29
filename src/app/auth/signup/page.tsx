@@ -3,8 +3,8 @@ import SignUpForm from '@/components/auth/SignUpForm';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sign Up - Naija Shoppa',
-  description: 'Create a new Naija Shoppa account.',
+  title: 'Sign Up - Lautech Shoppa',
+  description: 'Create a new Lautech Shoppa account.',
 };
 
 export default function SignUpPage() {

@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'Naija Shoppa',
+  title: 'Lautech Shoppa',
   description: 'Your one-stop shop for Nigerian foodstuffs, designed for students.',
 };
 

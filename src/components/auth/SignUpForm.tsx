@@ -45,7 +45,7 @@ export default function SignUpForm() {
 
       toast({
         title: 'Account Created!',
-        description: 'Welcome to Naija Shoppa. Please sign in.',
+        description: 'Welcome to Lautech Shoppa. Please sign in.',
       });
 
       if (values.email === 'oyedelepromise07@gmail.com') {
