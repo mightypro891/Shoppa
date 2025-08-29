@@ -42,11 +42,18 @@ export default function SignUpForm() {
       await updateProfile(userCredential.user, {
         displayName: values.name,
       });
-      router.push('/');
-       toast({
+
+      toast({
         title: 'Account Created!',
-        description: 'Welcome to Naija Shoppa.',
+        description: 'Welcome to Naija Shoppa. Please sign in.',
       });
+
+      if (values.email === 'oyedelepromise07@gmail.com') {
+        router.push('/admin');
+      } else {
+        router.push('/auth/signin');
+      }
+
     } catch (error: any) {
       toast({
         title: 'Sign Up Failed',
