@@ -12,10 +12,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { sendOrderConfirmationAction } from '@/app/actions';
+import { useAuth } from '@/context/AuthContext';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
   phone: z.string().min(10, 'Phone number seems too short'),
   address: z.string().min(5, 'Address must be at least 5 characters'),
   city: z.string().min(2, 'City is required'),
@@ -25,31 +28,63 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: user?.displayName || '',
       phone: '',
       address: '',
       city: '',
     },
   });
 
-  const onSubmit = (data: CheckoutFormValues) => {
-    console.log('Order submitted:', data);
+  const onSubmit = async (data: CheckoutFormValues) => {
+    if (!user || !user.email) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to place an order.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     const orderId = Math.random().toString(36).substr(2, 9);
     
-    toast({
-      title: 'Order Placed!',
-      description: 'Your order has been successfully placed.',
-    });
-    
-    clearCart();
-    router.push(`/order/${orderId}`);
+    try {
+        await sendOrderConfirmationAction({
+            orderId,
+            customer: {
+                name: data.name,
+                email: user.email,
+            },
+            cartItems,
+            cartTotal,
+        });
+
+        toast({
+            title: 'Order Placed!',
+            description: 'Your order has been successfully placed. A confirmation has been sent to your email.',
+        });
+        
+        clearCart();
+        router.push(`/order/${orderId}`);
+
+    } catch (error) {
+        toast({
+            title: 'Order Failed',
+            description: 'There was an issue placing your order. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -74,19 +109,11 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="you@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <Input disabled value={user?.email || 'No email associated'} />
+              </FormItem>
+
                <FormField
                 control={form.control}
                 name="phone"
@@ -126,7 +153,8 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-               <Button type="submit" size="lg" className="w-full mt-6">
+               <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
+                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Confirm Order
               </Button>
             </form>
