@@ -59,6 +59,15 @@ export default function Header() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          {isAdmin && (
+            <Button asChild variant="ghost" className="hidden md:flex">
+                <Link href="/admin">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Dashboard
+                </Link>
+            </Button>
+          )}
 
         </div>
 
@@ -78,6 +87,14 @@ export default function Header() {
                   <Link href={`/products/category/${category}`} className="capitalize">{category}</Link>
                 </DropdownMenuItem>
               ))}
+              {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -123,11 +140,6 @@ export default function Header() {
                  <DropdownMenuItem asChild>
                     <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
                   </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin</Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
