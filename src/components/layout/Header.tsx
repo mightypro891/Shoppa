@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, UserPlus } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -111,6 +110,9 @@ export default function Header() {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                    <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
+                  </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin</Link>
