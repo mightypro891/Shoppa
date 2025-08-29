@@ -87,7 +87,10 @@ export default function AdminDashboard() {
                 Approve and manage customer reviews.
             </CardDescription>
              <Button variant="secondary" disabled className="mt-4">
-                Coming Soon
+                Post Reviews
+            </Button>
+             <Button variant="destructive" disabled className="mt-4 ml-2">
+                Delete Review
             </Button>
           </CardContent>
         </Card>

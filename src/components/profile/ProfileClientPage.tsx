@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -189,6 +190,15 @@ export default function ProfileClientPage() {
                 </CardHeader>
                 <CardContent>
                     <Button disabled variant="secondary">View Orders (Coming Soon)</Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Reviews</CardTitle>
+                    <CardDescription>Manage your product reviews.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button disabled variant="secondary">Write a Review (Coming Soon)</Button>
                 </CardContent>
             </Card>
         </div>

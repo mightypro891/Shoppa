@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, Star } from 'lucide-react';
 import ProductCard from '@/components/products/ProductCard';
 import { AddToCartButton } from '@/components/products/AddToCartButton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
   params: { id: string };
@@ -76,8 +78,17 @@ export default async function ProductDetailPage({ params }: Props) {
       </div>
 
        <div className="mt-16 md:mt-24">
-        <h2 className="text-3xl font-bold text-center mb-10 font-headline">Leave a Review</h2>
-        <p className="text-center text-muted-foreground">Review functionality coming soon!</p>
+         <Card className="max-w-2xl mx-auto">
+           <CardHeader>
+             <CardTitle>Leave a Review</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <div className="space-y-4">
+               <Textarea placeholder="Share your thoughts on this product..." />
+               <Button disabled>Submit Review (Coming Soon)</Button>
+             </div>
+           </CardContent>
+         </Card>
       </div>
 
 
