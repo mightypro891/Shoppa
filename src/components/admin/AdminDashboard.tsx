@@ -1,13 +1,15 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone, ShoppingCart } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, BarChart, PieChart } from 'lucide-react';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import ProductPieChart from './charts/ProductPieChart';
+import ProductBarChart from './charts/ProductBarChart';
 
 export default function AdminDashboard() {
   const { isAdmin, loading } = useAuth();
@@ -42,6 +44,46 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+      <Card className="mb-6">
+        <CardHeader>
+            <CardTitle>Store Analytics</CardTitle>
+            <CardDescription>An overview of your store's performance.</CardDescription>
+        </CardHeader>
+        <CardContent>
+             <Tabs defaultValue="sold">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="sold">Products Sold</TabsTrigger>
+                    <TabsTrigger value="refunds">Refunds</TabsTrigger>
+                    <TabsTrigger value="views">Product Views</TabsTrigger>
+                    <TabsTrigger value="delivered">Delivered</TabsTrigger>
+                </TabsList>
+                <TabsContent value="sold">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <ProductPieChart />
+                        <ProductBarChart />
+                    </div>
+                </TabsContent>
+                 <TabsContent value="refunds">
+                    <div className="text-center py-10 text-muted-foreground">
+                        Refund analytics are not yet available.
+                    </div>
+                </TabsContent>
+                 <TabsContent value="views">
+                     <div className="text-center py-10 text-muted-foreground">
+                        Product view analytics are not yet available.
+                    </div>
+                </TabsContent>
+                 <TabsContent value="delivered">
+                     <div className="text-center py-10 text-muted-foreground">
+                        Delivery analytics are not yet available.
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </CardContent>
+      </Card>
+
+
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
