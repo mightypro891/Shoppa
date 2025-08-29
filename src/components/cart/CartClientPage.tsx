@@ -7,9 +7,29 @@ import Image from 'next/image';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import RecipeSuggestions from './RecipeSuggestions';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CartClientPage() {
   const { cartItems, updateQuantity, removeFromCart, cartTotal, itemCount } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleCheckout = () => {
+    if (!user) {
+      toast({
+        title: 'Please Sign In',
+        description: 'You need to be logged in to proceed to checkout.',
+        variant: 'destructive',
+      });
+      router.push('/auth/signin?redirect=/cart');
+    } else {
+      router.push('/checkout');
+    }
+  };
+
 
   if (itemCount === 0) {
     return (
@@ -71,8 +91,8 @@ export default function CartClientPage() {
               <p>Total</p>
               <p>${cartTotal.toFixed(2)}</p>
             </div>
-            <Button asChild className="w-full" size="lg">
-              <Link href="/checkout">Proceed to Checkout</Link>
+            <Button onClick={handleCheckout} className="w-full" size="lg">
+              Proceed to Checkout
             </Button>
             <RecipeSuggestions />
           </CardContent>
