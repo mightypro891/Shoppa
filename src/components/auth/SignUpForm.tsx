@@ -21,8 +21,6 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
-const adminEmails = ['oyedelepromise07@gmail.com', 'promiseoyedele07@gmail.com'];
-
 export default function SignUpForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -49,12 +47,8 @@ export default function SignUpForm() {
         title: 'Account Created!',
         description: 'Welcome to Lautech Shoppa. Please sign in.',
       });
-
-      if (adminEmails.includes(values.email)) {
-        router.push('/admin');
-      } else {
-        router.push('/auth/signin');
-      }
+      
+      router.push('/auth/signin');
 
     } catch (error: any) {
       toast({
