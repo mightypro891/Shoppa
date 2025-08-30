@@ -43,7 +43,7 @@ const ADMIN_EMAILS_KEY = 'lautech_shoppa_admins';
 
 const getAdminsFromStorage = (): string[] => {
     if (typeof window === 'undefined') {
-        return [superAdminEmail, 'oyedelepromise07@gmail.com'];
+        return [superAdminEmail, 'adedolapotamara@gmail.com'];
     }
     try {
         const savedAdmins = localStorage.getItem(ADMIN_EMAILS_KEY);
@@ -51,13 +51,13 @@ const getAdminsFromStorage = (): string[] => {
             return JSON.parse(savedAdmins);
         } else {
             // Initialize with default admins if nothing is in storage
-            const defaultAdmins = [superAdminEmail, 'oyedelepromise07@gmail.com'];
+            const defaultAdmins = [superAdminEmail, 'adedolapotamara@gmail.com'];
             localStorage.setItem(ADMIN_EMAILS_KEY, JSON.stringify(defaultAdmins));
             return defaultAdmins;
         }
     } catch (error) {
         console.error('Failed to parse admins from localStorage', error);
-        return [superAdminEmail, 'oyedelepromise07@gmail.com'];
+        return [superAdminEmail, 'adedolapotamara@gmail.com'];
     }
 };
 
