@@ -7,6 +7,7 @@ export interface Product {
   description: string;
   aiHint: string;
   tags?: string[];
+  vendorId?: string; // To associate product with a "Normal Admin"
 }
 
 export interface CartItem extends Product {
@@ -36,4 +37,11 @@ export interface UserProfile {
     phone: string;
     address: string;
     city: string;
+}
+
+export type AdminRole = 'Super Admin' | 'Website Admin' | 'Products Admin' | 'Normal Admin';
+
+export interface AdminUser {
+  email: string;
+  role: AdminRole;
 }

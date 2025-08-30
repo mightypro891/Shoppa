@@ -4,15 +4,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import type { UserProfile } from '@/lib/types';
+import type { UserProfile, AdminUser, AdminRole } from '@/lib/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  adminRole: AdminRole | null;
   isSuperAdmin: boolean;
-  admins: string[];
-  addAdmin: (email: string) => void;
+  admins: AdminUser[];
+  addAdmin: (email: string, role: AdminRole) => void;
   removeAdmin: (email: string) => void;
   userProfile: UserProfile | null;
   saveUserProfile: (profile: UserProfile) => void;
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAdmin: false,
+  adminRole: null,
   isSuperAdmin: false,
   admins: [],
   addAdmin: () => {},
@@ -38,33 +40,35 @@ export const useAuth = () => {
   return context;
 };
 
-const superAdminEmail = 'promiseoyedele07@gmail.com';
-const ADMIN_EMAILS_KEY = 'lautech_shoppa_admins';
+const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
 
-const getAdminsFromStorage = (): string[] => {
+const getAdminsFromStorage = (): AdminUser[] => {
+    const defaultAdmins: AdminUser[] = [
+        { email: 'promiseoyedele07@gmail.com', role: 'Super Admin' },
+        { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
+    ];
+
     if (typeof window === 'undefined') {
-        return [superAdminEmail, 'adedolapotamara@gmail.com'];
+        return defaultAdmins;
     }
     try {
-        const savedAdmins = localStorage.getItem(ADMIN_EMAILS_KEY);
+        const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
         if (savedAdmins) {
             return JSON.parse(savedAdmins);
         } else {
-            // Initialize with default admins if nothing is in storage
-            const defaultAdmins = [superAdminEmail, 'adedolapotamara@gmail.com'];
-            localStorage.setItem(ADMIN_EMAILS_KEY, JSON.stringify(defaultAdmins));
+            localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
             return defaultAdmins;
         }
     } catch (error) {
         console.error('Failed to parse admins from localStorage', error);
-        return [superAdminEmail, 'adedolapotamara@gmail.com'];
+        return defaultAdmins;
     }
 };
 
-const saveAdminsToStorage = (admins: string[]) => {
+const saveAdminsToStorage = (admins: AdminUser[]) => {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(ADMIN_EMAILS_KEY, JSON.stringify(admins));
+        localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(admins));
     } catch (error) {
         console.error('Failed to save admins to localStorage', error);
     }
@@ -75,17 +79,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [admins, setAdmins] = useState<string[]>(getAdminsFromStorage());
+  const [admins, setAdmins] = useState<AdminUser[]>(getAdminsFromStorage());
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const userEmail = user.email || '';
+        const adminRecord = admins.find(admin => admin.email === userEmail);
+
         setUser(user);
-        setIsAdmin(admins.includes(userEmail));
-        setIsSuperAdmin(userEmail === superAdminEmail);
+        setIsAdmin(!!adminRecord);
+        setAdminRole(adminRecord ? adminRecord.role : null);
+        setIsSuperAdmin(adminRecord?.role === 'Super Admin');
         
         try {
             const savedProfile = localStorage.getItem(`user_profile_${user.uid}`);
@@ -100,6 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setIsAdmin(false);
         setIsSuperAdmin(false);
+        setAdminRole(null);
         setUserProfile(null);
       }
       setTimeout(() => setLoading(false), 200);
@@ -107,11 +116,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, [admins]);
 
-  const addAdmin = (email: string) => {
+  const addAdmin = (email: string, role: AdminRole) => {
       if (isSuperAdmin) {
           setAdmins(prevAdmins => {
-              if (prevAdmins.includes(email)) return prevAdmins;
-              const newAdmins = [...prevAdmins, email];
+              if (prevAdmins.some(admin => admin.email === email)) return prevAdmins;
+              const newAdmins = [...prevAdmins, { email, role }];
               saveAdminsToStorage(newAdmins);
               return newAdmins;
           });
@@ -119,9 +128,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const removeAdmin = (email: string) => {
-      if (isSuperAdmin && email !== superAdminEmail) {
+      if (isSuperAdmin && email !== 'promiseoyedele07@gmail.com') {
           setAdmins(prevAdmins => {
-              const newAdmins = prevAdmins.filter(admin => admin !== email);
+              const newAdmins = prevAdmins.filter(admin => admin.email !== email);
               saveAdminsToStorage(newAdmins);
               return newAdmins;
           });
@@ -141,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
 
-  const value = { user, loading, isAdmin, isSuperAdmin, admins, addAdmin, removeAdmin, userProfile, saveUserProfile };
+  const value = { user, loading, isAdmin, adminRole, isSuperAdmin, admins, addAdmin, removeAdmin, userProfile, saveUserProfile };
 
   return (
     <AuthContext.Provider value={value}>

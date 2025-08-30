@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import ProductPieChart from './charts/ProductPieChart';
@@ -14,12 +14,20 @@ import ProductBarChart from './charts/ProductBarChart';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
+import { AdminRole } from '@/lib/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function AdminDashboard() {
   const { isAdmin, isSuperAdmin, loading, admins, addAdmin, removeAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminRole, setNewAdminRole] = useState<AdminRole>('Normal Admin');
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -29,8 +37,8 @@ export default function AdminDashboard() {
 
   const handleAddAdmin = () => {
     if (newAdminEmail && /\S+@\S+\.\S+/.test(newAdminEmail)) {
-        addAdmin(newAdminEmail);
-        toast({ title: 'Admin Added', description: `${newAdminEmail} is now an admin.` });
+        addAdmin(newAdminEmail, newAdminRole);
+        toast({ title: 'Admin Added', description: `${newAdminEmail} is now a ${newAdminRole}.` });
         setNewAdminEmail('');
     } else {
         toast({ title: 'Invalid Email', description: 'Please enter a valid email address.', variant: 'destructive' });
@@ -112,7 +120,7 @@ export default function AdminDashboard() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> Admin Management</CardTitle>
-                        <CardDescription>Add or remove admin users.</CardDescription>
+                        <CardDescription>Add or remove admin users and assign roles.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex gap-2">
@@ -121,7 +129,23 @@ export default function AdminDashboard() {
                                 placeholder="new.admin@example.com"
                                 value={newAdminEmail}
                                 onChange={(e) => setNewAdminEmail(e.target.value)}
+                                className="flex-grow"
                             />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="min-w-[140px] justify-between">
+                                        {newAdminRole}
+                                        <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(role => (
+                                        <DropdownMenuItem key={role} onClick={() => setNewAdminRole(role)}>
+                                            {role}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <Button onClick={handleAddAdmin} size="icon">
                                 <PlusCircle className="h-4 w-4" />
                             </Button>
@@ -129,18 +153,18 @@ export default function AdminDashboard() {
                         <div className="space-y-2">
                             <h4 className="font-medium text-sm">Current Admins</h4>
                             <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                                {admins.map(email => (
-                                    <div key={email} className="flex items-center justify-between p-2 rounded-md bg-secondary">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm truncate">{email}</span>
-                                            {email === 'promiseoyedele07@gmail.com' && <Badge>Super</Badge>}
+                                {admins.map(admin => (
+                                    <div key={admin.email} className="flex items-center justify-between p-2 rounded-md bg-secondary">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm truncate font-medium">{admin.email}</span>
+                                            <Badge variant="secondary" className="w-fit">{admin.role}</Badge>
                                         </div>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             className="h-7 w-7 text-destructive hover:text-destructive"
-                                            onClick={() => handleRemoveAdmin(email)}
-                                            disabled={email === 'promiseoyedele07@gmail.com'}
+                                            onClick={() => handleRemoveAdmin(admin.email)}
+                                            disabled={admin.role === 'Super Admin'}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
