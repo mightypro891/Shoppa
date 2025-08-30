@@ -106,8 +106,9 @@ export default function CheckoutForm() {
 
 
   const onSubmit = async (data: CheckoutFormValues) => {
-    if (accountBalance >= cartTotal) {
-        payWithWallet(cartTotal);
+    setIsSubmitting(true);
+    const success = payWithWallet(cartTotal);
+    if (success) {
         await handleOrderPlacement(data);
     } else {
         toast({
@@ -115,13 +116,14 @@ export default function CheckoutForm() {
             description: (
                 <div className="flex flex-col gap-2">
                     <span>Your wallet balance is not enough to cover this order.</span>
-                    <Button asChild size="sm">
+                    <Button asChild size="sm" className="w-fit">
                         <Link href="/fund-wallet">Fund Wallet</Link>
                     </Button>
                 </div>
             ),
             variant: 'destructive',
         });
+        setIsSubmitting(false);
     }
   };
 
@@ -191,7 +193,7 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
+              <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting || cartItems.length === 0}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{cartTotal.toFixed(2)})
               </Button>
