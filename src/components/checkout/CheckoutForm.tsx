@@ -174,7 +174,7 @@ export default function CheckoutForm() {
               />
                <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirm Order
+                Confirm Order & Pay ₦{cartTotal.toFixed(2)}
               </Button>
             </form>
           </Form>

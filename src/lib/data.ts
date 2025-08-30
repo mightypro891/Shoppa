@@ -8,8 +8,8 @@ let products: Product[] = [
     {
         id: '1',
         name: 'Ofada Rice',
-        price: 30.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Ofada+Rice',
+        price: 3000.0,
+        image: 'https://picsum.photos/400/300?random=1',
         description: 'Aromatic, locally grown short-grain rice with a unique nutty flavor. Perfect for Ofada stew.',
         aiHint: 'local rice',
         tags: ['grains']
@@ -17,8 +17,8 @@ let products: Product[] = [
     {
         id: '2',
         name: 'Long Grain Parboiled Rice',
-        price: 25.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Long+Grain+Rice',
+        price: 2500.0,
+        image: 'https://picsum.photos/400/300?random=2',
         description: 'A versatile staple, fluffy and separate when cooked. Ideal for Jollof rice and fried rice.',
         aiHint: 'white rice',
         tags: ['grains']
@@ -26,8 +26,8 @@ let products: Product[] = [
     {
         id: '11',
         name: 'Black Eyed Beans (Oloyin)',
-        price: 18.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Oloyin+Beans',
+        price: 1800.0,
+        image: 'https://picsum.photos/400/300?random=11',
         description: 'Sweet, honey-flavored brown beans. A favorite for making Ewa Aganyin or bean porridge.',
         aiHint: 'brown beans',
         tags: ['grains']
@@ -35,8 +35,8 @@ let products: Product[] = [
     {
         id: '12',
         name: 'Garri (Ijebu)',
-        price: 15.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Ijebu+Garri',
+        price: 1500.0,
+        image: 'https://picsum.photos/400/300?random=12',
         description: 'Crisp, sour, and fine-grained, perfect for soaking or making Eba.',
         aiHint: 'grain powder',
         tags: ['grains', 'swallows']
@@ -44,8 +44,8 @@ let products: Product[] = [
      {
         id: '13',
         name: 'Garri (Yellow)',
-        price: 15.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Yellow+Garri',
+        price: 1500.0,
+        image: 'https://picsum.photos/400/300?random=13',
         description: 'Fortified with palm oil, giving it a yellow color and a smoother texture for Eba.',
         aiHint: 'yellow powder',
         tags: ['grains', 'swallows']
@@ -53,8 +53,8 @@ let products: Product[] = [
      {
         id: '14',
         name: 'White Beans',
-        price: 17.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=White+Beans',
+        price: 1700.0,
+        image: 'https://picsum.photos/400/300?random=14',
         description: 'Firm and creamy, great for bean soups, salads, and Moi Moi.',
         aiHint: 'white beans',
         tags: ['grains']
@@ -63,8 +63,8 @@ let products: Product[] = [
     {
         id: '15',
         name: 'Poundo Yam',
-        price: 25.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Poundo+Yam',
+        price: 2500.0,
+        image: 'https://picsum.photos/400/300?random=15',
         description: 'A smooth, fluffy swallow made from yam flour. A staple for any soup.',
         aiHint: 'yam flour',
         tags: ['swallows']
@@ -72,8 +72,8 @@ let products: Product[] = [
     {
         id: '16',
         name: 'Amala (Yam Flour)',
-        price: 22.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Amala',
+        price: 2200.0,
+        image: 'https://picsum.photos/400/300?random=16',
         description: 'Made from dried yam peel, this flour creates a distinctive dark, earthy swallow.',
         aiHint: 'dark flour',
         tags: ['swallows']
@@ -81,8 +81,8 @@ let products: Product[] = [
     {
         id: '17',
         name: 'Semolina',
-        price: 20.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Semolina',
+        price: 2000.0,
+        image: 'https://picsum.photos/400/300?random=17',
         description: 'A fine, high-wheat flour that produces a light, smooth swallow.',
         aiHint: 'white flour',
         tags: ['swallows']
@@ -91,8 +91,8 @@ let products: Product[] = [
     {
         id: '3',
         name: 'Egusi (Ground)',
-        price: 12.5,
-        image: 'https://placehold.co/400x300/FFF/333?text=Egusi',
+        price: 1250.0,
+        image: 'https://picsum.photos/400/300?random=3',
         description: 'Ground melon seeds, the essential ingredient for the iconic Egusi soup.',
         aiHint: 'ground seeds',
         tags: ['grains', 'soups']
@@ -100,8 +100,8 @@ let products: Product[] = [
     {
         id: '6',
         name: 'Ogbono (Ground)',
-        price: 14.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Ogbono',
+        price: 1400.0,
+        image: 'https://picsum.photos/400/300?random=6',
         description: 'Ground African bush mango seeds, known for creating a delicious draw soup.',
         aiHint: 'ground seeds',
         tags: ['grains', 'soups']
@@ -109,8 +109,8 @@ let products: Product[] = [
      {
         id: '10',
         name: 'Atarodo (Scotch Bonnet)',
-        price: 4.5,
-        image: 'https://placehold.co/400x300/FFF/333?text=Scotch+Bonnet',
+        price: 450.0,
+        image: 'https://picsum.photos/400/300?random=10',
         description: 'Fiery and fragrant peppers, essential for adding that signature Nigerian heat.',
         aiHint: 'red peppers',
         tags: ['spices']
@@ -118,8 +118,8 @@ let products: Product[] = [
     {
         id: '18',
         name: 'Curry Powder',
-        price: 5.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Curry+Powder',
+        price: 500.0,
+        image: 'https://picsum.photos/400/300?random=18',
         description: 'A classic blend of spices used to season stews, rice, and meats.',
         aiHint: 'yellow spice',
         tags: ['spices']
@@ -128,8 +128,8 @@ let products: Product[] = [
     {
         id: '4',
         name: 'Palm Oil',
-        price: 18.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Palm+Oil',
+        price: 1800.0,
+        image: 'https://picsum.photos/400/300?random=4',
         description: 'Rich, flavorful, and red, this oil is the soul of Nigerian cooking.',
         aiHint: 'red oil',
         tags: ['oils']
@@ -137,8 +137,8 @@ let products: Product[] = [
     {
         id: '19',
         name: 'Vegetable Oil',
-        price: 16.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Vegetable+Oil',
+        price: 1600.0,
+        image: 'https://picsum.photos/400/300?random=19',
         description: 'A light, neutral-tasting oil for all-purpose frying and cooking.',
         aiHint: 'cooking oil',
         tags: ['oils']
@@ -147,8 +147,8 @@ let products: Product[] = [
     {
         id: '7',
         name: 'Smoked Catfish',
-        price: 22.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Smoked+Catfish',
+        price: 2200.0,
+        image: 'https://picsum.photos/400/300?random=7',
         description: 'A smoky, savory fish that adds deep flavor to soups and stews.',
         aiHint: 'smoked fish',
         tags: ['fishes']
@@ -156,8 +156,8 @@ let products: Product[] = [
     {
         id: '20',
         name: 'Stockfish (Panla)',
-        price: 35.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Stockfish',
+        price: 3500.0,
+        image: 'https://picsum.photos/400/300?random=20',
         description: 'Air-dried cod, providing a distinct, potent flavor to traditional soups.',
         aiHint: 'dried fish',
         tags: ['fishes']
@@ -165,8 +165,8 @@ let products: Product[] = [
     {
         id: '5',
         name: 'Plantain (Ripe)',
-        price: 5.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Plantain',
+        price: 500.0,
+        image: 'https://picsum.photos/400/300?random=5',
         description: 'Sweet and versatile, perfect for frying as dodo or boiling.',
         aiHint: 'plantain',
         tags: ['plantain']
@@ -174,8 +174,8 @@ let products: Product[] = [
     {
         id: '8',
         name: 'Indomie Noodles',
-        price: 8.0,
-        image: 'https://placehold.co/400x300/FFF/333?text=Indomie',
+        price: 800.0,
+        image: 'https://picsum.photos/400/300?random=8',
         description: 'The ultimate student comfort food. Quick, easy, and satisfying.',
         aiHint: 'instant noodles',
         tags: ['grains']

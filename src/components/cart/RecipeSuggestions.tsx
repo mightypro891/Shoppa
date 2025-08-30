@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -48,7 +49,7 @@ export default function RecipeSuggestions() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full mt-4 border-accent text-accent hover:bg-accent hover:text-accent-foreground" onClick={handleGetRecipes}>
+        <Button variant="outline" className="w-full mt-4" onClick={handleGetRecipes}>
           <Sparkles className="mr-2 h-4 w-4" />
           Get Recipe Ideas
         </Button>
