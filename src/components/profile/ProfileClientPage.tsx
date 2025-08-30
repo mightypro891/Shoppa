@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -14,8 +13,9 @@ import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wallet } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
+import Link from 'next/link';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -70,6 +70,7 @@ export default function ProfileClientPage() {
           phone: data.phone,
           address: data.address,
           city: data.city,
+          balance: userProfile?.balance || 0,
       });
 
       toast({
@@ -176,6 +177,19 @@ export default function ProfileClientPage() {
         <div className="md:col-span-1 space-y-8">
             <Card>
                 <CardHeader>
+                    <CardTitle>My Wallet</CardTitle>
+                    <CardDescription>Manage your account balance.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link href="/fund-wallet">
+                            <Wallet className="mr-2 h-4 w-4" /> Fund Wallet
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
                     <CardTitle>Account Security</CardTitle>
                     <CardDescription>Change your password.</CardDescription>
                 </CardHeader>
@@ -190,15 +204,6 @@ export default function ProfileClientPage() {
                 </CardHeader>
                 <CardContent>
                     <Button disabled variant="secondary">View Orders (Coming Soon)</Button>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>My Reviews</CardTitle>
-                    <CardDescription>Manage your product reviews.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button disabled variant="secondary">Write a Review (Coming Soon)</Button>
                 </CardContent>
             </Card>
         </div>

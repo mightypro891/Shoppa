@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -17,7 +16,10 @@ interface AuthContextType {
   removeAdmin: (email: string) => void;
   updateAdminRole: (email: string, role: AdminRole) => void;
   userProfile: UserProfile | null;
-  saveUserProfile: (profile: UserProfile) => void;
+  saveUserProfile: (profile: Omit<UserProfile, 'balance'>) => void;
+  accountBalance: number;
+  fundAccount: (amount: number) => void;
+  payWithWallet: (amount: number) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +34,9 @@ const AuthContext = createContext<AuthContextType>({
   updateAdminRole: () => {},
   userProfile: null,
   saveUserProfile: () => {},
+  accountBalance: 0,
+  fundAccount: () => {},
+  payWithWallet: () => false,
 });
 
 export const useAuth = () => {
@@ -76,6 +81,14 @@ const saveAdminsToStorage = (admins: AdminUser[]) => {
     }
 };
 
+const saveProfileToStorage = (uid: string, profile: UserProfile) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(`user_profile_${uid}`, JSON.stringify(profile));
+    } catch (error) {
+        console.error('Failed to save user profile', error);
+    }
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -85,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [admins, setAdmins] = useState<AdminUser[]>(getAdminsFromStorage());
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [accountBalance, setAccountBalance] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -100,11 +114,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const savedProfile = localStorage.getItem(`user_profile_${user.uid}`);
             if (savedProfile) {
-                setUserProfile(JSON.parse(savedProfile));
+                const profile = JSON.parse(savedProfile);
+                setUserProfile(profile);
+                setAccountBalance(profile.balance || 0);
+            } else {
+                // Create a default profile if none exists
+                const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
+                setUserProfile(defaultProfile);
+                setAccountBalance(0);
+                saveProfileToStorage(user.uid, defaultProfile);
             }
         } catch (error) {
             console.error('Failed to load user profile', error);
             setUserProfile(null);
+            setAccountBalance(0);
         }
       } else {
         setUser(null);
@@ -112,6 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsSuperAdmin(false);
         setAdminRole(null);
         setUserProfile(null);
+        setAccountBalance(0);
       }
       setTimeout(() => setLoading(false), 200);
     });
@@ -151,20 +175,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-
-  const saveUserProfile = (profile: UserProfile) => {
+  const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
       if (user) {
-          try {
-              localStorage.setItem(`user_profile_${user.uid}`, JSON.stringify(profile));
-              setUserProfile(profile);
-          } catch (error) {
-              console.error('Failed to save user profile', error);
-          }
+          const updatedProfile = { ...profile, balance: accountBalance };
+          setUserProfile(updatedProfile);
+          saveProfileToStorage(user.uid, updatedProfile);
+      }
+  };
+  
+  const fundAccount = (amount: number) => {
+      if (user && amount > 0) {
+          const newBalance = accountBalance + amount;
+          setAccountBalance(newBalance);
+          const updatedProfile = { ...userProfile!, balance: newBalance };
+          setUserProfile(updatedProfile);
+          saveProfileToStorage(user.uid, updatedProfile);
       }
   };
 
+  const payWithWallet = (amount: number): boolean => {
+      if (user && amount > 0 && accountBalance >= amount) {
+          const newBalance = accountBalance - amount;
+          setAccountBalance(newBalance);
+          const updatedProfile = { ...userProfile!, balance: newBalance };
+          setUserProfile(updatedProfile);
+          saveProfileToStorage(user.uid, updatedProfile);
+          return true;
+      }
+      return false;
+  };
 
-  const value = { user, loading, isAdmin, adminRole, isSuperAdmin, admins, addAdmin, removeAdmin, updateAdminRole, userProfile, saveUserProfile };
+  const value = { 
+      user, 
+      loading, 
+      isAdmin, 
+      adminRole, 
+      isSuperAdmin, 
+      admins, 
+      addAdmin, 
+      removeAdmin, 
+      updateAdminRole, 
+      userProfile, 
+      saveUserProfile,
+      accountBalance,
+      fundAccount,
+      payWithWallet
+  };
 
   return (
     <AuthContext.Provider value={value}>

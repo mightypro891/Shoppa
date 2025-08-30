@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCart } from '@/context/CartContext';
@@ -15,9 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { sendOrderConfirmationAction } from '@/app/actions';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wallet } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
 import { Textarea } from '../ui/textarea';
+import Link from 'next/link';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,11 +30,10 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
   const { cartItems, cartTotal, clearCart } = useCart();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, accountBalance, payWithWallet } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -47,19 +46,18 @@ export default function CheckoutForm() {
   });
 
   useEffect(() => {
-    if(user || userProfile) {
-        form.reset({
-            name: user?.displayName || '',
-            phone: userProfile?.phone || '',
-            address: userProfile?.address || '',
-            city: userProfile?.city || '',
-        });
+    if (user || userProfile) {
+      form.reset({
+        name: user?.displayName || '',
+        phone: userProfile?.phone || '',
+        address: userProfile?.address || '',
+        city: userProfile?.city || '',
+      });
     }
   }, [user, userProfile, form]);
 
-
-  const onSubmit = async (data: CheckoutFormValues) => {
-    if (!user || !user.email) {
+  const handleOrderPlacement = async (data: CheckoutFormValues) => {
+     if (!user || !user.email) {
       toast({
         title: 'Error',
         description: 'You must be logged in to place an order.',
@@ -67,7 +65,7 @@ export default function CheckoutForm() {
       });
       return;
     }
-
+    
     setIsSubmitting(true);
     
     try {
@@ -104,6 +102,27 @@ export default function CheckoutForm() {
     } finally {
         setIsSubmitting(false);
     }
+  }
+
+
+  const onSubmit = async (data: CheckoutFormValues) => {
+    if (accountBalance >= cartTotal) {
+        payWithWallet(cartTotal);
+        await handleOrderPlacement(data);
+    } else {
+        toast({
+            title: 'Insufficient Balance',
+            description: (
+                <div className="flex flex-col gap-2">
+                    <span>Your wallet balance is not enough to cover this order.</span>
+                    <Button asChild size="sm">
+                        <Link href="/fund-wallet">Fund Wallet</Link>
+                    </Button>
+                </div>
+            ),
+            variant: 'destructive',
+        });
+    }
   };
 
   return (
@@ -128,12 +147,12 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-               <FormItem>
+              <FormItem>
                 <FormLabel>Email Address</FormLabel>
                 <Input disabled value={user?.email || 'No email associated'} />
               </FormItem>
 
-               <FormField
+              <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -146,7 +165,7 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
@@ -159,7 +178,7 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="city"
                 render={({ field }) => (
@@ -172,10 +191,13 @@ export default function CheckoutForm() {
                   </FormItem>
                 )}
               />
-               <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
-                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirm Order & Pay ₦{cartTotal.toFixed(2)}
+              <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{cartTotal.toFixed(2)})
               </Button>
+               <div className="text-center text-sm text-muted-foreground">
+                Your balance: ₦{accountBalance.toFixed(2)}
+               </div>
             </form>
           </Form>
         </CardContent>

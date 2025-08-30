@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -37,6 +36,7 @@ export interface UserProfile {
     phone: string;
     address: string;
     city: string;
+    balance: number;
 }
 
 export type AdminRole = 'Super Admin' | 'Website Admin' | 'Products Admin' | 'Normal Admin';

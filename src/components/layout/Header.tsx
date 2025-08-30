@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings, Wallet } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +21,7 @@ import { ModeToggle } from './ModeToggle';
 
 export default function Header() {
   const { itemCount } = useCart();
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, accountBalance } = useAuth();
   const router = useRouter();
   const categories = ["fishes", "grains", "oils", "swallows", "plantain"];
 
@@ -114,38 +113,49 @@ export default function Header() {
           
           {loading ? (
              <div className="flex items-center gap-2">
-                <Skeleton className="h-8 w-16 rounded-md" />
+                <Skeleton className="h-8 w-24 rounded-md" />
                 <Skeleton className="h-8 w-8 rounded-full" />
               </div>
           ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-                    <AvatarFallback>
-                      <UserIcon />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem disabled>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                    <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
-                  </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+               <Button variant="outline" size="sm" asChild className="hidden sm:flex">
+                <Link href="/fund-wallet">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    ₦{accountBalance.toFixed(2)}
+                </Link>
+               </Button>
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                        <AvatarFallback>
+                        <UserIcon />
+                        </AvatarFallback>
+                    </Avatar>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem disabled>
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem asChild>
+                        <Link href="/fund-wallet"><Wallet className="mr-2 h-4 w-4" />Fund Wallet</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+                </DropdownMenu>
+            </>
           ) : (
             <div className="flex items-center gap-2">
                <Button asChild>
