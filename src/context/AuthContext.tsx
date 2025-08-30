@@ -15,6 +15,7 @@ interface AuthContextType {
   admins: AdminUser[];
   addAdmin: (email: string, role: AdminRole) => void;
   removeAdmin: (email: string) => void;
+  updateAdminRole: (email: string, role: AdminRole) => void;
   userProfile: UserProfile | null;
   saveUserProfile: (profile: UserProfile) => void;
 }
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   admins: [],
   addAdmin: () => {},
   removeAdmin: () => {},
+  updateAdminRole: () => {},
   userProfile: null,
   saveUserProfile: () => {},
 });
@@ -136,6 +138,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
       }
   };
+  
+  const updateAdminRole = (email: string, role: AdminRole) => {
+    if (isSuperAdmin) {
+        setAdmins(prevAdmins => {
+            const newAdmins = prevAdmins.map(admin => 
+                admin.email === email ? { ...admin, role } : admin
+            );
+            saveAdminsToStorage(newAdmins);
+            return newAdmins;
+        });
+    }
+  };
 
 
   const saveUserProfile = (profile: UserProfile) => {
@@ -150,7 +164,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
 
-  const value = { user, loading, isAdmin, adminRole, isSuperAdmin, admins, addAdmin, removeAdmin, userProfile, saveUserProfile };
+  const value = { user, loading, isAdmin, adminRole, isSuperAdmin, admins, addAdmin, removeAdmin, updateAdminRole, userProfile, saveUserProfile };
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -23,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function AdminDashboard() {
-  const { isAdmin, isSuperAdmin, loading, admins, addAdmin, removeAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin, loading, admins, addAdmin, removeAdmin, updateAdminRole } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [newAdminEmail, setNewAdminEmail] = useState('');
@@ -49,6 +48,11 @@ export default function AdminDashboard() {
       removeAdmin(email);
       toast({ title: 'Admin Removed', description: `${email} is no longer an admin.`, variant: 'destructive'});
   };
+
+  const handleRoleChange = (email: string, role: AdminRole) => {
+      updateAdminRole(email, role);
+      toast({ title: 'Role Updated', description: `${email}'s role has been changed to ${role}.`});
+  }
 
   if (loading) {
     return <div className="text-center p-10">Loading...</div>;
@@ -159,15 +163,31 @@ export default function AdminDashboard() {
                                             <span className="text-sm truncate font-medium">{admin.email}</span>
                                             <Badge variant="secondary" className="w-fit">{admin.role}</Badge>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-destructive hover:text-destructive"
-                                            onClick={() => handleRemoveAdmin(admin.email)}
-                                            disabled={admin.role === 'Super Admin'}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                             <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-7" disabled={admin.role === 'Super Admin'}>
+                                                        Change Role <ChevronDown className="ml-2 h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(role => (
+                                                        <DropdownMenuItem key={role} onClick={() => handleRoleChange(admin.email, role)} disabled={admin.role === role}>
+                                                            {role}
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                                onClick={() => handleRemoveAdmin(admin.email)}
+                                                disabled={admin.role === 'Super Admin'}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
