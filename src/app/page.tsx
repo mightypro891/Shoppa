@@ -5,6 +5,7 @@ import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import type { Product } from '@/lib/types';
+import HeroButton from '@/components/layout/HeroButton';
 
 export default async function Home() {
   const products = await getProducts();
@@ -36,12 +37,7 @@ export default async function Home() {
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-primary-foreground/90">
             From Egusi to Garri, get all your essential Nigerian foodstuffs delivered to your doorstep. Perfect for students craving a taste of home.
           </p>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-            <Link href="/products">
-              Start Shopping
-              <ShoppingCart className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          <HeroButton />
         </div>
       </section>
 
