@@ -1,7 +1,7 @@
 
 'use client';
 
-import { getProducts } from '@/lib/data';
+import { deleteProduct, getProducts } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -14,30 +14,59 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Product } from '@/lib/types';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog';
+
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const prods = await getProducts();
+    setProducts(prods);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function fetchProducts() {
-      const prods = await getProducts();
-      setProducts(prods);
-      setLoading(false);
-    }
     fetchProducts();
   }, []);
 
-  const handleDelete = (productId: string) => {
-    // In a real app, this would be an API call
-    console.log(`Deleting product ${productId}`);
-    setProducts(products.filter(p => p.id !== productId));
+  const handleDelete = async (productId: string) => {
+    setDeletingId(productId);
+    await deleteProduct(productId);
+    toast({
+      title: 'Product Deleted',
+      description: 'The product has been successfully removed.',
+      variant: 'destructive',
+    });
+    await fetchProducts(); // Refresh the list
+    setDeletingId(null);
   };
   
-  if (loading) return <div>Loading products...</div>;
+  if (loading && products.length === 0) {
+      return (
+        <div className="flex items-center justify-center p-10">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -88,19 +117,46 @@ export default function ProductManagement() {
                                 <Edit className="h-4 w-4" />
                                 </Link>
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => handleDelete(product.id)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-destructive hover:text-destructive"
+                                      disabled={deletingId === product.id}
+                                  >
+                                    {deletingId === product.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the product
+                                    "{product.name}".
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(product.id)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Yes, delete it
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                             </TableCell>
                         </TableRow>
                         ))}
                     </TableBody>
                 </Table>
+                 {products.length === 0 && !loading && (
+                    <div className="text-center py-10 text-muted-foreground">
+                        You have not added any products yet.
+                    </div>
+                )}
             </CardContent>
         </Card>
     </div>

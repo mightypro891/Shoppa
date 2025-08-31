@@ -1,30 +1,14 @@
 
-'use client';
-
 import type { Order, OrderStatus } from './types';
 
+let orders: Order[] = [];
+
 const getOrdersFromStorage = (): Order[] => {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-  try {
-    const savedOrders = localStorage.getItem('lautech_shoppa_orders');
-    return savedOrders ? JSON.parse(savedOrders) : [];
-  } catch (error) {
-    console.error('Failed to parse orders from localStorage', error);
-    return [];
-  }
+  return orders;
 };
 
-const saveOrdersToStorage = (orders: Order[]) => {
-    if (typeof window === 'undefined') {
-    return;
-  }
-  try {
-    localStorage.setItem('lautech_shoppa_orders', JSON.stringify(orders));
-  } catch (error) {
-    console.error('Failed to save orders to localStorage', error);
-  }
+const saveOrdersToStorage = (newOrders: Order[]) => {
+    orders = newOrders;
 };
 
 export async function getAllOrders(): Promise<Order[]> {
@@ -46,17 +30,17 @@ export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'crea
     status: 'Order Placed',
     createdAt: new Date().toISOString(),
   };
-  const orders = getOrdersFromStorage();
-  saveOrdersToStorage([newOrder, ...orders]);
+  const currentOrders = getOrdersFromStorage();
+  saveOrdersToStorage([newOrder, ...currentOrders]);
   return newOrder;
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order | undefined> {
     await new Promise(resolve => setTimeout(resolve, 100));
-    let orders = getOrdersFromStorage();
+    let allOrders = getOrdersFromStorage();
     let updatedOrder: Order | undefined;
     
-    const updatedOrders = orders.map(order => {
+    const updatedOrders = allOrders.map(order => {
         if (order.id === orderId) {
             updatedOrder = { ...order, status };
             return updatedOrder;
