@@ -82,7 +82,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       image: imageUrl,
       aiHint: data.aiHint,
       tags: data.tags.split(',').map(tag => tag.trim()),
-      vendorId: adminRole === 'Normal Admin' ? user.uid : undefined,
+      vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@lautechshoppa.com', // Use email as vendorId for prototype
     };
 
     if (isEditing) {

@@ -1,5 +1,5 @@
 
-import type { Product } from './types';
+import type { Product, AdminUser } from './types';
 
 // This is a temporary in-memory store for our products.
 // In a real application, this would be a database.
@@ -281,4 +281,35 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<Prod
 export async function deleteProduct(productId: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 100));
     products = products.filter(p => p.id !== productId);
+}
+
+
+// In a real app this would query a database.
+// For the prototype, we get it from the in-memory list managed by AuthContext.
+// This is a bit of a hack, but it allows the server-side flow to get the vendor email.
+const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
+let adminUsers: AdminUser[] = [];
+
+if (typeof window !== 'undefined') {
+    const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
+    if (savedAdmins) {
+        adminUsers = JSON.parse(savedAdmins);
+    }
+}
+
+// Function to find an admin by UID. We'll find them by email as we don't store UIDs for admins yet.
+// This is another simplification for the prototype.
+export async function getAdminUserByUid(uid: string): Promise<AdminUser | undefined> {
+    // Since we don't have a UID-to-admin mapping, we'll find the first admin
+    // that matches the vendorId, assuming vendorId is the email for now.
+    // A proper implementation would have a secure way to look up users.
+    if (adminUsers.length === 0 && typeof window !== 'undefined') {
+         const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
+         if (savedAdmins) {
+            adminUsers = JSON.parse(savedAdmins);
+        }
+    }
+    // Note: This is not secure and is for prototype purposes only.
+    // We are assuming the vendorId is the email.
+    return adminUsers.find(admin => admin.email === uid);
 }
