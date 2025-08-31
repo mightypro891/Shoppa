@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -23,12 +24,17 @@ export default function Header() {
   const { itemCount } = useCart();
   const { user, isAdmin, loading, accountBalance } = useAuth();
   const router = useRouter();
-  const categories = ["fishes", "grains", "oils", "swallows", "plantain"];
+  const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/');
   };
+  
+  // Helper to format category names for display
+  const formatCategoryName = (slug: string) => {
+    return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
@@ -53,7 +59,7 @@ export default function Header() {
               </DropdownMenuItem>
               {categories.map((category) => (
                 <DropdownMenuItem key={category} asChild>
-                  <Link href={`/products/category/${category}`} className="capitalize">{category}</Link>
+                  <Link href={`/products/category/${category}`} className="capitalize">{formatCategoryName(category)}</Link>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -83,7 +89,7 @@ export default function Header() {
               </DropdownMenuItem>
               {categories.map((category) => (
                 <DropdownMenuItem key={category} asChild>
-                  <Link href={`/products/category/${category}`} className="capitalize">{category}</Link>
+                  <Link href={`/products/category/${category}`} className="capitalize">{formatCategoryName(category)}</Link>
                 </DropdownMenuItem>
               ))}
               {isAdmin && (
