@@ -306,7 +306,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="space-y-2">
                             <h4 className="font-medium text-sm">Current Admins</h4>
-                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            <div className="space-y-2 pr-2">
                                 {admins.map(admin => (
                                     <div key={admin.email} className="flex items-center justify-between p-2 rounded-md bg-secondary">
                                         <div className="flex flex-col">
@@ -418,3 +418,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+    
