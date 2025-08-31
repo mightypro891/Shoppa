@@ -3,17 +3,43 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 
-const data = [
-  { name: 'Garri', total: Math.floor(Math.random() * 500) + 200 },
-  { name: 'P. Yam', total: Math.floor(Math.random() * 400) + 150 },
-  { name: 'Egusi', total: Math.floor(Math.random() * 600) + 250 },
-  { name: 'P. Oil', total: Math.floor(Math.random() * 300) + 100 },
-  { name: 'Plantain', total: Math.floor(Math.random() * 700) + 300 },
-  { name: 'Ogbono', total: Math.floor(Math.random() * 200) + 50 },
-  { name: 'S. Fish', total: Math.floor(Math.random() * 450) + 200 },
-];
+const dataByCategory: { [key: string]: { name: string, total: number }[] } = {
+  all: [
+    { name: 'Garri', total: Math.floor(Math.random() * 500) + 200 },
+    { name: 'P. Yam', total: Math.floor(Math.random() * 400) + 150 },
+    { name: 'Perfume', total: Math.floor(Math.random() * 300) + 100 },
+    { name: 'Laptop', total: Math.floor(Math.random() * 700) + 300 },
+    { name: 'Pots', total: Math.floor(Math.random() * 200) + 50 },
+    { name: 'Duvet', total: Math.floor(Math.random() * 450) + 200 },
+    { name: 'PJs', total: Math.floor(Math.random() * 250) + 70 },
+  ],
+  food: [
+    { name: 'Garri', total: Math.floor(Math.random() * 500) + 200 },
+    { name: 'P. Yam', total: Math.floor(Math.random() * 400) + 150 },
+    { name: 'Egusi', total: Math.floor(Math.random() * 600) + 250 },
+    { name: 'P. Oil', total: Math.floor(Math.random() * 300) + 100 },
+    { name: 'Plantain', total: Math.floor(Math.random() * 700) + 300 },
+  ],
+  'skin-care': [
+    { name: 'Perfume', total: Math.floor(Math.random() * 300) + 100 },
+    { name: 'Serum', total: Math.floor(Math.random() * 250) + 80 },
+    { name: 'Hair Oil', total: Math.floor(Math.random() * 200) + 60 },
+  ],
+  gadgets: [
+    { name: 'Laptop', total: Math.floor(Math.random() * 700) + 300 },
+    { name: 'Mouse', total: Math.floor(Math.random() * 150) + 50 },
+    { name: 'Hub', total: Math.floor(Math.random() * 200) + 75 },
+  ],
+};
 
-export default function ProductBarChart() {
+
+interface ProductBarChartProps {
+  category: string;
+}
+
+export default function ProductBarChart({ category }: ProductBarChartProps) {
+  const data = dataByCategory[category] || dataByCategory['all'];
+  
   return (
     <Card>
         <CardHeader>

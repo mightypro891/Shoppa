@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
@@ -94,6 +94,32 @@ export default function SignInForm() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    const email = form.getValues('email');
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        toast({
+            title: 'Invalid Email',
+            description: 'Please enter a valid email address to reset your password.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: 'Password Reset Email Sent',
+            description: 'Check your inbox for a link to reset your password.',
+        });
+    } catch (error: any) {
+        toast({
+            title: 'Password Reset Failed',
+            description: error.message,
+            variant: 'destructive',
+        });
+    }
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -121,7 +147,17 @@ export default function SignInForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                    <div className="flex justify-between items-center">
+                        <FormLabel>Password</FormLabel>
+                         <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-sm"
+                            onClick={handlePasswordReset}
+                        >
+                            Forgot Password?
+                        </Button>
+                    </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>

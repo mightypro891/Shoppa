@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -24,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 export default function AdminDashboard() {
@@ -34,6 +36,7 @@ export default function AdminDashboard() {
   const [newAdminRole, setNewAdminRole] = useState<AdminRole>('Normal Admin');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
+  const [analyticsCategory, setAnalyticsCategory] = useState('all');
   
   const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
@@ -181,9 +184,22 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
             <Card>
-                <CardHeader>
-                    <CardTitle>Store Analytics</CardTitle>
-                    <CardDescription>An overview of your store's performance.</CardDescription>
+                <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                        <CardTitle>Store Analytics</CardTitle>
+                        <CardDescription>An overview of your store's performance.</CardDescription>
+                    </div>
+                    <Select value={analyticsCategory} onValueChange={setAnalyticsCategory}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Products</SelectItem>
+                            {allCategories.map(cat => (
+                                <SelectItem key={cat} value={cat}>{formatCategoryName(cat)}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="sold">
@@ -195,8 +211,8 @@ export default function AdminDashboard() {
                         </TabsList>
                         <TabsContent value="sold">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <ProductPieChart />
-                                <ProductBarChart />
+                                <ProductPieChart category={analyticsCategory} />
+                                <ProductBarChart category={analyticsCategory} />
                             </div>
                         </TabsContent>
                         <TabsContent value="refunds">

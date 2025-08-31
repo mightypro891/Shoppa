@@ -1,15 +1,32 @@
 
+'use client';
+
 import type { Order, OrderStatus } from './types';
 
-let orders: Order[] = [];
+const ORDERS_KEY = 'lautech_shoppa_orders';
 
 const getOrdersFromStorage = (): Order[] => {
-  return orders;
+  if (typeof window === 'undefined') {
+    return [];
+  }
+  try {
+    const savedOrders = localStorage.getItem(ORDERS_KEY);
+    return savedOrders ? JSON.parse(savedOrders) : [];
+  } catch (error) {
+    console.error('Failed to parse orders from localStorage', error);
+    return [];
+  }
 };
 
-const saveOrdersToStorage = (newOrders: Order[]) => {
-    orders = newOrders;
+const saveOrdersToStorage = (orders: Order[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  } catch (error) {
+    console.error('Failed to save orders to localStorage', error);
+  }
 };
+
 
 export async function getAllOrders(): Promise<Order[]> {
   await new Promise(resolve => setTimeout(resolve, 50)); 
