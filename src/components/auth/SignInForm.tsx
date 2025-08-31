@@ -60,7 +60,7 @@ export default function SignInForm() {
           description: (
             <span>
               Invalid credentials. Don't have an account?{' '}
-              <Link href="/auth/signup" className="font-bold text-white underline">
+              <Link href="/auth/signup" className="font-bold text-primary-foreground underline">
                 Sign Up
               </Link>
             </span>
@@ -109,7 +109,7 @@ export default function SignInForm() {
         await sendPasswordResetEmail(auth, email);
         toast({
             title: 'Password Reset Email Sent',
-            description: 'Check your inbox for a link to reset your password.',
+            description: 'If an account exists for this email, you will receive a password reset link.',
         });
     } catch (error: any) {
         toast({
