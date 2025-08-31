@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings, Wallet } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings, Wallet, Search } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
 import { ModeToggle } from './ModeToggle';
+import { Input } from '../ui/input';
 
 export default function Header() {
   const { itemCount } = useCart();
@@ -31,52 +32,41 @@ export default function Header() {
     router.push('/');
   };
   
-  // Helper to format category names for display
   const formatCategoryName = (slug: string) => {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const query = formData.get('q') as string;
+    if (query) {
+      router.push(`/products?q=${encodeURIComponent(query)}`);
+    }
+  };
+
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
-            <span className="font-bold text-xl font-headline tracking-tight">
+            <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
               Lautech Shoppa
             </span>
           </Link>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-1 hidden md:flex">
-                Categories <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                  <Link href="/products">All Products</Link>
-              </DropdownMenuItem>
-              {categories.map((category) => (
-                <DropdownMenuItem key={category} asChild>
-                  <Link href={`/products/category/${category}`} className="capitalize">{formatCategoryName(category)}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {isAdmin && (
-            <Button asChild variant="ghost" className="hidden md:flex">
-                <Link href="/admin">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Dashboard
-                </Link>
-            </Button>
-          )}
-
         </div>
 
-        <nav className="flex items-center gap-2">
+        <div className="flex-1 max-w-md hidden md:flex">
+          <form onSubmit={handleSearch} className="w-full relative">
+            <Input name="q" placeholder="Search for products..." className="pr-10" />
+            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+
+        <nav className="flex items-center gap-1 sm:gap-2">
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -149,6 +139,11 @@ export default function Header() {
                     </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                          <Link href="/admin"><Shield className="mr-2 h-4 w-4" />Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                         <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
                     </DropdownMenuItem>
@@ -174,6 +169,14 @@ export default function Header() {
           )}
         </nav>
       </div>
+       <div className="container px-4 pb-2 md:hidden">
+          <form onSubmit={handleSearch} className="w-full relative">
+            <Input name="q" placeholder="Search for products..." className="pr-10" />
+            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
     </header>
   );
 }
