@@ -1,9 +1,12 @@
 
-import type { Product, AdminUser } from './types';
+'use client';
 
-// This is a temporary in-memory store for our products.
-// In a real application, this would be a database.
-let products: Product[] = [
+import type { Product, AdminUser, DeletedProduct } from './types';
+
+const PRODUCTS_KEY = 'lautech_shoppa_products';
+const DELETED_PRODUCTS_KEY = 'lautech_shoppa_deleted_products';
+
+const initialProducts: Product[] = [
     // Food
     {
         id: '1',
@@ -253,17 +256,42 @@ let products: Product[] = [
     }
 ];
 
+const getFromStorage = <T>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : defaultValue;
+    } catch (error) {
+        console.error(`Failed to parse ${key} from localStorage`, error);
+        return defaultValue;
+    }
+};
+
+const saveToStorage = <T>(key: string, value: T) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error(`Failed to save ${key} to localStorage`, error);
+    }
+};
+
+// Initialize products in storage if not present
+if (typeof window !== 'undefined' && !localStorage.getItem(PRODUCTS_KEY)) {
+    saveToStorage(PRODUCTS_KEY, initialProducts);
+}
+
 
 export async function getProducts(): Promise<Product[]> {
-  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 50));
-  return products;
+  return getFromStorage(PRODUCTS_KEY, initialProducts);
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
     const allProducts = await getProducts();
     const product = allProducts.find((p) => p.id === id);
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 50));
     return product;
 }
@@ -274,41 +302,44 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<Prod
     ...productData,
     id: Math.random().toString(36).substr(2, 9),
   };
-  products = [newProduct, ...products];
+  const products = await getProducts();
+  saveToStorage(PRODUCTS_KEY, [newProduct, ...products]);
   return newProduct;
 }
 
-export async function deleteProduct(productId: string): Promise<void> {
+export async function deleteProduct(productId: string, deletedBy: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 100));
-    products = products.filter(p => p.id !== productId);
+    let products = await getProducts();
+    const productToDelete = products.find(p => p.id === productId);
+
+    if (productToDelete) {
+        // Log the deleted product
+        const deletedProduct: DeletedProduct = {
+            product: productToDelete,
+            deletedBy: deletedBy,
+            deletedAt: new Date().toISOString(),
+        };
+        const deletedProducts = getFromStorage<DeletedProduct[]>(DELETED_PRODUCTS_KEY, []);
+        saveToStorage(DELETED_PRODUCTS_KEY, [deletedProduct, ...deletedProducts]);
+
+        // Remove from active products
+        const updatedProducts = products.filter(p => p.id !== productId);
+        saveToStorage(PRODUCTS_KEY, updatedProducts);
+    }
+}
+
+export async function getDeletedProducts(): Promise<DeletedProduct[]> {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    return getFromStorage<DeletedProduct[]>(DELETED_PRODUCTS_KEY, []);
 }
 
 
 // In a real app this would query a database.
-// For the prototype, we get it from the in-memory list managed by AuthContext.
-// This is a bit of a hack, but it allows the server-side flow to get the vendor email.
+// This is a simplified client-side lookup for the prototype.
 const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
-let adminUsers: AdminUser[] = [];
 
-if (typeof window !== 'undefined') {
-    const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
-    if (savedAdmins) {
-        adminUsers = JSON.parse(savedAdmins);
-    }
-}
-
-// Function to find an admin by UID. We'll find them by email as we don't store UIDs for admins yet.
-// This is another simplification for the prototype.
 export async function getAdminUserByUid(uid: string): Promise<AdminUser | undefined> {
-    // Since we don't have a UID-to-admin mapping, we'll find the first admin
-    // that matches the vendorId, assuming vendorId is the email for now.
-    // A proper implementation would have a secure way to look up users.
-    if (adminUsers.length === 0 && typeof window !== 'undefined') {
-         const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
-         if (savedAdmins) {
-            adminUsers = JSON.parse(savedAdmins);
-        }
-    }
+    const adminUsers = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
     // Note: This is not secure and is for prototype purposes only.
     // We are assuming the vendorId is the email.
     return adminUsers.find(admin => admin.email === uid);

@@ -3,6 +3,7 @@
 
 import { suggestRecipes, type RecipeSuggestionsInput, type RecipeSuggestionsOutput } from '@/ai/flows/recipe-suggestions';
 import { sendOrderConfirmation, type OrderConfirmationInput } from '@/ai/flows/send-order-confirmation';
+import { askSupportAgent, type SupportChatInput, type SupportChatOutput } from '@/ai/flows/support-chat-flow';
 
 
 export async function getRecipeSuggestionsAction(
@@ -28,4 +29,16 @@ export async function sendOrderConfirmationAction(
     console.error('Error in sendOrderConfirmationAction:', error);
     return { success: false, error: 'Failed to send order confirmation.' };
   }
+}
+
+export async function askSupportAgentAction(
+  input: SupportChatInput
+): Promise<SupportChatOutput> {
+    try {
+        const output = await askSupportAgent(input);
+        return output;
+    } catch (error) {
+        console.error('Error in askSupportAgentAction:', error);
+        return { answer: "I'm sorry, I'm having trouble connecting right now. Please try again later." };
+    }
 }

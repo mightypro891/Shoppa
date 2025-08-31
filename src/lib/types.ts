@@ -9,6 +9,12 @@ export interface Product {
   vendorId?: string; // To associate product with a "Normal Admin"
 }
 
+export interface DeletedProduct {
+    product: Product;
+    deletedBy: string;
+    deletedAt: string;
+}
+
 export interface CartItem extends Product {
   quantity: number;
 }
