@@ -12,14 +12,15 @@ interface AuthContextType {
   adminRole: AdminRole | null;
   isSuperAdmin: boolean;
   admins: AdminUser[];
-  addAdmin: (email: string, role: AdminRole) => void;
+  addAdmin: (email: string, role: AdminRole, categories?: string[]) => void;
   removeAdmin: (email: string) => void;
-  updateAdminRole: (email: string, role: AdminRole) => void;
+  updateAdminRole: (email: string, role: AdminRole, categories?: string[]) => void;
   userProfile: UserProfile | null;
   saveUserProfile: (profile: Omit<UserProfile, 'balance'>) => void;
   accountBalance: number;
   fundAccount: (amount: number) => void;
   payWithWallet: (amount: number) => boolean;
+  managedCategories: string[] | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   accountBalance: 0,
   fundAccount: () => {},
   payWithWallet: () => false,
+  managedCategories: null,
 });
 
 export const useAuth = () => {
@@ -99,6 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [admins, setAdmins] = useState<AdminUser[]>(getAdminsFromStorage());
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(0);
+  const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -110,6 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsAdmin(!!adminRecord);
         setAdminRole(adminRecord ? adminRecord.role : null);
         setIsSuperAdmin(adminRecord?.role === 'Super Admin');
+        setManagedCategories(adminRecord?.managedCategories || null);
         
         try {
             const savedProfile = localStorage.getItem(`user_profile_${user.uid}`);
@@ -136,17 +140,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAdminRole(null);
         setUserProfile(null);
         setAccountBalance(0);
+        setManagedCategories(null);
       }
       setTimeout(() => setLoading(false), 200);
     });
     return () => unsubscribe();
   }, [admins]);
 
-  const addAdmin = (email: string, role: AdminRole) => {
+  const addAdmin = (email: string, role: AdminRole, categories: string[] = []) => {
       if (isSuperAdmin) {
           setAdmins(prevAdmins => {
               if (prevAdmins.some(admin => admin.email === email)) return prevAdmins;
-              const newAdmins = [...prevAdmins, { email, role }];
+              const newAdmin: AdminUser = { email, role };
+              if (role === 'Normal Admin') {
+                  newAdmin.managedCategories = categories;
+              }
+              const newAdmins = [...prevAdmins, newAdmin];
               saveAdminsToStorage(newAdmins);
               return newAdmins;
           });
@@ -163,12 +172,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
   };
   
-  const updateAdminRole = (email: string, role: AdminRole) => {
+  const updateAdminRole = (email: string, role: AdminRole, categories: string[] = []) => {
     if (isSuperAdmin) {
         setAdmins(prevAdmins => {
-            const newAdmins = prevAdmins.map(admin => 
-                admin.email === email ? { ...admin, role } : admin
-            );
+            const newAdmins = prevAdmins.map(admin => {
+                if (admin.email === email) {
+                    const updatedAdmin: AdminUser = { ...admin, role };
+                    if (role === 'Normal Admin') {
+                        updatedAdmin.managedCategories = categories;
+                    } else {
+                        delete updatedAdmin.managedCategories;
+                    }
+                    return updatedAdmin;
+                }
+                return admin;
+            });
             saveAdminsToStorage(newAdmins);
             return newAdmins;
         });
@@ -219,7 +237,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       saveUserProfile,
       accountBalance,
       fundAccount,
-      payWithWallet
+      payWithWallet,
+      managedCategories
   };
 
   return (

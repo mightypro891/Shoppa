@@ -20,6 +20,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { addProduct } from '@/lib/data';
+import { useAuth } from '@/context/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -30,7 +32,7 @@ const formSchema = z.object({
       'Please upload an image.'
     ),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
-  tags: z.string().min(1, 'Please add at least one tag (comma separated).'),
+  tags: z.string().min(1, 'Please select a category.'),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -42,7 +44,12 @@ interface ProductFormProps {
 export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, managedCategories, adminRole } = useAuth();
   const isEditing = !!product;
+
+  const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
+  const availableCategories = adminRole === 'Normal Admin' ? (managedCategories || []) : allCategories;
+
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -57,34 +64,32 @@ export default function ProductForm({ product }: ProductFormProps) {
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    // In a real app, you would handle the file upload to a storage service
-    // and then save the URL to the database. For this prototype, we'll
-    // create a temporary URL for the uploaded image.
+    if (!user) return;
     
     let imageUrl = product?.image || 'https://picsum.photos/400/300?random=9'; // Default placeholder
 
     if (data.image instanceof FileList && data.image.length > 0) {
-      // Create a blob URL to simulate image upload
       imageUrl = URL.createObjectURL(data.image[0]);
     } else if (typeof data.image === 'string') {
       imageUrl = data.image;
     }
 
 
-    const newProduct: Omit<Product, 'id'> = {
+    const productData: Omit<Product, 'id'> = {
       name: data.name,
       price: data.price,
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
       tags: data.tags.split(',').map(tag => tag.trim()),
+      vendorId: adminRole === 'Normal Admin' ? user.uid : undefined,
     };
 
     if (isEditing) {
        // Update logic would go here
       console.log('Updating product not yet implemented');
     } else {
-      await addProduct(newProduct);
+      await addProduct(productData);
     }
 
     toast({
@@ -95,6 +100,10 @@ export default function ProductForm({ product }: ProductFormProps) {
     router.push('/admin/products');
     router.refresh(); 
   };
+  
+  const formatCategoryName = (slug: string) => {
+    return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   const imageRef = form.register("image");
 
@@ -175,18 +184,33 @@ export default function ProductForm({ product }: ProductFormProps) {
                 )}
                 />
                 <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
+                  control={form.control}
+                  name="tags"
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Tags (comma separated)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., 'grains, swallows'" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      <FormLabel>Category</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCategories.map(category => (
+                            <SelectItem key={category} value={category}>
+                              {formatCategoryName(category)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                       <FormDescription>
+                        {adminRole === 'Normal Admin' && 'You can only select from categories assigned to you.'}
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
+
 
                 <div className="flex justify-end gap-4">
                     <Button type="button" variant="outline" onClick={() => router.back()}>

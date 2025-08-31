@@ -13,13 +13,18 @@ import ProductBarChart from './charts/ProductBarChart';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
-import { AdminRole } from '@/lib/types';
+import { AdminRole, AdminUser } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 
 export default function AdminDashboard() {
   const { isAdmin, isSuperAdmin, loading, admins, addAdmin, removeAdmin, updateAdminRole } = useAuth();
@@ -27,18 +32,27 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<AdminRole>('Normal Admin');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
+  
+  const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
   useEffect(() => {
     if (!loading && !isAdmin) {
       router.push('/auth/signin');
     }
   }, [isAdmin, loading, router]);
+  
+  const formatCategoryName = (slug: string) => {
+    return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   const handleAddAdmin = () => {
     if (newAdminEmail && /\S+@\S+\.\S+/.test(newAdminEmail)) {
-        addAdmin(newAdminEmail, newAdminRole);
+        addAdmin(newAdminEmail, newAdminRole, selectedCategories);
         toast({ title: 'Admin Added', description: `${newAdminEmail} is now a ${newAdminRole}.` });
         setNewAdminEmail('');
+        setSelectedCategories([]);
     } else {
         toast({ title: 'Invalid Email', description: 'Please enter a valid email address.', variant: 'destructive' });
     }
@@ -49,10 +63,96 @@ export default function AdminDashboard() {
       toast({ title: 'Admin Removed', description: `${email} is no longer an admin.`, variant: 'destructive'});
   };
 
-  const handleRoleChange = (email: string, role: AdminRole) => {
-      updateAdminRole(email, role);
-      toast({ title: 'Role Updated', description: `${email}'s role has been changed to ${role}.`});
+  const handleRoleChange = (email: string, role: AdminRole, categories?: string[]) => {
+      updateAdminRole(email, role, categories);
+      toast({ title: 'Role Updated', description: `${email}'s role has been changed.`});
   }
+
+  const AdminEditor = ({ admin, children }: { admin: AdminUser; children: React.ReactNode }) => {
+    const [role, setRole] = useState(admin.role);
+    const [categories, setCategories] = useState(admin.managedCategories || []);
+    
+    const onRoleChange = (newRole: AdminRole) => {
+        setRole(newRole);
+        handleRoleChange(admin.email, newRole, categories);
+    }
+    
+    const onCategoryChange = (newCategories: string[]) => {
+        setCategories(newCategories);
+        handleRoleChange(admin.email, role, newCategories);
+    }
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                {children}
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+                <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Edit Admin</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Update role and permissions for {admin.email}.
+                        </p>
+                    </div>
+                    <div className="grid gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between">
+                                    {role}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(r => (
+                                    <DropdownMenuItem key={r} onClick={() => onRoleChange(r)}>
+                                        {r}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                         {role === 'Normal Admin' && (
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start">
+                                        <div className="flex gap-1 items-center">
+                                            {categories.length > 0 ? categories.map(c => <Badge key={c} variant="secondary">{formatCategoryName(c)}</Badge>) : "Assign Categories"}
+                                        </div>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-60 p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Filter categories..." />
+                                        <CommandList>
+                                            <CommandEmpty>No results found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {allCategories.map((option) => (
+                                                    <CommandItem
+                                                        key={option}
+                                                        onSelect={() => {
+                                                          const newSelection = categories.includes(option)
+                                                            ? categories.filter((c) => c !== option)
+                                                            : [...categories, option];
+                                                          onCategoryChange(newSelection);
+                                                        }}
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", categories.includes(option) ? "opacity-100" : "opacity-0")} />
+                                                        <span>{formatCategoryName(option)}</span>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                         )}
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+};
 
   if (loading) {
     return <div className="text-center p-10">Loading...</div>;
@@ -123,35 +223,69 @@ export default function AdminDashboard() {
             <div>
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> Admin Management</CardTitle>
-                        <CardDescription>Add or remove admin users and assign roles.</CardDescription>
+                        <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> Manage Admins</CardTitle>
+                        <CardDescription>Add, remove, and assign roles to administrators.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex gap-2">
-                            <Input 
+                        <div className="space-y-2">
+                             <Input 
                                 type="email"
                                 placeholder="new.admin@example.com"
                                 value={newAdminEmail}
                                 onChange={(e) => setNewAdminEmail(e.target.value)}
-                                className="flex-grow"
                             />
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="min-w-[140px] justify-between">
-                                        {newAdminRole}
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(role => (
-                                        <DropdownMenuItem key={role} onClick={() => setNewAdminRole(role)}>
-                                            {role}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button onClick={handleAddAdmin} size="icon">
-                                <PlusCircle className="h-4 w-4" />
+                            <div className="flex gap-2">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-between">
+                                            {newAdminRole}
+                                            <ChevronDown className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(role => (
+                                            <DropdownMenuItem key={role} onClick={() => setNewAdminRole(role)}>
+                                                {role}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                {newAdminRole === 'Normal Admin' && (
+                                    <Popover open={openCategoryPopover} onOpenChange={setOpenCategoryPopover}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                {selectedCategories.length > 0 ? selectedCategories.map(c => formatCategoryName(c)).join(', ') : "Assign Categories"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-60 p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Filter..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No results found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {allCategories.map((option) => (
+                                                            <CommandItem
+                                                                key={option}
+                                                                onSelect={() => {
+                                                                    setSelectedCategories(prev => 
+                                                                        prev.includes(option) ? prev.filter(p => p !== option) : [...prev, option]
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Check className={cn("mr-2 h-4 w-4", selectedCategories.includes(option) ? "opacity-100" : "opacity-0")} />
+                                                                <span>{formatCategoryName(option)}</span>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                            </div>
+                            <Button onClick={handleAddAdmin} className="w-full">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Admin
                             </Button>
                         </div>
                         <div className="space-y-2">
@@ -161,23 +295,19 @@ export default function AdminDashboard() {
                                     <div key={admin.email} className="flex items-center justify-between p-2 rounded-md bg-secondary">
                                         <div className="flex flex-col">
                                             <span className="text-sm truncate font-medium">{admin.email}</span>
-                                            <Badge variant="secondary" className="w-fit">{admin.role}</Badge>
+                                            <div className='flex items-center gap-1 flex-wrap'>
+                                                <Badge variant="secondary" className="w-fit">{admin.role}</Badge>
+                                                {admin.role === 'Normal Admin' && admin.managedCategories?.map(cat => (
+                                                    <Badge key={cat} variant="outline" className="w-fit">{formatCategoryName(cat)}</Badge>
+                                                ))}
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="h-7" disabled={admin.role === 'Super Admin'}>
-                                                        Change Role <ChevronDown className="ml-2 h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    {(['Normal Admin', 'Products Admin', 'Website Admin'] as AdminRole[]).map(role => (
-                                                        <DropdownMenuItem key={role} onClick={() => handleRoleChange(admin.email, role)} disabled={admin.role === role}>
-                                                            {role}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <AdminEditor admin={admin}>
+                                                <Button variant="ghost" size="sm" className="h-7" disabled={admin.role === 'Super Admin'}>
+                                                    Edit
+                                                </Button>
+                                            </AdminEditor>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

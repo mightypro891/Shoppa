@@ -44,4 +44,5 @@ export type AdminRole = 'Super Admin' | 'Website Admin' | 'Products Admin' | 'No
 export interface AdminUser {
   email: string;
   role: AdminRole;
+  managedCategories?: string[]; // New field for category restrictions
 }
