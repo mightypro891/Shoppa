@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -50,6 +51,8 @@ export const useAuth = () => {
 };
 
 const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
+const USER_PROFILE_KEY_PREFIX = 'user_profile_';
+
 
 const getAdminsFromStorage = (): AdminUser[] => {
     const defaultAdmins: AdminUser[] = [
@@ -63,7 +66,15 @@ const getAdminsFromStorage = (): AdminUser[] => {
     try {
         const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
         if (savedAdmins) {
-            return JSON.parse(savedAdmins);
+            // Ensure the default admins are always present
+            const parsedAdmins = JSON.parse(savedAdmins);
+            const allAdmins = [...parsedAdmins];
+            defaultAdmins.forEach(defaultAdmin => {
+                if (!allAdmins.some(ad => ad.email === defaultAdmin.email)) {
+                    allAdmins.push(defaultAdmin);
+                }
+            });
+            return allAdmins;
         } else {
             localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
             return defaultAdmins;
@@ -83,14 +94,26 @@ const saveAdminsToStorage = (admins: AdminUser[]) => {
     }
 };
 
+const getProfileFromStorage = (uid: string): UserProfile | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const savedProfile = localStorage.getItem(`${USER_PROFILE_KEY_PREFIX}${uid}`);
+        return savedProfile ? JSON.parse(savedProfile) : null;
+    } catch (error) {
+        console.error('Failed to load user profile', error);
+        return null;
+    }
+}
+
 const saveProfileToStorage = (uid: string, profile: UserProfile) => {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(`user_profile_${uid}`, JSON.stringify(profile));
+        localStorage.setItem(`${USER_PROFILE_KEY_PREFIX}${uid}`, JSON.stringify(profile));
     } catch (error) {
         console.error('Failed to save user profile', error);
     }
 }
+
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -98,10 +121,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [admins, setAdmins] = useState<AdminUser[]>(getAdminsFromStorage());
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(0);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
+  
+  useEffect(() => {
+    // We only want to load admins from storage once on the client
+    setAdmins(getAdminsFromStorage());
+  }, []);
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -115,23 +144,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsSuperAdmin(adminRecord?.role === 'Super Admin');
         setManagedCategories(adminRecord?.managedCategories || null);
         
-        try {
-            const savedProfile = localStorage.getItem(`user_profile_${user.uid}`);
-            if (savedProfile) {
-                const profile = JSON.parse(savedProfile);
-                setUserProfile(profile);
-                setAccountBalance(profile.balance || 0);
-            } else {
-                // Create a default profile if none exists
-                const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
-                setUserProfile(defaultProfile);
-                setAccountBalance(0);
-                saveProfileToStorage(user.uid, defaultProfile);
-            }
-        } catch (error) {
-            console.error('Failed to load user profile', error);
-            setUserProfile(null);
+        const profile = getProfileFromStorage(user.uid);
+        if (profile) {
+            setUserProfile(profile);
+            setAccountBalance(profile.balance || 0);
+        } else {
+            // Create a default profile if none exists
+            const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
+            setUserProfile(defaultProfile);
             setAccountBalance(0);
+            saveProfileToStorage(user.uid, defaultProfile);
         }
       } else {
         setUser(null);
@@ -163,8 +185,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const removeAdmin = (email: string) => {
-      if (isSuperAdmin && email !== 'promiseoyedele07@gmail.com') {
-          setAdmins(prevAdmins => {
+      if (isSuperAdmin) {
+           setAdmins(prevAdmins => {
               const newAdmins = prevAdmins.filter(admin => admin.email !== email);
               saveAdminsToStorage(newAdmins);
               return newAdmins;
