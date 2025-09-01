@@ -50,7 +50,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     // For this prototype, we will just log the email content to the console.
 
     const { orderId, customer, cartItems, cartTotal } = input;
-    const superAdminEmail = "admin@lautechshoppa.com"; // Super admin gets all notifications
+    const superAdminEmail = "promiseoyedele07@gmail.com"; // Super admin gets all notifications
 
     // 1. Generate and "send" customer email
     const customerEmailSubject = `Order Confirmed - Your Lautech Shoppa Order #${orderId}`;
@@ -95,13 +95,8 @@ const sendOrderConfirmationFlow = ai.defineFlow(
       
       if (vendorId !== 'superadmin') {
           // In a real app, this would be a proper DB lookup.
-          // Here we simulate it based on our localStorage "DB" logic.
-          const adminUser = await getAdminUserByUid(vendorId);
-          if (adminUser) {
-            vendorEmail = adminUser.email;
-          } else {
-             console.log(`Could not find vendor email for vendorId: ${vendorId}. Notifying super admin.`);
-          }
+          // Here we simulate it by using the vendorId (email) directly
+          vendorEmail = vendorId;
       }
       
       const vendorTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -128,3 +123,5 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     }
   }
 );
+
+    
