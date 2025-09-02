@@ -22,6 +22,8 @@ interface AuthContextType {
   fundAccount: (amount: number) => void;
   payWithWallet: (amount: number) => boolean;
   managedCategories: string[] | null;
+  totalUsers: number;
+  onlineUsers: number;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -40,6 +42,8 @@ const AuthContext = createContext<AuthContextType>({
   fundAccount: () => {},
   payWithWallet: () => false,
   managedCategories: null,
+  totalUsers: 0,
+  onlineUsers: 0,
 });
 
 export const useAuth = () => {
@@ -52,68 +56,37 @@ export const useAuth = () => {
 
 const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
 const USER_PROFILE_KEY_PREFIX = 'user_profile_';
+const ALL_USERS_KEY = 'lautech_shoppa_all_users';
+const USER_ACTIVITY_KEY = 'lautech_shoppa_user_activity';
+const ONLINE_THRESHOLD = 60 * 1000; // 1 minute
 
 
-const getAdminsFromStorage = (): AdminUser[] => {
-    const defaultAdmins: AdminUser[] = [
-        { email: 'promiseoyedele07@gmail.com', role: 'Super Admin' },
-        { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
-    ];
-
+const getFromStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') {
-        return defaultAdmins;
+        return defaultValue;
     }
     try {
-        const savedAdmins = localStorage.getItem(ADMIN_USERS_KEY);
-        if (savedAdmins) {
-            // Ensure the default admins are always present
-            const parsedAdmins = JSON.parse(savedAdmins);
-            const allAdmins = [...parsedAdmins];
-            defaultAdmins.forEach(defaultAdmin => {
-                if (!allAdmins.some(ad => ad.email === defaultAdmin.email)) {
-                    allAdmins.push(defaultAdmin);
-                }
-            });
-            return allAdmins;
-        } else {
-            localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
-            return defaultAdmins;
-        }
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : defaultValue;
     } catch (error) {
-        console.error('Failed to parse admins from localStorage', error);
-        return defaultAdmins;
-    }
-};
-
-const saveAdminsToStorage = (admins: AdminUser[]) => {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(admins));
-    } catch (error) {
-        console.error('Failed to save admins to localStorage', error);
-    }
-};
-
-const getProfileFromStorage = (uid: string): UserProfile | null => {
-    if (typeof window === 'undefined') return null;
-    try {
-        const savedProfile = localStorage.getItem(`${USER_PROFILE_KEY_PREFIX}${uid}`);
-        return savedProfile ? JSON.parse(savedProfile) : null;
-    } catch (error) {
-        console.error('Failed to load user profile', error);
-        return null;
+        console.error(`Failed to parse ${key} from localStorage`, error);
+        return defaultValue;
     }
 }
 
-const saveProfileToStorage = (uid: string, profile: UserProfile) => {
+const saveToStorage = (key: string, data: any) => {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(`${USER_PROFILE_KEY_PREFIX}${uid}`, JSON.stringify(profile));
+        localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
-        console.error('Failed to save user profile', error);
+        console.error(`Failed to save ${key} to localStorage`, error);
     }
-}
+};
 
+const defaultAdmins: AdminUser[] = [
+    { email: 'promiseoyedele07@gmail.com', role: 'Super Admin' },
+    { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
+];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -121,40 +94,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [admins, setAdmins] = useState<AdminUser[]>(() => getFromStorage(ADMIN_USERS_KEY, defaultAdmins));
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(0);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [onlineUsers, setOnlineUsers] = useState(0);
   
   useEffect(() => {
     // We only want to load admins from storage once on the client
-    setAdmins(getAdminsFromStorage());
+     const storedAdmins = getFromStorage(ADMIN_USERS_KEY, defaultAdmins);
+      // Ensure default admins are always present
+      defaultAdmins.forEach(defaultAdmin => {
+          if (!storedAdmins.some(ad => ad.email === defaultAdmin.email)) {
+              storedAdmins.push(defaultAdmin);
+          }
+      });
+      setAdmins(storedAdmins);
+      saveToStorage(ADMIN_USERS_KEY, storedAdmins);
+
+      setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
   }, []);
 
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const userEmail = user.email || '';
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        const userEmail = currentUser.email || '';
         const adminRecord = admins.find(admin => admin.email === userEmail);
 
-        setUser(user);
+        setUser(currentUser);
         setIsAdmin(!!adminRecord);
         setAdminRole(adminRecord ? adminRecord.role : null);
         setIsSuperAdmin(adminRecord?.role === 'Super Admin');
         setManagedCategories(adminRecord?.managedCategories || null);
         
-        const profile = getProfileFromStorage(user.uid);
+        const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${currentUser.uid}`, null);
         if (profile) {
             setUserProfile(profile);
             setAccountBalance(profile.balance || 0);
         } else {
-            // Create a default profile if none exists
             const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
             setUserProfile(defaultProfile);
             setAccountBalance(0);
-            saveProfileToStorage(user.uid, defaultProfile);
+            saveToStorage(`${USER_PROFILE_KEY_PREFIX}${currentUser.uid}`, defaultProfile);
         }
+
+        // Track total unique users
+        const allUsers = getFromStorage<string[]>(ALL_USERS_KEY, []);
+        if (!allUsers.includes(currentUser.uid)) {
+            const newAllUsers = [...allUsers, currentUser.uid];
+            saveToStorage(ALL_USERS_KEY, newAllUsers);
+            setTotalUsers(newAllUsers.length);
+        }
+
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -169,57 +162,90 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, [admins]);
 
+
+  // Effect for tracking user activity
+  useEffect(() => {
+    let activityInterval: NodeJS.Timeout;
+    if (user) {
+        const updateActivity = () => {
+             const activityData = getFromStorage<Record<string, number>>(USER_ACTIVITY_KEY, {});
+             activityData[user.uid] = Date.now();
+             saveToStorage(USER_ACTIVITY_KEY, activityData);
+        };
+        updateActivity(); // Run once immediately
+        activityInterval = setInterval(updateActivity, 30 * 1000); // Update every 30 seconds
+    }
+    return () => clearInterval(activityInterval);
+  }, [user]);
+
+  // Effect for checking online users (for admins)
+   useEffect(() => {
+    let onlineCheckInterval: NodeJS.Timeout;
+    if (isAdmin) {
+        const checkOnline = () => {
+            const activityData = getFromStorage<Record<string, number>>(USER_ACTIVITY_KEY, {});
+            const now = Date.now();
+            const onlineCount = Object.values(activityData).filter(
+                lastSeen => now - lastSeen < ONLINE_THRESHOLD
+            ).length;
+            setOnlineUsers(onlineCount);
+        };
+        checkOnline();
+        onlineCheckInterval = setInterval(checkOnline, 15 * 1000); // Check every 15 seconds
+    }
+     return () => clearInterval(onlineCheckInterval);
+   }, [isAdmin]);
+
+  const updateAdminStorage = (newAdmins: AdminUser[]) => {
+    setAdmins(newAdmins);
+    saveToStorage(ADMIN_USERS_KEY, newAdmins);
+  }
+
   const addAdmin = (email: string, role: AdminRole, categories: string[] = []) => {
       if (isSuperAdmin) {
-          setAdmins(prevAdmins => {
-              if (prevAdmins.some(admin => admin.email === email)) return prevAdmins;
-              const newAdmin: AdminUser = { email, role };
-              if (role === 'Normal Admin') {
-                  newAdmin.managedCategories = categories;
-              }
-              const newAdmins = [...prevAdmins, newAdmin];
-              saveAdminsToStorage(newAdmins);
-              return newAdmins;
-          });
+          const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
+          if (currentAdmins.some(admin => admin.email === email)) return;
+          const newAdmin: AdminUser = { email, role };
+          if (role === 'Normal Admin') {
+              newAdmin.managedCategories = categories;
+          }
+          updateAdminStorage([...currentAdmins, newAdmin]);
       }
   };
 
   const removeAdmin = (email: string) => {
       if (isSuperAdmin) {
-           setAdmins(prevAdmins => {
-              const newAdmins = prevAdmins.filter(admin => admin.email !== email);
-              saveAdminsToStorage(newAdmins);
-              return newAdmins;
-          });
+           const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
+           const newAdmins = currentAdmins.filter(admin => admin.email !== email);
+           updateAdminStorage(newAdmins);
       }
   };
   
   const updateAdminRole = (email: string, role: AdminRole, categories: string[] = []) => {
     if (isSuperAdmin) {
-        setAdmins(prevAdmins => {
-            const newAdmins = prevAdmins.map(admin => {
-                if (admin.email === email) {
-                    const updatedAdmin: AdminUser = { ...admin, role };
-                    if (role === 'Normal Admin') {
-                        updatedAdmin.managedCategories = categories;
-                    } else {
-                        delete updatedAdmin.managedCategories;
-                    }
-                    return updatedAdmin;
+        const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
+        const newAdmins = currentAdmins.map(admin => {
+            if (admin.email === email) {
+                const updatedAdmin: AdminUser = { ...admin, role };
+                if (role === 'Normal Admin' && categories.length > 0) {
+                    updatedAdmin.managedCategories = categories;
+                } else {
+                    delete updatedAdmin.managedCategories;
                 }
-                return admin;
-            });
-            saveAdminsToStorage(newAdmins);
-            return newAdmins;
+                return updatedAdmin;
+            }
+            return admin;
         });
+        updateAdminStorage(newAdmins);
     }
   };
 
   const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
       if (user) {
-          const updatedProfile = { ...profile, balance: accountBalance };
+          const currentProfile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
+          const updatedProfile = { ...currentProfile, ...profile, balance: accountBalance };
           setUserProfile(updatedProfile);
-          saveProfileToStorage(user.uid, updatedProfile);
+          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
       }
   };
   
@@ -227,9 +253,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user && amount > 0) {
           const newBalance = accountBalance + amount;
           setAccountBalance(newBalance);
-          const updatedProfile = { ...userProfile!, balance: newBalance };
+          const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
+          const updatedProfile = { ...profile!, balance: newBalance };
           setUserProfile(updatedProfile);
-          saveProfileToStorage(user.uid, updatedProfile);
+          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
       }
   };
 
@@ -237,9 +264,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user && amount > 0 && accountBalance >= amount) {
           const newBalance = accountBalance - amount;
           setAccountBalance(newBalance);
-          const updatedProfile = { ...userProfile!, balance: newBalance };
+          const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
+          const updatedProfile = { ...profile!, balance: newBalance };
           setUserProfile(updatedProfile);
-          saveProfileToStorage(user.uid, updatedProfile);
+          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
           return true;
       }
       return false;
@@ -260,7 +288,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       accountBalance,
       fundAccount,
       payWithWallet,
-      managedCategories
+      managedCategories,
+      totalUsers,
+      onlineUsers
   };
 
   return (
