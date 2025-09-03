@@ -8,7 +8,9 @@ import { ShoppingCart, Star } from 'lucide-react';
 import ProductCard from '@/components/products/ProductCard';
 import { AddToCartButton } from '@/components/products/AddToCartButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import ReviewForm from '@/components/reviews/ReviewForm';
+import ReviewList from '@/components/reviews/ReviewList';
+import { getReviewsForProduct } from '@/lib/reviews';
 
 type Props = {
   params: { id: string };
@@ -32,6 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailPage({ params }: Props) {
   const product = await getProductById(params.id);
   const allProducts = await getProducts();
+  const reviews = await getReviewsForProduct(params.id);
 
   if (!product) {
     notFound();
@@ -40,6 +43,8 @@ export default async function ProductDetailPage({ params }: Props) {
   const relatedProducts = allProducts
     .filter(p => p.tags?.some(tag => product.tags?.includes(tag)) && p.id !== product.id)
     .slice(0, 4);
+    
+  const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -60,10 +65,10 @@ export default async function ProductDetailPage({ params }: Props) {
           <div className="flex items-center gap-2 mb-4">
             <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-primary text-primary" />
+                    <Star key={i} className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-primary text-primary' : 'text-gray-300'}`} />
                 ))}
             </div>
-            <span className="text-muted-foreground text-sm">(12 reviews)</span>
+            <span className="text-muted-foreground text-sm">({reviews.length} reviews)</span>
           </div>
           <p className="text-muted-foreground text-lg mb-6">{product.description}</p>
           
@@ -78,14 +83,14 @@ export default async function ProductDetailPage({ params }: Props) {
       </div>
 
        <div className="mt-16 md:mt-24">
-         <Card className="max-w-2xl mx-auto">
+         <Card className="max-w-3xl mx-auto">
            <CardHeader>
-             <CardTitle>Leave a Review</CardTitle>
+             <CardTitle>Customer Reviews</CardTitle>
            </CardHeader>
            <CardContent>
-             <div className="space-y-4">
-               <Textarea placeholder="Share your thoughts on this product..." />
-               <Button disabled>Submit Review (Coming Soon)</Button>
+             <div className="space-y-8">
+                <ReviewList reviews={reviews} />
+                <ReviewForm productId={product.id} />
              </div>
            </CardContent>
          </Card>

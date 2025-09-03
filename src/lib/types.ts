@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -51,4 +52,14 @@ export interface AdminUser {
   email: string;
   role: AdminRole;
   managedCategories?: string[]; // New field for category restrictions
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  authorName: string;
+  authorImage?: string | null;
+  rating: number; // 1 to 5
+  text: string;
+  createdAt: string;
 }
