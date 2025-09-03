@@ -63,3 +63,9 @@ export interface Review {
   text: string;
   createdAt: string;
 }
+
+export interface CelebrationPopupConfig {
+    title: string;
+    message: string;
+    isActive: boolean;
+}

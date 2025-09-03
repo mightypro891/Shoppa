@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import ProductPieChart from './charts/ProductPieChart';
@@ -14,7 +13,7 @@ import ProductBarChart from './charts/ProductBarChart';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
-import { AdminRole, AdminUser } from '@/lib/types';
+import { AdminRole, AdminUser, CelebrationPopupConfig } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,10 +25,25 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 
 
 export default function AdminDashboard() {
-  const { isAdmin, isSuperAdmin, loading, admins, addAdmin, removeAdmin, updateAdminRole, totalUsers, onlineUsers } = useAuth();
+  const { 
+    isAdmin, 
+    isSuperAdmin, 
+    loading, 
+    admins, 
+    addAdmin, 
+    removeAdmin, 
+    updateAdminRole, 
+    totalUsers, 
+    onlineUsers,
+    celebrationPopupConfig,
+    updateCelebrationPopupConfig 
+  } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [newAdminEmail, setNewAdminEmail] = useState('');
@@ -37,14 +51,22 @@ export default function AdminDashboard() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
   const [analyticsCategory, setAnalyticsCategory] = useState('all');
-  
+  const [popupSettings, setPopupSettings] = useState<CelebrationPopupConfig>({
+      title: '',
+      message: '',
+      isActive: false,
+  });
+
   const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
   useEffect(() => {
     if (!loading && !isAdmin) {
       router.push('/auth/signin');
     }
-  }, [isAdmin, loading, router]);
+     if (celebrationPopupConfig) {
+      setPopupSettings(celebrationPopupConfig);
+    }
+  }, [isAdmin, loading, router, celebrationPopupConfig]);
   
   const formatCategoryName = (slug: string) => {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -70,6 +92,14 @@ export default function AdminDashboard() {
       updateAdminRole(email, role, categories);
       toast({ title: 'Role Updated', description: `${email}'s role has been changed.`});
   }
+
+  const handleSavePopupSettings = () => {
+    updateCelebrationPopupConfig(popupSettings);
+    toast({
+        title: 'Pop-up Settings Saved',
+        description: 'The celebration pop-up has been updated.',
+    });
+  };
 
   const AdminEditor = ({ admin, children }: { admin: AdminUser; children: React.ReactNode }) => {
     const [role, setRole] = useState(admin.role);
@@ -372,8 +402,48 @@ export default function AdminDashboard() {
 
        </div>
 
+      {isSuperAdmin && (
+           <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center"><PartyPopper className="mr-2 h-5 w-5" /> Celebration Pop-up Management</CardTitle>
+                    <CardDescription>Control a site-wide pop-up for special announcements or greetings.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch 
+                            id="popup-active" 
+                            checked={popupSettings.isActive}
+                            onCheckedChange={(checked) => setPopupSettings(prev => ({...prev, isActive: checked}))}
+                        />
+                        <Label htmlFor="popup-active">Activate Pop-up</Label>
+                    </div>
+                     <div>
+                        <Label htmlFor="popup-title">Pop-up Title</Label>
+                        <Input 
+                            id="popup-title"
+                            placeholder="e.g., Happy Holidays!"
+                            value={popupSettings.title}
+                            onChange={(e) => setPopupSettings(prev => ({...prev, title: e.target.value}))}
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="popup-message">Pop-up Message</Label>
+                        <Textarea
+                            id="popup-message"
+                            placeholder="e.g., All items are 10% off this week."
+                             value={popupSettings.message}
+                            onChange={(e) => setPopupSettings(prev => ({...prev, message: e.target.value}))}
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button onClick={handleSavePopupSettings}>Save Pop-up Settings</Button>
+                    </div>
+                </CardContent>
+            </Card>
+       )}
 
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">

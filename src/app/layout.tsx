@@ -8,6 +8,7 @@ import Footer from '@/components/layout/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import SupportChatWidget from '@/components/layout/SupportChatWidget';
+import CelebrationPopup from '@/components/layout/CelebrationPopup';
 
 export const metadata: Metadata = {
   title: 'Lautech Shoppa',
@@ -42,6 +43,7 @@ export default function RootLayout({
                 <main className="flex-1">{children}</main>
                 <Footer />
                 <SupportChatWidget />
+                <CelebrationPopup />
                 <Toaster />
             </CartProvider>
             </AuthProvider>

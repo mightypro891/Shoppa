@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import type { UserProfile, AdminUser, AdminRole } from '@/lib/types';
+import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +24,8 @@ interface AuthContextType {
   managedCategories: string[] | null;
   totalUsers: number;
   onlineUsers: number;
+  celebrationPopupConfig: CelebrationPopupConfig | null;
+  updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -44,6 +46,8 @@ const AuthContext = createContext<AuthContextType>({
   managedCategories: null,
   totalUsers: 0,
   onlineUsers: 0,
+  celebrationPopupConfig: null,
+  updateCelebrationPopupConfig: () => {},
 });
 
 export const useAuth = () => {
@@ -58,6 +62,7 @@ const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
 const USER_PROFILE_KEY_PREFIX = 'user_profile_';
 const ALL_USERS_KEY = 'lautech_shoppa_all_users';
 const USER_ACTIVITY_KEY = 'lautech_shoppa_user_activity';
+const POPUP_CONFIG_KEY = 'lautech_shoppa_popup_config';
 const ONLINE_THRESHOLD = 60 * 1000; // 1 minute
 
 
@@ -88,6 +93,12 @@ const defaultAdmins: AdminUser[] = [
     { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
 ];
 
+const defaultPopupConfig: CelebrationPopupConfig = {
+    title: 'Welcome!',
+    message: 'Check out our latest products.',
+    isActive: false,
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,9 +111,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState(0);
+  const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(() => getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
   
   useEffect(() => {
-    // We only want to load admins from storage once on the client
+    // We only want to load from storage once on the client
      const storedAdmins = getFromStorage(ADMIN_USERS_KEY, defaultAdmins);
       // Ensure default admins are always present
       defaultAdmins.forEach(defaultAdmin => {
@@ -114,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       saveToStorage(ADMIN_USERS_KEY, storedAdmins);
 
       setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
+      setCelebrationPopupConfig(getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
   }, []);
 
 
@@ -273,6 +286,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
   };
 
+  const updateCelebrationPopupConfig = (config: CelebrationPopupConfig) => {
+    setCelebrationPopupConfig(config);
+    saveToStorage(POPUP_CONFIG_KEY, config);
+  };
+
   const value = { 
       user, 
       loading, 
@@ -290,7 +308,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       payWithWallet,
       managedCategories,
       totalUsers,
-      onlineUsers
+      onlineUsers,
+      celebrationPopupConfig,
+      updateCelebrationPopupConfig
   };
 
   return (
