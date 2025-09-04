@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewList from '@/components/reviews/ReviewList';
 import { getReviewsForProduct } from '@/lib/reviews';
+import ProductStoryGenerator from '@/components/products/ProductStoryGenerator';
 
 type Props = {
   params: { id: string };
@@ -81,6 +82,11 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+       <div className="mt-16 md:mt-24">
+         <ProductStoryGenerator productName={product.name} productDescription={product.description} />
+      </div>
+
 
        <div className="mt-16 md:mt-24">
          <Card className="max-w-3xl mx-auto">

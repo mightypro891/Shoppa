@@ -4,6 +4,7 @@
 import { suggestRecipes, type RecipeSuggestionsInput, type RecipeSuggestionsOutput } from '@/ai/flows/recipe-suggestions';
 import { sendOrderConfirmation, type OrderConfirmationInput } from '@/ai/flows/send-order-confirmation';
 import { askSupportAgent, type SupportChatInput, type SupportChatOutput } from '@/ai/flows/support-chat-flow';
+import { generateStory, type StoryGenerationInput, type StoryGenerationOutput } from '@/ai/flows/story-generation-flow';
 
 
 export async function getRecipeSuggestionsAction(
@@ -40,5 +41,17 @@ export async function askSupportAgentAction(
     } catch (error) {
         console.error('Error in askSupportAgentAction:', error);
         return { answer: "I'm sorry, I'm having trouble connecting right now. Please try again later." };
+    }
+}
+
+export async function generateStoryAction(
+  input: StoryGenerationInput
+): Promise<StoryGenerationOutput> {
+    try {
+        const output = await generateStory(input);
+        return output;
+    } catch (error) {
+        console.error('Error in generateStoryAction:', error);
+        return { story: "The storyteller seems to be taking a nap. Please try again in a moment." };
     }
 }
