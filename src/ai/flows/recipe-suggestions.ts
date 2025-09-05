@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const RecipeSuggestionsInputSchema = z.object({
-  cartItems: z.array(z.string()).describe('List of items in the shopping cart.'),
+  cartItems: z.array(z.string()).describe('List of names of items in the shopping cart.'),
 });
 export type RecipeSuggestionsInput = z.infer<typeof RecipeSuggestionsInputSchema>;
 

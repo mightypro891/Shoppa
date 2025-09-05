@@ -76,20 +76,13 @@ export default function CheckoutForm() {
             cartTotal,
         });
         
-        // Pass vendor email instead of ID for the prototype
-        const itemsWithVendorEmail = cartItems.map(item => ({
-          ...item,
-          vendorId: item.vendorId ? item.vendorId : "admin@lautechshoppa.com" // Pass email as vendorId
-        }))
-
-
         await sendOrderConfirmationAction({
             orderId: newOrder.id,
             customer: {
                 name: data.name,
                 email: user.email,
             },
-            cartItems: itemsWithVendorEmail,
+            cartItems: cartItems, // Pass the full cart items
             cartTotal,
         });
 

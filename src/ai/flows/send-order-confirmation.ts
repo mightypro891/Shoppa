@@ -149,7 +149,6 @@ const sendOrderConfirmationFlow = ai.defineFlow(
         console.log(`Customer confirmation email sent to ${customer.email}`);
     } catch (error) {
         console.error(`Failed to send customer email to ${customer.email}:`, error);
-        // Do not re-throw, so vendor emails can still be attempted.
     }
 
 
@@ -200,7 +199,6 @@ const sendOrderConfirmationFlow = ai.defineFlow(
             console.log(`Vendor notification sent to ${vendorEmail}`);
        } catch (error) {
             console.error(`Failed to send vendor email to ${vendorEmail}:`, error);
-            // Optionally, notify super admin about the failure
             if (vendorEmail !== superAdminEmail) {
                 try {
                      await transporter.sendMail({
