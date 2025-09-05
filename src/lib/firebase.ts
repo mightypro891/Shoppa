@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp, App } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
-import admin from 'firebase-admin';
 
 // --- Client-side Firebase config ---
 const firebaseConfig = {
@@ -21,26 +20,10 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
 
-// --- Server-side Admin SDK Initialization ---
-if (typeof window === 'undefined' && !admin.apps.length) {
-    try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CONFIG!);
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            storageBucket: firebaseConfig.storageBucket,
-        });
-        console.log('Firebase Admin SDK initialized successfully.');
-    } catch (error: any) {
-        console.error('Error initializing Firebase Admin SDK:', error.message);
-         if (!process.env.FIREBASE_ADMIN_CONFIG) {
-            console.error("FIREBASE_ADMIN_CONFIG environment variable is not set. Please follow the setup instructions.");
-        }
-    }
-}
-
-const adminDb = admin.apps.length ? admin.firestore() : null;
-const adminAuth = admin.apps.length ? admin.auth() : null;
-const adminStorage = admin.apps.length ? admin.storage() : null;
+// Server-side admin SDK is no longer used to simplify the setup
+const adminDb = null;
+const adminAuth = null;
+const adminStorage = null;
 
 
 export { 
