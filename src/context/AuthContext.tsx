@@ -27,9 +27,9 @@ const MOCK_USERS: { [key: string]: MockUser & { role?: AdminRole, profile?: Omit
       city: 'Ogbomoso',
     },
   },
-  'admin@example.com': {
+  'promiseoyedele07@gmail.com': {
     uid: 'admin_456',
-    email: 'admin@example.com',
+    email: 'promiseoyedele07@gmail.com',
     displayName: 'Super Admin',
     role: 'Super Admin',
     photoURL: 'https://i.pravatar.cc/150?u=admin@example.com',
@@ -147,23 +147,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
-      // On initial load, check if a user is "logged in" from a previous session
+    setLoading(true);
+    const storedUserStr = sessionStorage.getItem('mock_user');
+    if (storedUserStr) {
       try {
-          const storedUser = sessionStorage.getItem('mock_user');
-          if (storedUser) {
-              updateUserState(JSON.parse(storedUser));
-          } else {
-              updateUserState(null);
-          }
+        updateUserState(JSON.parse(storedUserStr));
       } catch (e) {
-          updateUserState(null);
+        updateUserState(null);
       }
+    } else {
+      updateUserState(null);
+    }
+    setLoading(false);
   }, []);
 
 
   const googleSignIn = () => {
     // In this prototype, we'll just sign in as the main admin user
-    const adminUser = MOCK_USERS['admin@example.com'];
+    const adminUser = MOCK_USERS['promiseoyedele07@gmail.com'];
     sessionStorage.setItem('mock_user', JSON.stringify(adminUser));
     updateUserState(adminUser);
   };
@@ -176,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           updateUserState(loggedInUser);
           return loggedInUser;
       }
-      throw new Error("Invalid credentials. Hint: try user@example.com or admin@example.com");
+      throw new Error("Invalid credentials. Hint: try user@example.com or promiseoyedele07@gmail.com");
   };
 
   const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {

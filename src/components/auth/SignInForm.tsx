@@ -85,7 +85,7 @@ export default function SignInForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Prototype Login</CardTitle>
         <CardDescription>
-          Use `admin@example.com` or `user@example.com` with any password to sign in.
+          Use `user@example.com` or `promiseoyedele07@gmail.com` with any password to sign in.
         </CardDescription>
       </CardHeader>
       <CardContent>

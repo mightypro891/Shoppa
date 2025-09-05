@@ -113,7 +113,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
         return;
     }
 
-    const superAdminEmail = "admin@example.com"; 
+    const superAdminEmail = "promiseoyedele07@gmail.com"; 
 
     // 1. Generate and send customer email
     const customerEmailSubject = `Order Confirmed - Your Lautech Shoppa Order #${orderId}`;
