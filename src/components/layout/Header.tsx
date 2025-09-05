@@ -85,7 +85,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Naija Shoppa
+              Lautech Shoppa
             </span>
           </Link>
            <nav className="hidden md:flex">
