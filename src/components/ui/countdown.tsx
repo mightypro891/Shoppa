@@ -37,14 +37,14 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
   const timerComponents: JSX.Element[] = [];
 
   Object.keys(timeLeft).forEach((interval) => {
-    if (!timeLeft[interval as keyof typeof timeLeft]) {
-      return;
-    }
+    const value = timeLeft[interval as keyof typeof timeLeft];
+    if (value === undefined) return;
+
 
     timerComponents.push(
       <div key={interval} className="flex flex-col items-center">
         <span className="text-2xl font-bold">
-          {timeLeft[interval as keyof typeof timeLeft]}
+          {value.toString().padStart(2, '0')}
         </span>
         <span className="text-xs uppercase">{interval}</span>
       </div>
@@ -52,10 +52,12 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
   });
 
   return (
-    <div className="flex justify-center gap-4 text-center">
+    <div className="flex justify-center gap-4 text-center text-foreground">
       {timerComponents.length ? timerComponents : <span>Time's up!</span>}
     </div>
   );
 };
 
 export default Countdown;
+
+    
