@@ -6,8 +6,8 @@ import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '
 import { initialProducts } from '@/lib/seed';
 
 // --- PROTOTYPE AUTH SYSTEM ---
-// This is a mock authentication context for demonstration purposes.
-// It simulates user roles and profiles without a real backend.
+// This is a placeholder authentication context for demonstration purposes.
+// It uses localStorage to persist users between sessions.
 
 interface MockUser {
   uid: string;
@@ -27,7 +27,7 @@ const INITIAL_MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfi
       city: 'Ogbomoso',
     },
   },
-  'customer@example.com': {
+    'customer@example.com': {
       uid: 'customer_789',
       email: 'customer@example.com',
       displayName: 'Valued Customer',
@@ -62,15 +62,20 @@ const INITIAL_ADMINS: AdminUser[] = [
     { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
 ];
 
-const getMockUsersFromStorage = () => {
+const getLocalUsers = () => {
     if (typeof window === 'undefined') return INITIAL_MOCK_USERS;
-    const stored = localStorage.getItem('mock_users_db');
-    return stored ? JSON.parse(stored) : INITIAL_MOCK_USERS;
+    const stored = localStorage.getItem('lautech_shoppa_users');
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    // On first load, seed with initial users
+    localStorage.setItem('lautech_shoppa_users', JSON.stringify(INITIAL_MOCK_USERS));
+    return INITIAL_MOCK_USERS;
 }
 
-const saveMockUsersToStorage = (users: any) => {
+const saveLocalUsers = (users: any) => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('mock_users_db', JSON.stringify(users));
+    localStorage.setItem('lautech_shoppa_users', JSON.stringify(users));
 }
 
 
@@ -120,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(2500);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
-  const [totalUsers, setTotalUsers] = useState(Object.keys(getMockUsersFromStorage()).length);
+  const [totalUsers, setTotalUsers] = useState(Object.keys(getLocalUsers()).length);
   const [onlineUsers, setOnlineUsers] = useState(1);
   const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>({
       title: 'Welcome Back!',
@@ -130,7 +135,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserState = (userData: MockUser | null) => {
       setUser(userData);
-      const mockUsers = getMockUsersFromStorage();
       
       if (userData) {
           const adminInfo = admins.find(admin => admin.email === userData.email);
@@ -147,11 +151,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setManagedCategories(null);
           }
           
-          const mock_user_profile = mockUsers[userData.email]?.profile;
+          const localUsers = getLocalUsers();
+          const localUserProfile = localUsers[userData.email]?.profile;
           setUserProfile({
-              phone: mock_user_profile?.phone || '',
-              address: mock_user_profile?.address || '',
-              city: mock_user_profile?.city || '',
+              phone: localUserProfile?.phone || '',
+              address: localUserProfile?.address || '',
+              city: localUserProfile?.city || '',
               balance: accountBalance,
           });
 
@@ -168,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setLoading(true);
-    const storedUserStr = sessionStorage.getItem('mock_user');
+    const storedUserStr = sessionStorage.getItem('lautech_shoppa_session_user');
     if (storedUserStr) {
       try {
         updateUserState(JSON.parse(storedUserStr));
@@ -178,24 +183,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       updateUserState(null);
     }
+    setTotalUsers(Object.keys(getLocalUsers()).length);
   }, [admins]);
 
 
   const googleSignIn = () => {
     // In this prototype, we'll just sign in as the main admin user
-    const MOCK_USERS = getMockUsersFromStorage();
-    const adminUser = MOCK_USERS['promiseoyedele07@gmail.com'];
-    sessionStorage.setItem('mock_user', JSON.stringify(adminUser));
+    const localUsers = getLocalUsers();
+    const adminUser = localUsers['promiseoyedele07@gmail.com'];
+    sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(adminUser));
     updateUserState(adminUser);
   };
   
   const emailSignIn = async (email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-      const MOCK_USERS = getMockUsersFromStorage();
-      const userExists = MOCK_USERS[email];
+      const localUsers = getLocalUsers();
+      const userExists = localUsers[email];
 
       if (userExists) {
-          sessionStorage.setItem('mock_user', JSON.stringify(userExists));
+          sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(userExists));
           updateUserState(userExists);
           return userExists;
       }
@@ -204,15 +210,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-      const MOCK_USERS = getMockUsersFromStorage();
-       if (MOCK_USERS[email]) {
+      const localUsers = getLocalUsers();
+       if (localUsers[email]) {
           throw new Error("An account with this email already exists.");
       }
       const newUser: MockUser = { uid: `user_${Date.now()}`, email, displayName: name };
-      const updatedUsers = {...MOCK_USERS, [email]: newUser};
-      saveMockUsersToStorage(updatedUsers);
+      const updatedUsers = {...localUsers, [email]: newUser};
+      saveLocalUsers(updatedUsers);
       
-      sessionStorage.setItem('mock_user', JSON.stringify(newUser));
+      sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(newUser));
       updateUserState(newUser);
       setTotalUsers(Object.keys(updatedUsers).length);
       return newUser;
@@ -220,7 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   const logOut = () => {
-    sessionStorage.removeItem('mock_user');
+    sessionStorage.removeItem('lautech_shoppa_session_user');
     updateUserState(null);
   };
   
