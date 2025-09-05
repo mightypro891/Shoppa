@@ -16,7 +16,7 @@ interface MockUser {
   photoURL?: string;
 }
 
-const MOCK_USERS: { [key: string]: MockUser & { role?: AdminRole, profile?: Omit<UserProfile, 'balance'>, managedCategories?: string[] } } = {
+const MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfile, 'balance'> } } = {
   'user@example.com': {
     uid: 'user_123',
     email: 'user@example.com',
@@ -31,29 +31,31 @@ const MOCK_USERS: { [key: string]: MockUser & { role?: AdminRole, profile?: Omit
     uid: 'admin_456',
     email: 'promiseoyedele07@gmail.com',
     displayName: 'Super Admin',
-    role: 'Super Admin',
     photoURL: 'https://i.pravatar.cc/150?u=admin@example.com',
   },
   'websiteadmin@example.com': {
     uid: 'website_admin_789',
     email: 'websiteadmin@example.com',
     displayName: 'Website Admin',
-    role: 'Website Admin',
   },
   'productsadmin@example.com': {
     uid: 'products_admin_012',
     email: 'productsadmin@example.com',
     displayName: 'Products Admin',
-    role: 'Products Admin',
   },
   'normaladmin@example.com': {
     uid: 'normal_admin_345',
     email: 'normaladmin@example.com',
     displayName: 'Normal Admin',
-    role: 'Normal Admin',
-    managedCategories: ['food', 'kitchen-utensils'],
   },
 };
+
+const INITIAL_ADMINS: AdminUser[] = [
+    { email: 'promiseoyedele07@gmail.com', role: 'Super Admin'},
+    { email: 'websiteadmin@example.com', role: 'Website Admin'},
+    { email: 'productsadmin@example.com', role: 'Products Admin'},
+    { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
+];
 
 
 interface AuthContextType {
@@ -98,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [admins, setAdmins] = useState<AdminUser[]>(Object.values(MOCK_USERS).filter(u => u.role).map(u => ({email: u.email, role: u.role!, managedCategories: u.managedCategories})));
+  const [admins, setAdmins] = useState<AdminUser[]>(INITIAL_ADMINS);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(2500);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
@@ -111,29 +113,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const updateUserState = (userData: MockUser | null) => {
-      setLoading(true);
       setUser(userData);
       
-      if (userData && userData.email in MOCK_USERS) {
-          const mock_user = MOCK_USERS[userData.email];
-          const role = mock_user.role;
-          if (role) {
+      if (userData) {
+          const adminInfo = admins.find(admin => admin.email === userData.email);
+
+          if (adminInfo) {
               setIsAdmin(true);
-              setAdminRole(role);
-              setIsSuperAdmin(role === 'Super Admin');
-              setManagedCategories(mock_user.managedCategories || null);
+              setAdminRole(adminInfo.role);
+              setIsSuperAdmin(adminInfo.role === 'Super Admin');
+              setManagedCategories(adminInfo.managedCategories || null);
           } else {
               setIsAdmin(false);
               setAdminRole(null);
               setIsSuperAdmin(false);
               setManagedCategories(null);
           }
+          
+          const mock_user_profile = MOCK_USERS[userData.email]?.profile;
           setUserProfile({
-              phone: mock_user.profile?.phone || '',
-              address: mock_user.profile?.address || '',
-              city: mock_user.profile?.city || '',
+              phone: mock_user_profile?.phone || '',
+              address: mock_user_profile?.address || '',
+              city: mock_user_profile?.city || '',
               balance: accountBalance,
           });
+
       } else {
           setIsAdmin(false);
           setAdminRole(null);
@@ -142,8 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setManagedCategories(null);
       }
       
-      // Simulate loading time
-      setTimeout(() => setLoading(false), 500);
+      setLoading(false);
   }
 
   useEffect(() => {
@@ -158,8 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       updateUserState(null);
     }
-    setLoading(false);
-  }, []);
+  }, [admins]);
 
 
   const googleSignIn = () => {
@@ -171,18 +173,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const emailSignIn = async (email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-      if (email in MOCK_USERS) {
-          const loggedInUser = MOCK_USERS[email];
+      const userExists = Object.values(MOCK_USERS).some(u => u.email === email);
+
+      if (userExists) {
+          const loggedInUser = Object.values(MOCK_USERS).find(u => u.email === email)!;
           sessionStorage.setItem('mock_user', JSON.stringify(loggedInUser));
           updateUserState(loggedInUser);
           return loggedInUser;
       }
-      throw new Error("Invalid credentials. Hint: try user@example.com or promiseoyedele07@gmail.com");
+      throw new Error("Invalid credentials. Hint: try user@example.com or an admin email.");
   };
 
   const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-       if (email in MOCK_USERS) {
+       if (Object.values(MOCK_USERS).some(u => u.email === email)) {
           throw new Error("An account with this email already exists.");
       }
       const newUser: MockUser = { uid: `user_${Date.now()}`, email, displayName: name };
