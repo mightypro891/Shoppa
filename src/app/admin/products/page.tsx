@@ -1,11 +1,7 @@
 
-import ProductManagement from '@/components/admin/ProductManagement';
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Product Management - Lautech Shoppa',
-  description: 'Manage your store products.',
-};
+import ProductManagement from '@/components/admin/ProductManagement';
 
 export default function AdminProductsPage() {
   return <ProductManagement />;

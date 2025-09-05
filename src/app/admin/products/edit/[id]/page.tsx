@@ -1,27 +1,44 @@
 
+'use client';
+
 import ProductForm from "@/components/admin/ProductForm";
 import { getProductById } from "@/lib/data";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useParams, notFound } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { Product } from "@/lib/types";
 
 
-type Props = {
-  params: { id: string }
-}
+export default function EditProductPage() {
+    const params = useParams();
+    const id = params.id as string;
+    const [product, setProduct] = useState<Product | null>(null);
+    const [loading, setLoading] = useState(true);
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProductById(params.id);
-  return {
-    title: `Edit ${product?.name || 'Product'} - Lautech Shoppa`,
-  }
-}
+    useEffect(() => {
+        if (!id) return;
+        const fetchProduct = async () => {
+            const productData = await getProductById(id);
+            if (productData) {
+                setProduct(productData);
+            } else {
+                notFound();
+            }
+            setLoading(false);
+        };
+        fetchProduct();
+    }, [id]);
 
-
-export default async function EditProductPage({ params }: { params: { id: string }}) {
-    const product = await getProductById(params.id);
-
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
     if (!product) {
-        notFound();
+        return notFound();
     }
 
     return (

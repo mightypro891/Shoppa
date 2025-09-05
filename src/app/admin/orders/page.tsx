@@ -1,11 +1,7 @@
 
-import OrderManagement from '@/components/admin/OrderManagement';
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Order Management - Lautech Shoppa',
-  description: 'Manage customer orders.',
-};
+import OrderManagement from '@/components/admin/OrderManagement';
 
 export default function AdminOrdersPage() {
   return <OrderManagement />;
