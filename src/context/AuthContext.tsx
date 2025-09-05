@@ -3,57 +3,21 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
-import { initialProducts } from '@/lib/seed';
+import { auth } from '@/lib/firebase';
+import { 
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    User
+} from 'firebase/auth';
 
-// --- PROTOTYPE AUTH SYSTEM ---
-// This is a placeholder authentication context for demonstration purposes.
-// It uses localStorage to persist users between sessions.
-
-interface MockUser {
-  uid: string;
-  email: string;
-  displayName: string;
-  photoURL?: string;
-}
-
-const INITIAL_MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfile, 'balance'> } } = {
-  'user@example.com': {
-    uid: 'user_123',
-    email: 'user@example.com',
-    displayName: 'Customer User',
-    profile: {
-      phone: '08012345678',
-      address: '123 Main St',
-      city: 'Ogbomoso',
-    },
-  },
-    'customer@example.com': {
-      uid: 'customer_789',
-      email: 'customer@example.com',
-      displayName: 'Valued Customer',
-  },
-  'promiseoyedele07@gmail.com': {
-    uid: 'admin_456',
-    email: 'promiseoyedele07@gmail.com',
-    displayName: 'Super Admin',
-    photoURL: 'https://i.pravatar.cc/150?u=admin@example.com',
-  },
-  'websiteadmin@example.com': {
-    uid: 'website_admin_789',
-    email: 'websiteadmin@example.com',
-    displayName: 'Website Admin',
-  },
-  'productsadmin@example.com': {
-    uid: 'products_admin_012',
-    email: 'productsadmin@example.com',
-    displayName: 'Products Admin',
-  },
-  'normaladmin@example.com': {
-    uid: 'normal_admin_345',
-    email: 'normaladmin@example.com',
-    displayName: 'Normal Admin',
-  },
-};
+// --- PRODUCTION AUTH SYSTEM ---
+// This context now uses Firebase Authentication.
+// User profiles and admin roles are still managed locally for now.
 
 const INITIAL_ADMINS: AdminUser[] = [
     { email: 'promiseoyedele07@gmail.com', role: 'Super Admin'},
@@ -62,25 +26,8 @@ const INITIAL_ADMINS: AdminUser[] = [
     { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
 ];
 
-const getLocalUsers = () => {
-    if (typeof window === 'undefined') return INITIAL_MOCK_USERS;
-    const stored = localStorage.getItem('lautech_shoppa_users');
-    if (stored) {
-        return JSON.parse(stored);
-    }
-    // On first load, seed with initial users
-    localStorage.setItem('lautech_shoppa_users', JSON.stringify(INITIAL_MOCK_USERS));
-    return INITIAL_MOCK_USERS;
-}
-
-const saveLocalUsers = (users: any) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('lautech_shoppa_users', JSON.stringify(users));
-}
-
-
 interface AuthContextType {
-  user: MockUser | null;
+  user: User | null;
   loading: boolean;
   isAdmin: boolean;
   adminRole: AdminRole | null;
@@ -99,10 +46,10 @@ interface AuthContextType {
   onlineUsers: number;
   celebrationPopupConfig: CelebrationPopupConfig | null;
   updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
-  googleSignIn: () => void;
-  logOut: () => void;
-  emailSignUp: (name:string, email:string, password:string) => Promise<MockUser>;
-  emailSignIn: (email:string, password:string) => Promise<MockUser>;
+  googleSignIn: () => Promise<void>;
+  logOut: () => Promise<void>;
+  emailSignUp: (name:string, email:string, password:string) => Promise<User>;
+  emailSignIn: (email:string, password:string) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -116,7 +63,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
@@ -125,19 +72,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(2500);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
-  const [totalUsers, setTotalUsers] = useState(Object.keys(getLocalUsers()).length);
-  const [onlineUsers, setOnlineUsers] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0); // This would come from a db
+  const [onlineUsers, setOnlineUsers] = useState(1); // This would come from a db
   const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>({
       title: 'Welcome Back!',
       message: 'Thanks for trying out the prototype. All items are 10% off!',
       isActive: false,
   });
 
-  const updateUserState = (userData: MockUser | null) => {
-      setUser(userData);
+  const updateUserState = (currentUser: User | null) => {
+      setUser(currentUser);
       
-      if (userData) {
-          const adminInfo = admins.find(admin => admin.email === userData.email);
+      if (currentUser) {
+          const adminInfo = admins.find(admin => admin.email === currentUser.email);
 
           if (adminInfo) {
               setIsAdmin(true);
@@ -151,12 +98,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setManagedCategories(null);
           }
           
-          const localUsers = getLocalUsers();
-          const localUserProfile = localUsers[userData.email]?.profile;
+          // In a real app, profile data would be fetched from Firestore
           setUserProfile({
-              phone: localUserProfile?.phone || '',
-              address: localUserProfile?.address || '',
-              city: localUserProfile?.city || '',
+              phone: '', // placeholder
+              address: '', // placeholder
+              city: '', // placeholder
               balance: accountBalance,
           });
 
@@ -170,79 +116,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       setLoading(false);
   }
-
+  
   useEffect(() => {
-    setLoading(true);
-    const storedUserStr = sessionStorage.getItem('lautech_shoppa_session_user');
-    if (storedUserStr) {
-      try {
-        updateUserState(JSON.parse(storedUserStr));
-      } catch (e) {
-        updateUserState(null);
-      }
-    } else {
-      updateUserState(null);
-    }
-    setTotalUsers(Object.keys(getLocalUsers()).length);
-  }, [admins]);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setLoading(true);
+        updateUserState(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, [admins, accountBalance]);
 
 
-  const googleSignIn = () => {
-    // In this prototype, we'll just sign in as the main admin user
-    const localUsers = getLocalUsers();
-    const adminUser = localUsers['promiseoyedele07@gmail.com'];
-    sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(adminUser));
-    updateUserState(adminUser);
+  const googleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
   
-  const emailSignIn = async (email: string, password: string): Promise<MockUser> => {
-      await new Promise(res => setTimeout(res, 500)); // Simulate network
-      const localUsers = getLocalUsers();
-      const userExists = localUsers[email];
-
-      if (userExists) {
-          sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(userExists));
-          updateUserState(userExists);
-          return userExists;
-      }
-      throw new Error("Invalid credentials. Please check your email and password.");
+  const emailSignIn = async (email: string, password: string): Promise<User> => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
   };
 
-  const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {
-      await new Promise(res => setTimeout(res, 500)); // Simulate network
-      const localUsers = getLocalUsers();
-       if (localUsers[email]) {
-          throw new Error("An account with this email already exists.");
-      }
-      const newUser: MockUser = { uid: `user_${Date.now()}`, email, displayName: name };
-      const updatedUsers = {...localUsers, [email]: newUser};
-      saveLocalUsers(updatedUsers);
-      
-      sessionStorage.setItem('lautech_shoppa_session_user', JSON.stringify(newUser));
-      updateUserState(newUser);
-      setTotalUsers(Object.keys(updatedUsers).length);
-      return newUser;
+  const emailSignUp = async (name: string, email: string, password: string): Promise<User> => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    return userCredential.user;
   };
 
 
-  const logOut = () => {
-    sessionStorage.removeItem('lautech_shoppa_session_user');
-    updateUserState(null);
+  const logOut = async () => {
+    await signOut(auth);
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
+    // In real app, this would update Firestore
     setAdmins(prev => [...prev, { email, role, managedCategories: categories }]);
   };
   
   const removeAdmin = async (email: string) => {
+    // In real app, this would update Firestore
     setAdmins(prev => prev.filter(admin => admin.email !== email));
   };
 
   const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
+    // In real app, this would update Firestore
     setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
   };
 
   const saveUserProfile = async (profileData: Omit<UserProfile, 'balance'>) => {
+     // In real app, this would update Firestore
      if (user) {
          setUserProfile({ ...profileData, balance: accountBalance });
      }
@@ -250,12 +172,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fundAccount = async (amount: number) => {
     if (user && amount > 0) {
+      // In real app, this would be a transaction
       setAccountBalance(prev => prev + amount);
     }
   };
 
   const payWithWallet = (amount: number): boolean => {
     if (user && amount > 0 && accountBalance >= amount) {
+      // In real app, this would be a transaction
       setAccountBalance(prev => prev - amount);
       return true;
     }
@@ -263,6 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateCelebrationPopupConfig = (config: CelebrationPopupConfig) => {
+    // In real app, this would update Firestore/Remote Config
     setCelebrationPopupConfig(config);
   };
 

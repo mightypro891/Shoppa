@@ -12,12 +12,12 @@ import { getStorage } from "firebase/storage";
 // in-memory data for demonstration purposes.
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  "projectId": "naija-shoppa",
+  "appId": "1:137647070211:web:b0d277643206bf226ac236",
+  "storageBucket": "naija-shoppa.firebasestorage.app",
+  "apiKey": "AIzaSyCGHpCReIV5n-b4FXynO4NPybvNDTT9c6w",
+  "authDomain": "naija-shoppa.firebaseapp.com",
+  "messagingSenderId": "137647070211"
 };
 
 // Initialize Firebase
