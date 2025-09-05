@@ -16,7 +16,7 @@ interface MockUser {
   photoURL?: string;
 }
 
-const MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfile, 'balance'> } } = {
+const INITIAL_MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfile, 'balance'> } } = {
   'user@example.com': {
     uid: 'user_123',
     email: 'user@example.com',
@@ -61,6 +61,17 @@ const INITIAL_ADMINS: AdminUser[] = [
     { email: 'productsadmin@example.com', role: 'Products Admin'},
     { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
 ];
+
+const getMockUsersFromStorage = () => {
+    if (typeof window === 'undefined') return INITIAL_MOCK_USERS;
+    const stored = localStorage.getItem('mock_users_db');
+    return stored ? JSON.parse(stored) : INITIAL_MOCK_USERS;
+}
+
+const saveMockUsersToStorage = (users: any) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('mock_users_db', JSON.stringify(users));
+}
 
 
 interface AuthContextType {
@@ -109,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(2500);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
-  const [totalUsers, setTotalUsers] = useState(Object.keys(MOCK_USERS).length);
+  const [totalUsers, setTotalUsers] = useState(Object.keys(getMockUsersFromStorage()).length);
   const [onlineUsers, setOnlineUsers] = useState(1);
   const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>({
       title: 'Welcome Back!',
@@ -119,6 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUserState = (userData: MockUser | null) => {
       setUser(userData);
+      const mockUsers = getMockUsersFromStorage();
       
       if (userData) {
           const adminInfo = admins.find(admin => admin.email === userData.email);
@@ -135,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setManagedCategories(null);
           }
           
-          const mock_user_profile = MOCK_USERS[userData.email]?.profile;
+          const mock_user_profile = mockUsers[userData.email]?.profile;
           setUserProfile({
               phone: mock_user_profile?.phone || '',
               address: mock_user_profile?.address || '',
@@ -171,6 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const googleSignIn = () => {
     // In this prototype, we'll just sign in as the main admin user
+    const MOCK_USERS = getMockUsersFromStorage();
     const adminUser = MOCK_USERS['promiseoyedele07@gmail.com'];
     sessionStorage.setItem('mock_user', JSON.stringify(adminUser));
     updateUserState(adminUser);
@@ -178,6 +191,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const emailSignIn = async (email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
+      const MOCK_USERS = getMockUsersFromStorage();
       const userExists = MOCK_USERS[email];
 
       if (userExists) {
@@ -190,14 +204,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
+      const MOCK_USERS = getMockUsersFromStorage();
        if (MOCK_USERS[email]) {
           throw new Error("An account with this email already exists.");
       }
       const newUser: MockUser = { uid: `user_${Date.now()}`, email, displayName: name };
-      MOCK_USERS[email] = newUser;
+      const updatedUsers = {...MOCK_USERS, [email]: newUser};
+      saveMockUsersToStorage(updatedUsers);
+      
       sessionStorage.setItem('mock_user', JSON.stringify(newUser));
       updateUserState(newUser);
-      setTotalUsers(Object.keys(MOCK_USERS).length);
+      setTotalUsers(Object.keys(updatedUsers).length);
       return newUser;
   };
 
