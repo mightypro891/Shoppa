@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -113,6 +113,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
     setCelebrationPopupConfig(getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
   }, []);
+  
+  const fetchAdmins = async () => {
+    const adminsCollection = collection(db, 'admins');
+    const adminSnapshot = await getDocs(adminsCollection);
+    const adminList = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminUser));
+    setAdmins(adminList);
+  };
+  
+  useEffect(() => {
+    if(isSuperAdmin) {
+        fetchAdmins();
+    }
+  }, [isSuperAdmin]);
 
 
   useEffect(() => {
@@ -207,18 +220,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    }, [isAdmin]);
 
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
-      // This is a simplified lookup. In a real app, you'd use a Cloud Function to get user by email.
-      // For this prototype, we assume an admin will only be added when that user is logged in on another browser to create the user record.
-      // This is a limitation of the client-side approach.
-      console.warn("This is a mock implementation. For a real app, use a Cloud Function to find a user's UID by their email.");
+      // This is a mock implementation. A real app would use a Cloud Function
+      // to find a user's UID by their email and create the admin document.
+      console.warn("This is a mock implementation for addAdmin. You need to manually create the admin document in Firestore for this to fully work.");
+      // For the prototype, we can optimistically add to the local state
+      const newAdmin: AdminUser = { email, role, managedCategories: categories };
+      setAdmins(prev => [...prev, newAdmin]);
   };
 
   const removeAdmin = async (email: string) => {
-    console.warn("removeAdmin is not implemented in this prototype.");
+    console.warn("removeAdmin is a mock implementation.");
+    setAdmins(prev => prev.filter(admin => admin.email !== email));
   };
   
   const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
-    console.warn("updateAdminRole is not implemented in this prototype.");
+    console.warn("updateAdminRole is a mock implementation.");
+    setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
   };
 
   const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
@@ -287,3 +304,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+    

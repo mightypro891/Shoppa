@@ -1,13 +1,13 @@
 
 import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, setDoc, query, orderBy, limit } from 'firebase/firestore';
 import type { Product, AdminUser, DeletedProduct } from './types';
-import { db } from './firebase';
+import { db, adminDb } from './firebase';
 
 const PRODUCTS_COLLECTION = 'products';
 const DELETED_PRODUCTS_COLLECTION = 'deletedProducts';
 
 // Helper function to convert Firestore doc to Product
-const toProduct = (doc: any): Product => {
+const toProduct = (doc: admin.firestore.DocumentSnapshot | any): Product => {
     const data = doc.data();
     return {
         id: doc.id,
@@ -16,7 +16,7 @@ const toProduct = (doc: any): Product => {
 };
 
 // Helper function to convert Firestore doc to DeletedProduct
-const toDeletedProduct = (doc: any): DeletedProduct => {
+const toDeletedProduct = (doc: admin.firestore.DocumentSnapshot | any): DeletedProduct => {
     const data = doc.data();
     return {
         id: doc.id,
@@ -30,17 +30,25 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 
 export async function getProducts(): Promise<Product[]> {
-    const productsCol = collection(db, PRODUCTS_COLLECTION);
-    const q = query(productsCol, orderBy('name'));
-    const snapshot = await getDocs(q);
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch products on the server.");
+        return [];
+    }
+    const productsCol = adminDb.collection(PRODUCTS_COLLECTION);
+    const q = productsCol.orderBy('name');
+    const snapshot = await q.get();
     return snapshot.docs.map(toProduct);
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-    const docRef = doc(db, PRODUCTS_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
+     if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch product by ID on the server.");
+        return undefined;
+    }
+    const docRef = adminDb.collection(PRODUCTS_COLLECTION).doc(id);
+    const docSnap = await docRef.get();
 
-    if (docSnap.exists()) {
+    if (docSnap.exists) {
         return toProduct(docSnap);
     } else {
         return undefined;
