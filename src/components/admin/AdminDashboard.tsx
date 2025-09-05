@@ -402,81 +402,103 @@ export default function AdminDashboard() {
         )}
 
        </div>
-
-      {isSuperAdmin && (
-           <Card className="mt-6">
-                <CardHeader>
-                    <CardTitle className="flex items-center"><PartyPopper className="mr-2 h-5 w-5" /> Celebration Pop-up Management</CardTitle>
-                    <CardDescription>Control a site-wide pop-up for special announcements or greetings.</CardDescription>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                    Product Management
+                    </CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                        <Switch 
-                            id="popup-active" 
-                            checked={popupSettings.isActive}
-                            onCheckedChange={(checked) => setPopupSettings(prev => ({...prev, isActive: checked}))}
-                        />
-                        <Label htmlFor="popup-active">Activate Pop-up</Label>
-                    </div>
-                     <div>
-                        <Label htmlFor="popup-title">Pop-up Title</Label>
-                        <Input 
-                            id="popup-title"
-                            placeholder="e.g., Happy Holidays!"
-                            value={popupSettings.title}
-                            onChange={(e) => setPopupSettings(prev => ({...prev, title: e.target.value}))}
-                        />
-                    </div>
-                     <div>
-                        <Label htmlFor="popup-message">Pop-up Message</Label>
-                        <Textarea
-                            id="popup-message"
-                            placeholder="e.g., All items are 10% off this week."
-                             value={popupSettings.message}
-                            onChange={(e) => setPopupSettings(prev => ({...prev, message: e.target.value}))}
-                        />
-                    </div>
-                    <div className="flex justify-end">
-                        <Button onClick={handleSavePopupSettings}>Save Pop-up Settings</Button>
-                    </div>
+                <CardContent>
+                    <CardDescription>
+                    Add, edit, and manage your products.
+                    </CardDescription>
+                    <Button asChild className="mt-4">
+                        <Link href="/admin/products">Go to Products</Link>
+                    </Button>
                 </CardContent>
             </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                    Order Management
+                    </CardTitle>
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                    View and update customer orders.
+                    </CardDescription>
+                    <Button asChild className="mt-4">
+                        <Link href="/admin/orders">Go to Orders</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+
+
+      {isSuperAdmin && (
+          <div className='mt-6 space-y-6'>
+            <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center"><PartyPopper className="mr-2 h-5 w-5" /> Celebration Pop-up Management</CardTitle>
+                        <CardDescription>Control a site-wide pop-up for special announcements or greetings.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                            <Switch 
+                                id="popup-active" 
+                                checked={popupSettings.isActive}
+                                onCheckedChange={(checked) => setPopupSettings(prev => ({...prev, isActive: checked}))}
+                            />
+                            <Label htmlFor="popup-active">Activate Pop-up</Label>
+                        </div>
+                        <div>
+                            <Label htmlFor="popup-title">Pop-up Title</Label>
+                            <Input 
+                                id="popup-title"
+                                placeholder="e.g., Happy Holidays!"
+                                value={popupSettings.title}
+                                onChange={(e) => setPopupSettings(prev => ({...prev, title: e.target.value}))}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="popup-message">Pop-up Message</Label>
+                            <Textarea
+                                id="popup-message"
+                                placeholder="e.g., All items are 10% off this week."
+                                value={popupSettings.message}
+                                onChange={(e) => setPopupSettings(prev => ({...prev, message: e.target.value}))}
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button onClick={handleSavePopupSettings}>Save Pop-up Settings</Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Promotions
+                    </CardTitle>
+                    <Megaphone className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                        Manage "Today's Deals" and other sales.
+                    </CardDescription>
+                    <Button variant="secondary" disabled className="mt-4">
+                        Manage Deals (Coming Soon)
+                    </Button>
+                </CardContent>
+            </Card>
+          </div>
        )}
 
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Product Management
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Add, edit, and manage your products.
-            </CardDescription>
-             <Button asChild className="mt-4">
-                <Link href="/admin/products">Go to Products</Link>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Order Management
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              View and update customer orders.
-            </CardDescription>
-             <Button asChild className="mt-4">
-                <Link href="/admin/orders">Go to Orders</Link>
-            </Button>
-          </CardContent>
-        </Card>
          <Card>
            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -493,22 +515,6 @@ export default function AdminDashboard() {
             </Button>
              <Button variant="destructive" disabled className="mt-4 ml-2">
                 Delete Review
-            </Button>
-          </CardContent>
-        </Card>
-         <Card>
-           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Promotions
-            </CardTitle>
-            <Megaphone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-                Create and manage sales promotions.
-            </CardDescription>
-             <Button variant="secondary" disabled className="mt-4">
-                Coming Soon
             </Button>
           </CardContent>
         </Card>
