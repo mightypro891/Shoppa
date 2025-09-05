@@ -1,0 +1,55 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Products can be read by anyone, but only managed by admins
+    match /products/{productId} {
+      allow read: if true;
+      // Allow write only if user is an admin
+      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+    }
+
+    // Reviews can be read by anyone
+    // Users can create their own reviews, but cannot update or delete them (for simplicity)
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Prevent users from editing reviews for now
+    }
+
+    // Orders can only be accessed by the user who created them or an admin
+    match /orders/{orderId} {
+        allow read, write: if request.auth != null && (
+            // User can access their own order
+            resource.data.customer.email == request.auth.token.email || 
+            // Admins can access any order
+            get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin']
+        );
+        allow create: if request.auth != null; // Any authenticated user can create an order
+    }
+
+    // User profiles can only be accessed and modified by the user themselves
+    match /profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Admin roles can only be read by admins and modified by Super Admins
+    match /admins/{email} {
+      allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == 'Super Admin';
+    }
+    
+    // Deleted products log can only be read by admins
+    match /deletedProducts/{deletedId} {
+      allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+      allow write: if false; // Only written via server logic, not direct client
+    }
+
+    // Site-wide configuration can be read by anyone, but only written by a Super Admin
+    match /config/{configId} {
+        allow read: if true;
+        allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == 'Super Admin';
+    }
+  }
+}
