@@ -46,14 +46,54 @@ export default function SignInForm() {
     }
   }, [user, loading, router]);
   
+  const handleGoogleSignIn = async () => {
+    try {
+      await googleSignIn();
+      router.push('/');
+    } catch (error: any) {
+      console.error("Google Sign In Error:", error);
+      let description = 'An unknown error occurred. Please try again.';
+      if (error.code === 'auth/popup-closed-by-user') {
+          description = 'The sign-in window was closed. Please try again.';
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+          description = 'An account already exists with this email. Please sign in with the original method.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+          description = 'Google Sign-In is not enabled for this app. Please contact support.';
+      }
+      toast({
+        title: 'Google Sign-In Failed',
+        description,
+        variant: 'destructive',
+      });
+    }
+  };
+  
   const onSubmit = async (data: SignInFormValues) => {
       try {
           await emailSignIn(data.email, data.password);
           router.push('/');
       } catch (error: any) {
+          console.error("Email Sign In Error:", error);
+          let description = 'An unknown error occurred.';
+          switch (error.code) {
+              case 'auth/user-not-found':
+                  description = 'No account found with this email. Please sign up first.';
+                  break;
+              case 'auth/wrong-password':
+                  description = 'Incorrect password. Please try again.';
+                  break;
+              case 'auth/invalid-credential':
+                  description = 'Incorrect email or password. Please try again.';
+                  break;
+              case 'auth/operation-not-allowed':
+                   description = 'Email/password sign-in is not enabled. Please check Firebase settings.';
+                   break;
+              default:
+                  description = error.message;
+          }
           toast({
               title: 'Sign In Failed',
-              description: error.message,
+              description: description,
               variant: 'destructive',
           });
       }
@@ -111,7 +151,7 @@ export default function SignInForm() {
             </span>
           </div>
         </div>
-        <Button className="w-full" variant="outline" onClick={googleSignIn}>
+        <Button className="w-full" variant="outline" onClick={handleGoogleSignIn}>
           <GoogleIcon />
           Google
         </Button>
