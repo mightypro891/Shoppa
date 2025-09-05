@@ -13,7 +13,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -29,6 +31,8 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const isFirebaseConfigured = firebaseApiKey && firebaseApiKey !== 'YOUR_API_KEY' && firebaseApiKey !== '';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -83,11 +87,15 @@ export default function SignInForm() {
                   description = 'Incorrect password. Please try again.';
                   break;
               case 'auth/invalid-credential':
+              case 'auth/invalid-email':
                   description = 'Incorrect email or password. Please try again.';
                   break;
               case 'auth/operation-not-allowed':
                    description = 'Email/password sign-in is not enabled. Please check Firebase settings.';
                    break;
+              case 'auth/api-key-not-valid':
+                  description = 'The Firebase API Key is not valid. Please check your .env file.';
+                  break;
               default:
                   description = error.message;
           }
@@ -103,58 +111,75 @@ export default function SignInForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
-        <CardDescription>Sign in to your Lautech Shoppa account.</CardDescription>
+        <CardDescription>Sign in to your Naija Shoppa account.</CardDescription>
       </CardHeader>
       <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                 <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                            <Input placeholder="name@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                 />
-                 <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                 />
-                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
-                </Button>
-            </form>
-          </Form>
+          {!isFirebaseConfigured ? (
+             <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Firebase Not Configured</AlertTitle>
+              <AlertDescription>
+                Your Firebase API keys are missing. Please:
+                <ol className="list-decimal list-inside mt-2">
+                    <li>Copy your web app credentials from the Firebase Console.</li>
+                    <li>Paste them into the `.env` file in your project.</li>
+                    <li>Restart the development server.</li>
+                </ol>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input placeholder="name@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Sign In
+                    </Button>
+                </form>
+              </Form>
 
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <Button className="w-full" variant="outline" onClick={handleGoogleSignIn}>
-          <GoogleIcon />
-          Google
-        </Button>
+              <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                  </span>
+              </div>
+              </div>
+              <Button className="w-full" variant="outline" onClick={handleGoogleSignIn}>
+              <GoogleIcon />
+              Google
+              </Button>
+            </>
+          )}
       </CardContent>
        <CardFooter className="flex justify-center text-sm">
             <p>Don't have an account?&nbsp;</p>
