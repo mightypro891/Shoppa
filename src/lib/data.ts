@@ -82,16 +82,3 @@ export async function getDeletedProducts(): Promise<DeletedProduct[]> {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => d.data() as DeletedProduct); // The structure is already what we need
 }
-
-// In a real app this would query a database.
-// This is a simplified client-side lookup for the prototype.
-const adminUsers: AdminUser[] = [
-  { email: 'promiseoyedele07@gmail.com', role: 'Super Admin' },
-  { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
-];
-
-export async function getAdminUserByUid(uid: string): Promise<AdminUser | undefined> {
-    // Note: This is not secure and is for prototype purposes only.
-    // We are assuming the vendorId is the email.
-    return adminUsers.find(admin => admin.email === uid);
-}

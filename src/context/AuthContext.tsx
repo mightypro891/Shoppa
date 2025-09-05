@@ -3,8 +3,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -13,9 +14,9 @@ interface AuthContextType {
   adminRole: AdminRole | null;
   isSuperAdmin: boolean;
   admins: AdminUser[];
-  addAdmin: (email: string, role: AdminRole, categories?: string[]) => void;
-  removeAdmin: (email: string) => void;
-  updateAdminRole: (email: string, role: AdminRole, categories?: string[]) => void;
+  addAdmin: (email: string, role: AdminRole, categories?: string[]) => Promise<void>;
+  removeAdmin: (email: string) => Promise<void>;
+  updateAdminRole: (email: string, role: AdminRole, categories?: string[]) => Promise<void>;
   userProfile: UserProfile | null;
   saveUserProfile: (profile: Omit<UserProfile, 'balance'>) => void;
   accountBalance: number;
@@ -35,9 +36,9 @@ const AuthContext = createContext<AuthContextType>({
   adminRole: null,
   isSuperAdmin: false,
   admins: [],
-  addAdmin: () => {},
-  removeAdmin: () => {},
-  updateAdminRole: () => {},
+  addAdmin: async () => {},
+  removeAdmin: async () => {},
+  updateAdminRole: async () => {},
   userProfile: null,
   saveUserProfile: () => {},
   accountBalance: 0,
@@ -58,18 +59,15 @@ export const useAuth = () => {
   return context;
 };
 
-const ADMIN_USERS_KEY = 'lautech_shoppa_admin_users';
+// --- Local Storage Keys ---
 const USER_PROFILE_KEY_PREFIX = 'user_profile_';
 const ALL_USERS_KEY = 'lautech_shoppa_all_users';
 const USER_ACTIVITY_KEY = 'lautech_shoppa_user_activity';
 const POPUP_CONFIG_KEY = 'lautech_shoppa_popup_config';
 const ONLINE_THRESHOLD = 60 * 1000; // 1 minute
 
-
 const getFromStorage = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
+    if (typeof window === 'undefined') return defaultValue;
     try {
         const saved = localStorage.getItem(key);
         return saved ? JSON.parse(saved) : defaultValue;
@@ -88,16 +86,12 @@ const saveToStorage = (key: string, data: any) => {
     }
 };
 
-const defaultAdmins: AdminUser[] = [
-    { email: 'promiseoyedele07@gmail.com', role: 'Super Admin' },
-    { email: 'adedolapotamara@gmail.com', role: 'Products Admin' },
-];
-
 const defaultPopupConfig: CelebrationPopupConfig = {
     title: 'Welcome!',
     message: 'Check out our latest products.',
     isActive: false,
 };
+
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -105,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [admins, setAdmins] = useState<AdminUser[]>(() => getFromStorage(ADMIN_USERS_KEY, defaultAdmins));
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(0);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
@@ -113,35 +107,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(() => getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
   
+
   useEffect(() => {
     // We only want to load from storage once on the client
-     const storedAdmins = getFromStorage(ADMIN_USERS_KEY, defaultAdmins);
-      // Ensure default admins are always present
-      defaultAdmins.forEach(defaultAdmin => {
-          if (!storedAdmins.some(ad => ad.email === defaultAdmin.email)) {
-              storedAdmins.push(defaultAdmin);
-          }
-      });
-      setAdmins(storedAdmins);
-      saveToStorage(ADMIN_USERS_KEY, storedAdmins);
-
-      setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
-      setCelebrationPopupConfig(getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
+    setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
+    setCelebrationPopupConfig(getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
   }, []);
 
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setLoading(true);
       if (currentUser) {
-        const userEmail = currentUser.email || '';
-        const adminRecord = admins.find(admin => admin.email === userEmail);
-
         setUser(currentUser);
-        setIsAdmin(!!adminRecord);
-        setAdminRole(adminRecord ? adminRecord.role : null);
-        setIsSuperAdmin(adminRecord?.role === 'Super Admin');
-        setManagedCategories(adminRecord?.managedCategories || null);
+
+        // Check admin status from Firestore
+        const adminDocRef = doc(db, 'admins', currentUser.uid);
+        const adminDocSnap = await getDoc(adminDocRef);
         
+        if (adminDocSnap.exists()) {
+            const adminData = adminDocSnap.data() as AdminUser;
+            setIsAdmin(true);
+            setAdminRole(adminData.role);
+            setIsSuperAdmin(adminData.role === 'Super Admin');
+            setManagedCategories(adminData.managedCategories || null);
+        } else {
+            setIsAdmin(false);
+            setAdminRole(null);
+            setIsSuperAdmin(false);
+            setManagedCategories(null);
+        }
+        
+        // Fetch user profile from localStorage
         const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${currentUser.uid}`, null);
         if (profile) {
             setUserProfile(profile);
@@ -173,7 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setTimeout(() => setLoading(false), 200);
     });
     return () => unsubscribe();
-  }, [admins]);
+  }, []);
 
 
   // Effect for tracking user activity
@@ -209,48 +206,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      return () => clearInterval(onlineCheckInterval);
    }, [isAdmin]);
 
-  const updateAdminStorage = (newAdmins: AdminUser[]) => {
-    setAdmins(newAdmins);
-    saveToStorage(ADMIN_USERS_KEY, newAdmins);
-  }
-
-  const addAdmin = (email: string, role: AdminRole, categories: string[] = []) => {
-      if (isSuperAdmin) {
-          const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
-          if (currentAdmins.some(admin => admin.email === email)) return;
-          const newAdmin: AdminUser = { email, role };
-          if (role === 'Normal Admin') {
-              newAdmin.managedCategories = categories;
-          }
-          updateAdminStorage([...currentAdmins, newAdmin]);
-      }
+  const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
+      // This is a simplified lookup. In a real app, you'd use a Cloud Function to get user by email.
+      // For this prototype, we assume an admin will only be added when that user is logged in on another browser to create the user record.
+      // This is a limitation of the client-side approach.
+      console.warn("This is a mock implementation. For a real app, use a Cloud Function to find a user's UID by their email.");
   };
 
-  const removeAdmin = (email: string) => {
-      if (isSuperAdmin) {
-           const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
-           const newAdmins = currentAdmins.filter(admin => admin.email !== email);
-           updateAdminStorage(newAdmins);
-      }
+  const removeAdmin = async (email: string) => {
+    console.warn("removeAdmin is not implemented in this prototype.");
   };
   
-  const updateAdminRole = (email: string, role: AdminRole, categories: string[] = []) => {
-    if (isSuperAdmin) {
-        const currentAdmins = getFromStorage<AdminUser[]>(ADMIN_USERS_KEY, []);
-        const newAdmins = currentAdmins.map(admin => {
-            if (admin.email === email) {
-                const updatedAdmin: AdminUser = { ...admin, role };
-                if (role === 'Normal Admin' && categories.length > 0) {
-                    updatedAdmin.managedCategories = categories;
-                } else {
-                    delete updatedAdmin.managedCategories;
-                }
-                return updatedAdmin;
-            }
-            return admin;
-        });
-        updateAdminStorage(newAdmins);
-    }
+  const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
+    console.warn("updateAdminRole is not implemented in this prototype.");
   };
 
   const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
