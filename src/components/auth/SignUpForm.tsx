@@ -34,7 +34,7 @@ const GoogleIcon = () => (
 
 export default function SignUpForm() {
   const router = useRouter();
-  const { user, loading, googleSignIn, emailSignUp } = useAuth();
+  const { user, loading, googleSignIn, emailSignUp, admins } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,17 +43,22 @@ export default function SignUpForm() {
     defaultValues: { name: '', email: '', password: '' },
   });
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
+  const handleSuccessfulLogin = (loggedInUser: {email?: string | null}) => {
+    const isAdmin = admins.some(admin => admin.email === loggedInUser.email);
+    if (isAdmin) {
+        router.push('/auth/select-role');
+    } else {
+        router.push('/');
     }
-  }, [user, loading, router]);
-  
+  }
+
   const onSubmit = async (data: SignUpFormValues) => {
       setIsSubmitting(true);
       try {
-          await emailSignUp(data.name, data.email, data.password);
-          router.push('/');
+          const signedUpUser = await emailSignUp(data.name, data.email, data.password);
+          if (signedUpUser) {
+            handleSuccessfulLogin(signedUpUser);
+          }
       } catch (error: any) {
           toast({
               title: 'Sign Up Failed',
@@ -68,8 +73,10 @@ export default function SignUpForm() {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      googleSignIn();
-      router.push('/');
+      const loggedInUser = await googleSignIn();
+      if (loggedInUser) {
+        handleSuccessfulLogin(loggedInUser);
+      }
     } catch (error: any) {
        toast({
         title: 'Google Sign-In Failed',

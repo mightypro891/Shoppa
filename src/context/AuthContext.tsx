@@ -26,6 +26,8 @@ const INITIAL_ADMINS: AdminUser[] = [
     { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
 ];
 
+type SelectedRole = 'admin' | 'user' | null;
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -46,10 +48,13 @@ interface AuthContextType {
   onlineUsers: number;
   celebrationPopupConfig: CelebrationPopupConfig | null;
   updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
-  googleSignIn: () => Promise<void>;
+  googleSignIn: () => Promise<User | null>;
   logOut: () => Promise<void>;
-  emailSignUp: (name:string, email:string, password:string) => Promise<User>;
-  emailSignIn: (email:string, password:string) => Promise<User>;
+  emailSignUp: (name:string, email:string, password:string) => Promise<User | null>;
+  emailSignIn: (email:string, password:string) => Promise<User | null>;
+  selectedRole: SelectedRole;
+  selectRole: (role: SelectedRole) => void;
+  hasSelectedRole: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -79,6 +84,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       message: 'Thanks for trying out the prototype. All items are 10% off!',
       isActive: false,
   });
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
+  const [hasSelectedRole, setHasSelectedRole] = useState(false);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
+      if (roleFromSession) {
+        setSelectedRole(roleFromSession);
+        setHasSelectedRole(true);
+      } else {
+        setHasSelectedRole(false);
+      }
+    } else if (user && !isAdmin) {
+      setSelectedRole('user');
+      setHasSelectedRole(true);
+    } else {
+      setSelectedRole(null);
+      setHasSelectedRole(false);
+    }
+  }, [user, isAdmin]);
+
+  const selectRole = (role: SelectedRole) => {
+    if (role) {
+      sessionStorage.setItem('selectedRole', role);
+      setSelectedRole(role);
+      setHasSelectedRole(true);
+    } else {
+      sessionStorage.removeItem('selectedRole');
+      setSelectedRole(null);
+      setHasSelectedRole(false);
+    }
+  }
+
 
   const updateUserState = (currentUser: User | null) => {
       setUser(currentUser);
@@ -112,6 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsSuperAdmin(false);
           setUserProfile(null);
           setManagedCategories(null);
+          selectRole(null); // Clear role on logout
       }
       
       setLoading(false);
@@ -127,17 +166,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [admins, accountBalance]);
 
 
-  const googleSignIn = async () => {
+  const googleSignIn = async (): Promise<User | null> => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
   };
   
-  const emailSignIn = async (email: string, password: string): Promise<User> => {
+  const emailSignIn = async (email: string, password: string): Promise<User | null> => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
   };
 
-  const emailSignUp = async (name: string, email: string, password: string): Promise<User> => {
+  const emailSignUp = async (name: string, email: string, password: string): Promise<User | null> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     return userCredential.user;
@@ -146,6 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logOut = async () => {
     await signOut(auth);
+    selectRole(null); // Clear selected role on logout
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
@@ -195,9 +236,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
-    isAdmin,
+    isAdmin: isAdmin && selectedRole === 'admin', // Use selected role
     adminRole,
-    isSuperAdmin,
+    isSuperAdmin: isSuperAdmin && selectedRole === 'admin', // Use selected role
     admins,
     addAdmin,
     removeAdmin,
@@ -216,6 +257,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logOut,
     emailSignUp,
     emailSignIn,
+    selectedRole,
+    selectRole,
+    hasSelectedRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

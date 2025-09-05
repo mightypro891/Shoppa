@@ -33,7 +33,7 @@ const GoogleIcon = () => (
 
 export default function SignInForm() {
   const router = useRouter();
-  const { user, loading, googleSignIn, emailSignIn } = useAuth();
+  const { user, loading, googleSignIn, emailSignIn, admins } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,17 +42,27 @@ export default function SignInForm() {
     defaultValues: { email: '', password: '' },
   });
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
+  const handleSuccessfulLogin = (loggedInUser: {email?: string | null}) => {
+    const isAdmin = admins.some(admin => admin.email === loggedInUser.email);
+    if (isAdmin) {
+        router.push('/auth/select-role');
+    } else {
+        router.push('/');
     }
+  }
+
+  useEffect(() => {
+    // This effect is tricky because of the role selection.
+    // Let's remove the auto-redirect from here and handle it explicitly after login.
   }, [user, loading, router]);
   
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      googleSignIn();
-      router.push('/');
+      const loggedInUser = await googleSignIn();
+      if(loggedInUser) {
+        handleSuccessfulLogin(loggedInUser);
+      }
     } catch (error: any) {
        toast({
         title: 'Google Sign-In Failed',
@@ -67,8 +77,10 @@ export default function SignInForm() {
   const onSubmit = async (data: SignInFormValues) => {
       setIsSubmitting(true);
       try {
-          await emailSignIn(data.email, data.password);
-          router.push('/');
+          const loggedInUser = await emailSignIn(data.email, data.password);
+           if(loggedInUser) {
+            handleSuccessfulLogin(loggedInUser);
+          }
       } catch (error: any) {
           toast({
               title: 'Sign In Failed',

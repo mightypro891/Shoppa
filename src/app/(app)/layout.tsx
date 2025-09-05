@@ -1,13 +1,37 @@
 
+'use client';
+
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import SupportChatWidget from "@/components/layout/SupportChatWidget";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { user, loading, isAdmin, hasSelectedRole } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user && isAdmin && !hasSelectedRole) {
+      router.push('/auth/select-role');
+    }
+  }, [user, loading, isAdmin, hasSelectedRole, router]);
+
+  if (loading || (user && isAdmin && !hasSelectedRole)) {
+     return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <>
       <Header />
