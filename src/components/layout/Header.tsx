@@ -114,11 +114,9 @@ export default function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link href="/products" asChild>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    All Products
-                  </NavigationMenuLink>
-                </Link>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/products">All Products</Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
                <NavigationMenuItem>
                   <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
@@ -286,5 +284,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
