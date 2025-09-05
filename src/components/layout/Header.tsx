@@ -119,17 +119,37 @@ export default function Header() {
                <NavigationMenuItem>
                   <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                    <div className="grid grid-cols-3 gap-x-8 gap-y-4 p-6 w-[700px] lg:w-[800px]">
                       {categories.map((category) => (
-                        <ListItem
-                          key={category}
-                          href={`/products/category/${category}`}
-                          title={formatCategoryName(category)}
-                        >
-                          {productsByCategory[category]?.slice(0, 3).map(p => p.name).join(', ')}...
-                        </ListItem>
+                        <div key={category} className="flex flex-col">
+                           <NavigationMenuLink asChild>
+                               <Link href={`/products/category/${category}`} className="font-semibold text-lg mb-3 pb-1 border-b border-primary/50 hover:text-primary transition-colors">
+                                   {formatCategoryName(category)}
+                               </Link>
+                           </NavigationMenuLink>
+                           <ul className="flex flex-col gap-2">
+                               {productsByCategory[category]?.slice(0, 5).map(product => (
+                                   <li key={product.id}>
+                                       <NavigationMenuLink asChild>
+                                           <Link href={`/products/${product.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                               {product.name}
+                                           </Link>
+                                       </NavigationMenuLink>
+                                   </li>
+                               ))}
+                                {productsByCategory[category]?.length > 5 && (
+                                   <li>
+                                        <NavigationMenuLink asChild>
+                                            <Link href={`/products/category/${category}`} className="text-sm font-semibold text-primary hover:underline">
+                                                View all...
+                                            </Link>
+                                        </NavigationMenuLink>
+                                   </li>
+                               )}
+                           </ul>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
             </NavigationMenuList>
