@@ -1,6 +1,4 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -35,16 +33,19 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Admin roles can only be read by admins and modified by Super Admins
+    // Admin roles can only be written by Super Admins.
+    // Any authenticated user can read their OWN admin status document.
+    // Admins can read the full list of admins.
     match /admins/{email} {
-      allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+      allow get: if request.auth != null && request.auth.token.email == email;
+      allow list: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin'];
       allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == 'Super Admin';
     }
     
     // Deleted products log can only be read by admins
     match /deletedProducts/{deletedId} {
       allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
-      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+      allow write: if false; // Only written via server logic, not direct client
     }
 
     // Site-wide configuration can be read by anyone, but only written by a Super Admin
