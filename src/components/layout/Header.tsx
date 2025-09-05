@@ -85,7 +85,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Lautech Shoppa
+              Naija Shoppa
             </span>
           </Link>
            <nav className="hidden md:flex">
@@ -138,8 +138,8 @@ export default function Header() {
         </div>
 
 
-        <div className="flex-1 flex justify-end">
-          <div className={cn("relative w-full max-w-md hidden md:flex justify-end", isSearchOpen && "w-full")}>
+        <div className="flex-1 flex justify-end items-center">
+            <div className={cn("relative w-full max-w-md", isSearchOpen && "w-full")}>
               <form onSubmit={handleSearch} className={cn("w-full absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-300", isSearchOpen ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
                 <Input ref={searchInputRef} name="q" placeholder="Search for products..." className="pr-10" />
                  <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setIsSearchOpen(false)}>
@@ -288,14 +288,8 @@ export default function Header() {
           )}
         </nav>
       </div>
-       <div className="container px-4 pb-2 md:hidden">
-          <form onSubmit={handleSearch} className="w-full relative">
-            <Input name="q" placeholder="Search for products..." className="pr-10" />
-            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
     </header>
   );
 }
+
+    
