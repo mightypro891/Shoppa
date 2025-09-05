@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MessageSquare, Send, X, Loader2 } from 'lucide-react';
@@ -11,7 +11,8 @@ import { askSupportAgentAction } from '@/app/actions';
 import { ScrollArea } from '../ui/scroll-area';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts } from '@/lib/data';
-import type { Product } from '@/lib/types';
+import { getOrderByUserEmail } from '@/lib/orders';
+import type { Product, Order } from '@/lib/types';
 
 
 interface ChatMessage {
@@ -26,20 +27,38 @@ export default function SupportChatWidget() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  
+  // Use refs to hold the latest data without causing re-renders on every fetch.
+  const productsRef = useRef<Product[]>([]);
+  const lastOrderRef = useRef<Order | undefined>(undefined);
 
+  // Pre-fetch data when the widget is about to open.
   useEffect(() => {
-    // Pre-fetch products when the component mounts so we can pass them to the AI.
-    const fetchProducts = async () => {
+    if (!open) return;
+
+    const fetchInitialData = async () => {
       try {
-        const prods = await getProducts();
-        setProducts(prods);
+        // Fetch products
+        productsRef.current = await getProducts();
+        
+        // Fetch last order if user is logged in
+        if (user?.email) {
+            lastOrderRef.current = await getOrderByUserEmail(user.email);
+        } else {
+            lastOrderRef.current = undefined;
+        }
       } catch (error) {
-        console.error("Failed to fetch products for support widget:", error);
+        console.error("Failed to fetch initial data for support widget:", error);
+        toast({
+            title: 'Error',
+            description: 'Could not load support data. Please try again.',
+            variant: 'destructive',
+        });
       }
     };
-    fetchProducts();
-  }, []);
+    
+    fetchInitialData();
+  }, [open, user, toast]);
 
   const handleSendMessage = async () => {
     if (message.trim() === '') return;
@@ -50,15 +69,21 @@ export default function SupportChatWidget() {
     setMessage('');
 
     try {
-        // Now we pass the product list directly to the action.
+        // Pass the pre-fetched data directly to the action.
+        // This avoids any database calls on the server-side of the AI flow.
         const response = await askSupportAgentAction({
             question: message,
-            userEmail: user?.email || undefined,
-            products: products.map(({ name, price, description, tags }) => ({ name, price, description, tags: tags || [] })),
+            products: productsRef.current.map(({ name, price, description, tags }) => ({ name, price, description, tags: tags || [] })),
+            lastOrder: lastOrderRef.current 
+                ? { id: lastOrderRef.current.id, status: lastOrderRef.current.status, cartTotal: lastOrderRef.current.cartTotal } 
+                : undefined,
         });
+
         const aiMessage: ChatMessage = { sender: 'ai', text: response.answer };
         setChatHistory(prev => [...prev, aiMessage]);
+
     } catch (error) {
+        console.error("Support widget error:", error);
         toast({
             title: 'Error',
             description: 'Could not connect to the support agent. Please try again.',
@@ -96,7 +121,7 @@ export default function SupportChatWidget() {
                     )}
                     {chatHistory.map((chat, index) => (
                         <div key={index} className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`rounded-lg px-3 py-2 max-w-[80%] text-sm ${chat.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`rounded-lg px-3 py-2 max-w-[80%] text-sm ${chat.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                 {chat.text}
                             </div>
                         </div>
