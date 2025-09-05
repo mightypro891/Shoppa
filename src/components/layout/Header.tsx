@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart, X } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart, X, Info } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -132,6 +132,11 @@ export default function Header() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                        <Link href="/about" className={navigationMenuTriggerStyle()}>About Us</Link>
+                    </NavigationMenuLink>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </nav>
@@ -173,6 +178,9 @@ export default function Header() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                </DropdownMenuSub>
+                <DropdownMenuItem asChild>
+                    <Link href="/about">About Us</Link>
+                </DropdownMenuItem>
 
               {isAdmin && (
                   <>

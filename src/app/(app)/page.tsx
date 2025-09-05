@@ -61,24 +61,6 @@ export default function Home() {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  const features = [
-      {
-          icon: <Truck className="h-10 w-10 text-primary" />,
-          title: "Fast Delivery",
-          description: "Get your orders delivered to your doorstep within hours."
-      },
-      {
-          icon: <Leaf className="h-10 w-10 text-primary" />,
-          title: "Authentic Products",
-          description: "We source directly from trusted suppliers to ensure quality."
-      },
-      {
-          icon: <ShieldCheck className="h-10 w-10 text-primary" />,
-          title: "Secure Payments",
-          description: "Your transactions are safe with our secure payment gateway."
-      }
-  ];
-
   return (
     <div className="flex flex-col">
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white overflow-hidden">
@@ -100,22 +82,6 @@ export default function Home() {
           </p>
           <HeroButton />
         </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="py-12 md:py-16 bg-secondary/30">
-          <div className="container mx-auto px-4">
-               <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-10">Why Choose Lautech Shoppa?</h2>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                   {features.map((feature, index) => (
-                       <div key={index} className="flex flex-col items-center p-6 bg-card rounded-lg shadow-md">
-                           {feature.icon}
-                           <h3 className="text-xl font-semibold mt-4 mb-2">{feature.title}</h3>
-                           <p className="text-muted-foreground">{feature.description}</p>
-                       </div>
-                   ))}
-               </div>
-          </div>
       </section>
 
       {loading ? (
