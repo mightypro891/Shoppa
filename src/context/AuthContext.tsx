@@ -27,6 +27,11 @@ const MOCK_USERS: { [key: string]: MockUser & { profile?: Omit<UserProfile, 'bal
       city: 'Ogbomoso',
     },
   },
+  'customer@example.com': {
+      uid: 'customer_789',
+      email: 'customer@example.com',
+      displayName: 'Valued Customer',
+  },
   'promiseoyedele07@gmail.com': {
     uid: 'admin_456',
     email: 'promiseoyedele07@gmail.com',
@@ -173,26 +178,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const emailSignIn = async (email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-      const userExists = Object.values(MOCK_USERS).some(u => u.email === email);
+      const userExists = MOCK_USERS[email];
 
       if (userExists) {
-          const loggedInUser = Object.values(MOCK_USERS).find(u => u.email === email)!;
-          sessionStorage.setItem('mock_user', JSON.stringify(loggedInUser));
-          updateUserState(loggedInUser);
-          return loggedInUser;
+          sessionStorage.setItem('mock_user', JSON.stringify(userExists));
+          updateUserState(userExists);
+          return userExists;
       }
-      throw new Error("Invalid credentials. Hint: try user@example.com or an admin email.");
+      throw new Error("Invalid credentials. Please check your email and password.");
   };
 
   const emailSignUp = async (name: string, email: string, password: string): Promise<MockUser> => {
       await new Promise(res => setTimeout(res, 500)); // Simulate network
-       if (Object.values(MOCK_USERS).some(u => u.email === email)) {
+       if (MOCK_USERS[email]) {
           throw new Error("An account with this email already exists.");
       }
       const newUser: MockUser = { uid: `user_${Date.now()}`, email, displayName: name };
       MOCK_USERS[email] = newUser;
       sessionStorage.setItem('mock_user', JSON.stringify(newUser));
       updateUserState(newUser);
+      setTotalUsers(Object.keys(MOCK_USERS).length);
       return newUser;
   };
 
