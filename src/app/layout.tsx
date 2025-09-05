@@ -3,11 +3,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/CartContext';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
-import SupportChatWidget from '@/components/layout/SupportChatWidget';
 import CelebrationPopup from '@/components/layout/CelebrationPopup';
 import { WishlistProvider } from '@/context/WishlistContext';
 
@@ -41,10 +38,7 @@ export default function RootLayout({
             <AuthProvider>
             <CartProvider>
             <WishlistProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-                <SupportChatWidget />
+                {children}
                 <CelebrationPopup />
                 <Toaster />
             </WishlistProvider>

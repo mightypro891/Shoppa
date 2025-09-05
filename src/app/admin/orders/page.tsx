@@ -1,8 +1,13 @@
 
 'use client';
 
+import AppLayout from "@/app/(app)/layout";
 import OrderManagement from '@/components/admin/OrderManagement';
 
 export default function AdminOrdersPage() {
-  return <OrderManagement />;
+  return (
+    <AppLayout>
+      <OrderManagement />
+    </AppLayout>
+  );
 }

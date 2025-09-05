@@ -1,4 +1,5 @@
 
+import AppLayout from '@/app/(app)/layout';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import { Metadata } from 'next';
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminDashboard />;
+  return (
+    <AppLayout>
+      <AdminDashboard />
+    </AppLayout>
+  );
 }
