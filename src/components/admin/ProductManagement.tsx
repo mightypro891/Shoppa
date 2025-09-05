@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Product, DeletedProduct } from '@/lib/types';
-import { PlusCircle, Edit, Trash2, Loader2, History } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, History, DatabaseZap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { format } from 'date-fns';
+import { seedInitialProducts } from '@/lib/seed';
 
 
 export default function ProductManagement() {
@@ -71,6 +72,17 @@ export default function ProductManagement() {
     setDeletingId(null);
   };
   
+  const handleSeed = async () => {
+      const result = await seedInitialProducts();
+      toast({
+          title: result.success ? 'Database Seeded' : 'Seeding Skipped',
+          description: result.message,
+      });
+      if (result.success) {
+          fetchProducts();
+      }
+  };
+
   if (loading && products.length === 0) {
       return (
         <div className="flex items-center justify-center p-10">
@@ -105,8 +117,8 @@ export default function ProductManagement() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {deletedProducts.length > 0 ? deletedProducts.map(dp => (
-                                        <TableRow key={dp.product.id}>
+                                    {deletedProducts.length > 0 ? deletedProducts.map((dp, index) => (
+                                        <TableRow key={index}>
                                             <TableCell>{dp.product.name}</TableCell>
                                             <TableCell>{format(new Date(dp.deletedAt), 'PPpp')}</TableCell>
                                             <TableCell>{dp.deletedBy}</TableCell>
@@ -206,7 +218,11 @@ export default function ProductManagement() {
                 </div>
                  {products.length === 0 && !loading && (
                     <div className="text-center py-10 text-muted-foreground">
-                        You have not added any products yet.
+                        <p>No products found in the database.</p>
+                         <Button onClick={handleSeed} className="mt-4">
+                            <DatabaseZap className="mr-2 h-4 w-4" />
+                            Seed Initial Products
+                        </Button>
                     </div>
                 )}
             </CardContent>
