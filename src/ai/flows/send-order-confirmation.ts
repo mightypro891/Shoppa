@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { CartItem } from '@/lib/types';
 import * as nodemailer from 'nodemailer';
 
 const OrderConfirmationInputSchema = z.object({
