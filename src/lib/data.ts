@@ -3,7 +3,7 @@
 
 import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import type { Product, DeletedProduct } from './types';
-import { db } from './firebase'; 
+import { db } from './firebase-admin'; 
 
 // Helper function to convert Firestore doc to Product
 const toProduct = (docSnapshot: any): Product => {
@@ -13,16 +13,6 @@ const toProduct = (docSnapshot: any): Product => {
         ...data,
     } as Product;
 };
-
-// Helper function to convert Firestore doc to DeletedProduct
-const toDeletedProduct = (docSnapshot: any): DeletedProduct => {
-    const data = docSnapshot.data();
-    return {
-        id: docSnapshot.id,
-        ...data,
-    } as DeletedProduct;
-};
-
 
 export async function getProducts(): Promise<Product[]> {
     const productsCol = collection(db, 'products');
