@@ -3,88 +3,58 @@
 
 import type { Product, DeletedProduct } from './types';
 import { initialProducts } from './seed';
-import { db } from './firebase';
-import { collection, doc, getDocs, getDoc, addDoc, deleteDoc, writeBatch, query, where } from 'firebase/firestore';
+
+// --- PROTOTYPE DATA STORE ---
+// In a real application, this would be a database.
+// For this prototype, we're using an in-memory array.
+let products: Product[] = initialProducts.map((p, i) => ({ ...p, id: `prod_${i + 1}` }));
+let deletedProductsLog: DeletedProduct[] = [];
 
 
 // Helper function to simulate database latency
-// const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function getProducts(): Promise<Product[]> {
-    const productsCol = collection(db, 'products');
-    const productSnapshot = await getDocs(productsCol);
-    const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-    return productList;
+    await delay(500); // Simulate network call
+    return JSON.parse(JSON.stringify(products));
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-    const productRef = doc(db, 'products', id);
-    const productSnap = await getDoc(productRef);
-    if (productSnap.exists()) {
-        return { id: productSnap.id, ...productSnap.data() } as Product;
-    }
-    return undefined;
+    await delay(200);
+    return products.find(p => p.id === id);
 }
 
 export async function addProduct(productData: Omit<Product, 'id'>): Promise<Product> {
-    const productsCol = collection(db, 'products');
-    const docRef = await addDoc(productsCol, productData);
-    return { id: docRef.id, ...productData };
+    await delay(300);
+    const newProduct: Product = {
+        ...productData,
+        id: `prod_${Date.now()}`,
+    };
+    products.unshift(newProduct); // Add to the beginning of the list
+    return newProduct;
 }
 
 export async function deleteProduct(productId: string, deletedBy: string): Promise<void> {
-    const productRef = doc(db, 'products', productId);
-    const productSnap = await getDoc(productRef);
-
-    if (productSnap.exists()) {
-        const productData = productSnap.data() as Product;
-        const deletedRecord: DeletedProduct = {
-            product: productData,
-            deletedBy: deletedBy,
+    await delay(300);
+    const productIndex = products.findIndex(p => p.id === productId);
+    if (productIndex > -1) {
+        const [deletedProduct] = products.splice(productIndex, 1);
+        deletedProductsLog.push({
+            product: deletedProduct,
+            deletedBy,
             deletedAt: new Date().toISOString(),
-        };
-        
-        const deletedProductsCol = collection(db, 'deletedProducts');
-        await addDoc(deletedProductsCol, deletedRecord);
-        
-        await deleteDoc(productRef);
-    } else {
-        console.error("Product not found for deletion:", productId);
+        })
     }
 }
 
 export async function getDeletedProducts(): Promise<DeletedProduct[]> {
-    const deletedCol = collection(db, 'deletedProducts');
-    const deletedSnapshot = await getDocs(deletedCol);
-    return deletedSnapshot.docs.map(doc => doc.data() as DeletedProduct);
+    await delay(200);
+    return JSON.parse(JSON.stringify(deletedProductsLog));
 }
 
 
 export async function resetAllProducts(): Promise<void> {
-    const productsCol = collection(db, 'products');
-    const deletedCol = collection(db, 'deletedProducts');
-
-    // Delete all existing products
-    const existingProductsSnapshot = await getDocs(productsCol);
-    const deleteProductsBatch = writeBatch(db);
-    existingProductsSnapshot.docs.forEach(doc => {
-        deleteProductsBatch.delete(doc.ref);
-    });
-    await deleteProductsBatch.commit();
-    
-    // Delete all existing deleted product logs
-    const existingDeletedSnapshot = await getDocs(deletedCol);
-    const deleteLogsBatch = writeBatch(db);
-    existingDeletedSnapshot.docs.forEach(doc => {
-        deleteLogsBatch.delete(doc.ref);
-    });
-    await deleteLogsBatch.commit();
-
-    // Add initial products
-    const addBatch = writeBatch(db);
-    initialProducts.forEach(product => {
-        const newDocRef = doc(productsCol);
-        addBatch.set(newDocRef, product);
-    });
-    await addBatch.commit();
+    await delay(500);
+    products = initialProducts.map((p, i) => ({ ...p, id: `prod_${i + 1}` }));
+    deletedProductsLog = [];
 }

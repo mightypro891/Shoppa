@@ -2,55 +2,50 @@
 'use server';
 
 import type { Order, OrderStatus } from './types';
-import { db } from './firebase';
-import { collection, doc, getDocs, getDoc, addDoc, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
 
+// --- PROTOTYPE DATA STORE ---
+let orders: Order[] = [];
+
+// Helper function to simulate database latency
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function getAllOrders(): Promise<Order[]> {
-  const ordersCol = collection(db, 'orders');
-  const q = query(ordersCol, orderBy('createdAt', 'desc'));
-  const orderSnapshot = await getDocs(q);
-  return orderSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+  await delay(500);
+  return JSON.parse(JSON.stringify(orders)).sort((a:Order, b:Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getOrderById(id: string): Promise<Order | undefined> {
-  const orderRef = doc(db, 'orders', id);
-  const orderSnap = await getDoc(orderRef);
-  if (orderSnap.exists()) {
-    return { id: orderSnap.id, ...orderSnap.data() } as Order;
-  }
-  return undefined;
+  await delay(200);
+  return orders.find(o => o.id === id);
 }
 
 export async function getOrderByUserEmail(email: string): Promise<Order | undefined> {
-    const ordersCol = collection(db, 'orders');
-    const q = query(
-        ordersCol, 
-        where('customer.email', '==', email),
-        orderBy('createdAt', 'desc'),
-        limit(1)
-    );
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as Order;
-    }
-    return undefined;
+    await delay(300);
+    const userOrders = orders
+        .filter(o => o.customer.email === email)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return userOrders[0];
 }
 
+
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
-  const newOrderData = {
+  await delay(400);
+  const newOrder: Order = {
     ...orderData,
-    status: 'Order Placed' as OrderStatus,
+    id: `order_${Date.now()}`,
+    status: 'Order Placed',
     createdAt: new Date().toISOString(),
   };
-  const ordersCol = collection(db, 'orders');
-  const docRef = await addDoc(ordersCol, newOrderData);
-  return { id: docRef.id, ...newOrderData };
+  orders.push(newOrder);
+  return newOrder;
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order | undefined> {
-    const orderRef = doc(db, 'orders', orderId);
-    await updateDoc(orderRef, { status: status });
-    return await getOrderById(orderId);
+    await delay(300);
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex > -1) {
+        orders[orderIndex].status = status;
+        return orders[orderIndex];
+    }
+    return undefined;
 }

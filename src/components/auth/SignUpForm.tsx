@@ -10,12 +10,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { updateProfile } from 'firebase/auth';
-import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { Loader2 } from 'lucide-react';
+
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -32,13 +31,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-const isFirebaseConfigured = firebaseApiKey && firebaseApiKey !== 'YOUR_API_KEY' && firebaseApiKey !== '';
 
 export default function SignUpForm() {
   const router = useRouter();
   const { user, loading, googleSignIn, emailSignUp } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(formSchema),
@@ -52,9 +50,9 @@ export default function SignUpForm() {
   }, [user, loading, router]);
   
   const onSubmit = async (data: SignUpFormValues) => {
+      setIsSubmitting(true);
       try {
-          const newUser = await emailSignUp(data.email, data.password);
-          await updateProfile(newUser, { displayName: data.name });
+          await emailSignUp(data.name, data.email, data.password);
           router.push('/');
       } catch (error: any) {
           toast({
@@ -62,6 +60,8 @@ export default function SignUpForm() {
               description: error.message,
               variant: 'destructive',
           });
+      } finally {
+        setIsSubmitting(false);
       }
   };
 
@@ -72,85 +72,68 @@ export default function SignUpForm() {
         <CardDescription>Enter your details to get started.</CardDescription>
       </CardHeader>
       <CardContent>
-          {!isFirebaseConfigured ? (
-             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Firebase Not Configured</AlertTitle>
-              <AlertDescription>
-                Your Firebase API keys are missing. Please:
-                <ol className="list-decimal list-inside mt-2">
-                    <li>Copy your web app credentials from the Firebase Console.</li>
-                    <li>Paste them into the `.env` file in your project.</li>
-                    <li>Restart the development server.</li>
-                </ol>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="John Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                                <Input placeholder="name@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Create Account
-                    </Button>
-                </form>
-              </Form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                            <Input placeholder="name@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Account
+                </Button>
+            </form>
+          </Form>
 
-              <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                  </span>
-              </div>
-              </div>
-              <Button className="w-full" variant="outline" onClick={googleSignIn}>
-              <GoogleIcon />
-              Google
-              </Button>
-            </>
-          )}
+          <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+              </span>
+          </div>
+          </div>
+          <Button className="w-full" variant="outline" onClick={googleSignIn} disabled={isSubmitting}>
+            <GoogleIcon />
+            Sign in as Super Admin
+          </Button>
       </CardContent>
        <CardFooter className="flex justify-center text-sm">
             <p>Already have an account?&nbsp;</p>
