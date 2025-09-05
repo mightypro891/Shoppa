@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/context/CartContext';
@@ -101,6 +102,7 @@ export default function CheckoutForm() {
         router.push(`/order/${newOrder.id}`);
 
     } catch (error) {
+        console.error("Order placement error:", error);
         toast({
             title: 'Order Failed',
             description: 'There was an issue placing your order. Please try again.',

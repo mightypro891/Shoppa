@@ -27,7 +27,7 @@ const OrderConfirmationInputSchema = z.object({
         description: z.string(),
         aiHint: z.string(),
         tags: z.array(z.string()).optional(),
-        vendorId: z.string().optional(),
+        vendorId: z.string().optional(), // This is the vendor's email
     })).describe('The items in the order.'),
     cartTotal: z.number().describe('The total price of the order.'),
 });
@@ -41,16 +41,17 @@ export async function sendOrderConfirmation(input: OrderConfirmationInput): Prom
 
 // Helper function to create a Nodemailer transporter
 const createTransporter = () => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        throw new Error("Email credentials are not configured in environment variables.");
+    if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.warn("Email service is not configured. Skipping email sending.");
+        return null;
     }
     return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.EMAIL_PORT || '465'),
-        secure: true, // true for 465, false for other ports
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: (process.env.EMAIL_PORT || '587') === '465',
         auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS, // Use App Password for Gmail
+            pass: process.env.EMAIL_PASS,
         },
     });
 };
@@ -106,6 +107,13 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     
     const { orderId, customer, cartItems, cartTotal } = input;
     const transporter = createTransporter();
+    
+    // If transporter is null, it means email service is not configured.
+    if (!transporter) {
+        console.log("Skipping email notifications because email service is not configured.");
+        return;
+    }
+
     const superAdminEmail = "promiseoyedele07@gmail.com"; 
 
     // 1. Generate and send customer email
@@ -147,7 +155,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
 
 
     // 2. Group items by vendor
-    const itemsByVendor = new Map<string, CartItem[]>();
+    const itemsByVendor = new Map<string, typeof cartItems>();
 
     for (const item of cartItems) {
       const vendorId = item.vendorId || superAdminEmail; // Default to super admin if no vendor
