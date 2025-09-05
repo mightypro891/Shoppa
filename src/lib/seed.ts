@@ -4,7 +4,7 @@ import type { Product } from './types';
 export const initialProducts: Omit<Product, 'id'>[] = [
     // Food
     {
-        name: 'Ofada Rice',
+        name: 'Ofada Rice (2kg)',
         price: 3000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fofada-rice.jpg?alt=media&token=e9d50937-255d-4f1b-8c63-44143494773c',
         description: 'Aromatic, locally grown short-grain rice with a unique nutty flavor. Perfect for Ofada stew.',
@@ -13,8 +13,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Long Grain Parboiled Rice',
-        price: 2500.0,
+        name: 'Long Grain Parboiled Rice (5kg)',
+        price: 5500.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fparboiled-rice.jpg?alt=media&token=7a9a1b1b-5b5c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A versatile staple, fluffy and separate when cooked. Ideal for Jollof rice and fried rice.',
         aiHint: 'white rice',
@@ -49,7 +49,7 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Poundo Yam',
+        name: 'Poundo Yam Flour (1kg)',
         price: 2500.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fpoundo-yam.jpg?alt=media&token=b3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A smooth, fluffy swallow made from yam flour. A staple for any soup.',
@@ -67,7 +67,7 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Palm Oil',
+        name: 'Palm Oil (1 Litre)',
         price: 1800.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fpalm-oil.jpg?alt=media&token=d8a1d82e-9f3a-4e2b-8c63-44143494773c',
         description: 'Rich, flavorful, and red, this oil is the soul of Nigerian cooking.',
@@ -76,7 +76,7 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Smoked Catfish',
+        name: 'Smoked Catfish (Medium)',
         price: 2200.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fsmoked-fish.jpg?alt=media&token=f8a1d82e-9f3a-4e2b-8c63-44143494773c',
         description: 'A smoky, savory fish that adds deep flavor to soups and stews.',
@@ -85,11 +85,11 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Plantain (Ripe)',
-        price: 500.0,
+        name: 'Plantain (Bunch)',
+        price: 1500.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fplantain.jpg?alt=media&token=0c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'Sweet and versatile, perfect for frying as dodo or boiling.',
-        aiHint: 'plantain',
+        aiHint: 'plantain bunch',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com'
     },
@@ -114,36 +114,36 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Argan Oil Hair Treatment',
-        price: 6000.0,
-        image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fhair-treatment.jpg?alt=media&token=3c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'Nourishes and repairs damaged hair, leaving it soft, silky, and strong.',
-        aiHint: 'hair product',
+        name: 'African Black Soap',
+        price: 3500.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Traditional soap known for its cleansing and clarifying properties. Great for all skin types.',
+        aiHint: 'black soap',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Silk Head Scarf',
-        price: 4500.0,
-        image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fsilk-scarf.jpg?alt=media&token=4c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'A beautiful and elegant silk scarf, perfect for protecting hair or as a fashion accessory.',
-        aiHint: 'silk scarf',
+        name: 'Raw Shea Butter',
+        price: 2500.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Unrefined shea butter, deeply moisturizing for skin and hair. A natural wonder.',
+        aiHint: 'shea butter',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com'
     },
-    {
-        name: 'Gold Plated Necklace',
-        price: 12000.0,
-        image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fgold-necklace.jpg?alt=media&token=5c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'Elegant gold plated jewelry to complement any outfit.',
-        aiHint: 'gold necklace',
-        tags: ['skin-care'],
-        vendorId: 'adedolapotamara@gmail.com'
-    },
-    
+
     // Gadgets
     {
-        name: 'Ultra-Thin Laptop',
+        name: 'Affordable Smartphone',
+        price: 95000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'A reliable and modern smartphone with a great camera and long-lasting battery. Perfect for students.',
+        aiHint: 'smartphone',
+        tags: ['gadgets'],
+        vendorId: 'promiseoyedele07@gmail.com'
+    },
+    {
+        name: 'Student Laptop',
         price: 450000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Flaptop.jpg?alt=media&token=6c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A powerful and lightweight laptop for work, study, and entertainment on the go.',
@@ -152,16 +152,34 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'promiseoyedele07@gmail.com'
     },
     {
-        name: 'Wireless Mouse',
-        price: 7500.0,
-        image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fwireless-mouse.jpg?alt=media&token=7c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'Ergonomic wireless mouse with a long-lasting battery for seamless productivity.',
-        aiHint: 'computer mouse',
+        name: 'High-Capacity Power Bank',
+        price: 15000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Never run out of battery again. This 20,000mAh power bank can charge your devices multiple times.',
+        aiHint: 'power bank',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com'
     },
     {
-        name: 'USB-C Hub',
+        name: 'Wireless Bluetooth Speaker',
+        price: 12500.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Portable and powerful speaker with rich sound and deep bass for music lovers.',
+        aiHint: 'bluetooth speaker',
+        tags: ['gadgets'],
+        vendorId: 'promiseoyedele07@gmail.com'
+    },
+    {
+        name: 'Noise-Cancelling Earbuds',
+        price: 22000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Immerse yourself in sound with these comfortable, noise-cancelling wireless earbuds.',
+        aiHint: 'wireless earbuds',
+        tags: ['gadgets'],
+        vendorId: 'promiseoyedele07@gmail.com'
+    },
+    {
+        name: 'USB-C Hub Multiport Adapter',
         price: 12000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fusbc-hub.jpg?alt=media&token=8c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'Expand your laptop\'s connectivity with this multi-port USB-C hub.',
@@ -172,7 +190,7 @@ export const initialProducts: Omit<Product, 'id'>[] = [
 
     // Kitchen Utensils
     {
-        name: 'Non-Stick Pot Set',
+        name: 'Non-Stick Pot Set (3-piece)',
         price: 25000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fpot-set.jpg?alt=media&token=9c3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A complete set of durable non-stick pots for all your cooking needs.',
@@ -181,11 +199,20 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Stainless Steel Knife Set',
+        name: 'Electric Blender & Grinder',
         price: 18000.0,
-        image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fknife-set.jpg?alt=media&token=ac3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'High-quality, sharp stainless steel knives with a wooden block.',
-        aiHint: 'knife set',
+        image: 'https://picsum.photos/400/300',
+        description: 'High-speed blender perfect for smoothies, soups, and grinding pepper or beans.',
+        aiHint: 'kitchen blender',
+        tags: ['kitchen-utensils'],
+        vendorId: 'adedolapotamara@gmail.com'
+    },
+     {
+        name: 'Digital Air Fryer',
+        price: 45000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Enjoy healthier fried foods with less oil. Large capacity for the whole hostel.',
+        aiHint: 'air fryer',
         tags: ['kitchen-utensils'],
         vendorId: 'adedolapotamara@gmail.com'
     },
@@ -201,11 +228,20 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Duvet Comforter',
+        name: 'All-Season Duvet Comforter',
         price: 35000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fduvet.jpg?alt=media&token=cc3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A plush and warm duvet to keep you cozy during cold nights.',
         aiHint: 'duvet comforter',
+        tags: ['beddings'],
+        vendorId: 'adedolapotamara@gmail.com'
+    },
+     {
+        name: 'Orthopedic Pillow',
+        price: 12000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Memory foam pillow that provides excellent neck and shoulder support for restful sleep.',
+        aiHint: 'bed pillow',
         tags: ['beddings'],
         vendorId: 'adedolapotamara@gmail.com'
     },
@@ -221,13 +257,22 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     },
     {
-        name: 'Scented Candle',
+        name: 'Scented Candle (Lavender)',
         price: 5000.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fscented-candle.jpg?alt=media&token=ec3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
         description: 'A lavender-scented candle to create a relaxing and calming atmosphere.',
         aiHint: 'scented candle',
         tags: ['home-decors'],
         vendorId: 'adedolapotamara@gmail.com'
+    },
+    {
+        name: 'LED Desk Lamp',
+        price: 8500.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'A flexible and bright LED lamp, perfect for late-night study sessions.',
+        aiHint: 'desk lamp',
+        tags: ['home-decors', 'gadgets'],
+        vendorId: 'promiseoyedele07@gmail.com'
     },
 
     // Intimate Apparel
