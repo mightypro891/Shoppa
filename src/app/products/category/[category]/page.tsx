@@ -3,10 +3,12 @@
 
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Product } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -19,17 +21,16 @@ export default function CategoryPage() {
 
     const fetchProducts = async () => {
       setLoading(true);
-      const allProducts = await getProducts();
-      const decodedCategory = decodeURIComponent(category).toLowerCase();
-      const prods = allProducts.filter(p => p.tags?.includes(decodedCategory));
-      
-      if (prods.length === 0) {
-        // You might want to handle this case differently, maybe show a message
-        console.warn(`No products found for category: ${decodedCategory}`);
+      try {
+        const allProducts = await getProducts();
+        const decodedCategory = decodeURIComponent(category).toLowerCase();
+        const prods = allProducts.filter(p => p.tags?.includes(decodedCategory));
+        setFilteredProducts(prods);
+      } catch (error) {
+          console.error("Failed to fetch products for category:", error);
+      } finally {
+          setLoading(false);
       }
-      
-      setFilteredProducts(prods);
-      setLoading(false);
     };
 
     fetchProducts();
@@ -58,6 +59,9 @@ export default function CategoryPage() {
           <div className="text-center py-16">
             <h2 className="text-2xl font-semibold">No products found</h2>
             <p className="text-muted-foreground">There are no products in the "{formattedCategory}" category yet.</p>
+             <Button asChild className="mt-6">
+                <Link href="/products">View All Products</Link>
+            </Button>
           </div>
         )}
     </div>

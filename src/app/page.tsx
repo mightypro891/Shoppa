@@ -18,9 +18,14 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const prods = await getProducts();
-      setProducts(prods);
-      setLoading(false);
+      try {
+        const prods = await getProducts();
+        setProducts(prods);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchProducts();
   }, []);

@@ -2,7 +2,7 @@
 'use client';
 
 import { getProductById, getProducts } from '@/lib/data';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { AddToCartButton } from '@/components/products/AddToCartButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,40 +24,63 @@ export default function ProductDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
     const fetchProductData = async () => {
       setLoading(true);
-      
-      const productData = await getProductById(id);
-      if (!productData) {
-        notFound();
+      setError(null);
+      try {
+        const productData = await getProductById(id);
+        if (!productData) {
+          setError('Product not found.');
+          return;
+        }
+        setProduct(productData);
+        
+        const reviewData = await getReviewsForProduct(id);
+        setReviews(reviewData);
+        
+        const allProducts = await getProducts();
+        const related = allProducts
+          .filter(p => p.tags?.some(tag => productData.tags?.includes(tag)) && p.id !== productData.id)
+          .slice(0, 4);
+        setRelatedProducts(related);
+      } catch (e) {
+          console.error("Failed to fetch product data", e);
+          setError("Failed to load product details.");
+      } finally {
+          setLoading(false);
       }
-      setProduct(productData);
-      
-      const reviewData = await getReviewsForProduct(id);
-      setReviews(reviewData);
-      
-      const allProducts = await getProducts();
-      const related = allProducts
-        .filter(p => p.tags?.some(tag => productData.tags?.includes(tag)) && p.id !== productData.id)
-        .slice(0, 4);
-      setRelatedProducts(related);
-      
-      setLoading(false);
     };
 
     fetchProductData();
   }, [id]);
 
-  if (loading || !product) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (error) {
+     return (
+      <div className="flex flex-col justify-center items-center h-screen text-center">
+        <h2 className="text-2xl font-semibold text-destructive">{error}</h2>
+        <p className="text-muted-foreground">Please try again or return to the homepage.</p>
+        <Button asChild className="mt-4">
+          <Link href="/">Go Home</Link>
+        </Button>
+      </div>
+    );
+  }
+  
+  if (!product) {
+      return null; // Should be covered by loading/error states
   }
     
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
