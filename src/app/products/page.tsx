@@ -3,7 +3,7 @@
 
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
@@ -12,6 +12,8 @@ import { Product } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -93,6 +95,26 @@ export default function ProductsPage() {
 
   const formatCategoryName = (slug: string) => slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
+  const FilterControls = () => (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold mb-4">Categories</h3>
+      <div className="space-y-2">
+        {allCategories.map(category => (
+          <div key={category} className="flex items-center space-x-2">
+            <Checkbox 
+              id={`filter-${category}`}
+              checked={selectedCategories.includes(category)}
+              onCheckedChange={() => handleCategoryChange(category)}
+            />
+            <Label htmlFor={`filter-${category}`} className="font-normal capitalize cursor-pointer">
+              {formatCategoryName(category)}
+            </Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -101,7 +123,7 @@ export default function ProductsPage() {
         </h1>
         <div className="flex items-center gap-4">
             <Select value={sortOption} onValueChange={setSortOption}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Sort by..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,27 +133,39 @@ export default function ProductsPage() {
                     <SelectItem value="price-desc">Price: High to Low</SelectItem>
                 </SelectContent>
             </Select>
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                    <span className="sr-only">Filters</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4">
+                    <FilterControls />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <aside className="md:col-span-1">
-          <div className="sticky top-24">
-            <h3 className="text-lg font-semibold mb-4">Categories</h3>
-            <div className="space-y-2">
-              {allCategories.map(category => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={category} 
-                    checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => handleCategoryChange(category)}
-                  />
-                  <Label htmlFor={category} className="font-normal capitalize cursor-pointer">
-                    {formatCategoryName(category)}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
+        <aside className="hidden md:block md:col-span-1">
+          <Card className="sticky top-24">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Filter className="h-5 w-5" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FilterControls />
+            </CardContent>
+          </Card>
         </aside>
         <main className="md:col-span-3">
           {filteredProducts.length > 0 ? (
