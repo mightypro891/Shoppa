@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart, X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,11 +22,12 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
 import { ModeToggle } from './ModeToggle';
 import { Input } from '../ui/input';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '../ui/navigation-menu';
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { itemCount } = useCart();
@@ -34,6 +35,8 @@ export default function Header() {
   const router = useRouter();
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
   const [productsByCategory, setProductsByCategory] = useState<Record<string, Product[]>>({});
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
 
   useEffect(() => {
@@ -48,6 +51,13 @@ export default function Header() {
     };
     fetchProducts();
   }, []);
+  
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
 
   const handleSignOut = async () => {
     logOut();
@@ -64,76 +74,82 @@ export default function Header() {
     const query = formData.get('q') as string;
     if (query) {
       router.push(`/products?q=${encodeURIComponent(query)}`);
+      setIsSearchOpen(false);
     }
   };
 
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Naija Shoppa
+              Lautech Shoppa
             </span>
           </Link>
-        </div>
-
-        <nav className="hidden md:flex">
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                   <Link href="/products" className={navigationMenuTriggerStyle()}>All Products</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-               <NavigationMenuItem>
-                  <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="grid grid-cols-3 gap-x-8 gap-y-4 p-6 w-[700px] lg:w-[800px]">
-                      {categories.map((category) => (
-                        <div key={category} className="flex flex-col">
-                           <NavigationMenuLink asChild>
-                               <Link href={`/products/category/${category}`} className="font-semibold text-lg mb-3 pb-1 border-b border-primary/50 hover:text-primary transition-colors">
-                                   {formatCategoryName(category)}
-                               </Link>
-                           </NavigationMenuLink>
-                           <ul className="flex flex-col gap-2">
-                               {productsByCategory[category]?.slice(0, 5).map(product => (
-                                   <li key={product.id}>
-                                       <NavigationMenuLink asChild>
-                                           <Link href={`/products/${product.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                               {product.name}
-                                           </Link>
-                                       </NavigationMenuLink>
-                                   </li>
-                               ))}
-                                {productsByCategory[category]?.length > 5 && (
-                                   <li>
+           <nav className="hidden md:flex">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/products" className={navigationMenuTriggerStyle()}>All Products</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                    <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="grid grid-cols-3 gap-x-8 gap-y-4 p-6 w-[700px] lg:w-[800px]">
+                        {categories.map((category) => (
+                          <div key={category} className="flex flex-col">
+                            <NavigationMenuLink asChild>
+                                <Link href={`/products/category/${category}`} className="font-semibold text-lg mb-3 pb-1 border-b border-primary/50 hover:text-primary transition-colors">
+                                    {formatCategoryName(category)}
+                                </Link>
+                            </NavigationMenuLink>
+                            <ul className="flex flex-col gap-2">
+                                {productsByCategory[category]?.slice(0, 5).map(product => (
+                                    <li key={product.id}>
                                         <NavigationMenuLink asChild>
-                                            <Link href={`/products/category/${category}`} className="text-sm font-semibold text-primary hover:underline">
-                                                View all...
+                                            <Link href={`/products/${product.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                                {product.name}
                                             </Link>
                                         </NavigationMenuLink>
-                                   </li>
-                               )}
-                           </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-        </nav>
+                                    </li>
+                                ))}
+                                  {productsByCategory[category]?.length > 5 && (
+                                    <li>
+                                          <NavigationMenuLink asChild>
+                                              <Link href={`/products/category/${category}`} className="text-sm font-semibold text-primary hover:underline">
+                                                  View all...
+                                              </Link>
+                                          </NavigationMenuLink>
+                                    </li>
+                                  )}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </nav>
+        </div>
 
-        <div className="flex-1 max-w-md hidden md:flex">
-          <form onSubmit={handleSearch} className="w-full relative">
-            <Input name="q" placeholder="Search for products..." className="pr-10" />
-            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
+
+        <div className="flex-1 flex justify-end">
+          <div className={cn("relative w-full max-w-md hidden md:flex justify-end", isSearchOpen && "w-full")}>
+              <form onSubmit={handleSearch} className={cn("w-full absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-300", isSearchOpen ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+                <Input ref={searchInputRef} name="q" placeholder="Search for products..." className="pr-10" />
+                 <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setIsSearchOpen(false)}>
+                    <X className="h-4 w-4" />
+                </Button>
+              </form>
+               <Button onClick={() => setIsSearchOpen(true)} variant="ghost" size="icon" className={cn("transition-all duration-300", isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100')}>
+                <Search className="h-5 w-5" />
+              </Button>
+          </div>
         </div>
 
         <nav className="flex items-center gap-1 sm:gap-2">
