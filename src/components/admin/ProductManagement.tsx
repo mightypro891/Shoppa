@@ -161,6 +161,7 @@ export default function ProductManagement() {
                             <TableHead className="w-[80px]">Image</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Price</TableHead>
+                            <TableHead>Sale Price</TableHead>
                             <TableHead>Tags</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -179,6 +180,13 @@ export default function ProductManagement() {
                                 </TableCell>
                                 <TableCell className="font-medium">{product.name}</TableCell>
                                 <TableCell>₦{product.price.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    {product.salePrice ? (
+                                        <span className="font-semibold text-destructive">₦{product.salePrice.toFixed(2)}</span>
+                                    ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                    )}
+                                </TableCell>
                                 <TableCell>{product.tags?.join(', ')}</TableCell>
                                 <TableCell className="text-right">
                                 <Button asChild variant="ghost" size="icon">

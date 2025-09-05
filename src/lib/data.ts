@@ -34,6 +34,17 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<Prod
     return newProduct;
 }
 
+export async function updateProduct(id: string, productData: Omit<Product, 'id'>): Promise<Product | undefined> {
+    await delay(300);
+    const productIndex = products.findIndex(p => p.id === id);
+    if (productIndex > -1) {
+        products[productIndex] = { ...products[productIndex], ...productData };
+        return products[productIndex];
+    }
+    return undefined;
+}
+
+
 export async function deleteProduct(productId: string, deletedBy: string): Promise<void> {
     await delay(300);
     const productIndex = products.findIndex(p => p.id === productId);

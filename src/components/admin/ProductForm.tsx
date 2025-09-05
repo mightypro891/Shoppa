@@ -20,7 +20,7 @@ import type { Product } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { addProduct } from '@/lib/data';
+import { addProduct, updateProduct } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -29,6 +29,7 @@ import { useState } from 'react';
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
+  salePrice: z.coerce.number().optional(),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   image: z.any(),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
@@ -57,6 +58,7 @@ export default function ProductForm({ product }: ProductFormProps) {
     defaultValues: {
       name: product?.name || '',
       price: product?.price || 0,
+      salePrice: product?.salePrice || undefined,
       description: product?.description || '',
       image: product?.image || '',
       aiHint: product?.aiHint || '',
@@ -81,6 +83,7 @@ export default function ProductForm({ product }: ProductFormProps) {
     const productData: Omit<Product, 'id'> = {
       name: data.name,
       price: data.price,
+      salePrice: data.salePrice || undefined,
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
@@ -88,12 +91,11 @@ export default function ProductForm({ product }: ProductFormProps) {
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
-    if (isEditing) {
-       // Update logic is not fully implemented in this prototype
-      console.log('PROTOTYPE: Updating product', { id: product?.id, ...productData });
+    if (isEditing && product) {
+       await updateProduct(product.id, productData);
        toast({
-        title: 'Note: Update Not Implemented',
-        description: `Product edits are not saved in this prototype version.`,
+        title: 'Product Updated',
+        description: `The product "${data.name}" has been saved.`,
       });
     } else {
       await addProduct(productData);
@@ -135,19 +137,37 @@ export default function ProductForm({ product }: ProductFormProps) {
                     </FormItem>
                 )}
                 />
-                <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" placeholder="9.99" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Regular Price</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" placeholder="e.g. 1000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="salePrice"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Sale Price (Optional)</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                            Adds item to "Today's Deals"
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
                 <FormField
                 control={form.control}
                 name="description"
