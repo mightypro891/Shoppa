@@ -81,7 +81,7 @@ export default function Header() {
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
@@ -138,21 +138,17 @@ export default function Header() {
         </div>
 
 
-        <div className="flex-1 flex justify-end items-center">
-            <div className={cn("relative w-full max-w-md", isSearchOpen && "w-full")}>
-              <form onSubmit={handleSearch} className={cn("w-full absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-300", isSearchOpen ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
-                <Input ref={searchInputRef} name="q" placeholder="Search for products..." className="pr-10" />
-                 <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setIsSearchOpen(false)}>
-                    <X className="h-4 w-4" />
+        <div className="flex items-center gap-1 sm:gap-2">
+           <div className="relative w-full max-w-md hidden md:block">
+              <form onSubmit={handleSearch} className={cn("w-full transition-all duration-300")}>
+                <Input name="q" placeholder="Search for products..." className="pr-10 bg-secondary/50" />
+                 <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-0 h-full">
+                    <Search className="h-4 w-4" />
                 </Button>
               </form>
-               <Button onClick={() => setIsSearchOpen(true)} variant="ghost" size="icon" className={cn("transition-all duration-300", isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100')}>
-                <Search className="h-5 w-5" />
-              </Button>
-          </div>
-        </div>
+           </div>
 
-        <nav className="flex items-center gap-1 sm:gap-2">
+
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -170,22 +166,9 @@ export default function Header() {
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
                       {categories.map((category) => (
-                         <DropdownMenuSub key={category}>
-                            <DropdownMenuSubTrigger>
-                                <Link href={`/products/category/${category}`}>{formatCategoryName(category)}</Link>
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuPortal>
-                               <DropdownMenuSubContent>
-                                {productsByCategory[category]?.length > 0 ? productsByCategory[category].map(product => (
-                                    <DropdownMenuItem key={product.id} asChild>
-                                        <Link href={`/products/${product.id}`}>{product.name}</Link>
-                                    </DropdownMenuItem>
-                                )) : (
-                                    <DropdownMenuItem disabled>No products</DropdownMenuItem>
-                                )}
-                               </DropdownMenuSubContent>
-                            </DropdownMenuPortal>
-                         </DropdownMenuSub>
+                         <DropdownMenuItem key={category} asChild>
+                             <Link href={`/products/category/${category}`}>{formatCategoryName(category)}</Link>
+                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
@@ -201,15 +184,24 @@ export default function Header() {
                 )}
             </DropdownMenuContent>
           </DropdownMenu>
+          
+           <Button onClick={() => setIsSearchOpen(true)} variant="ghost" size="icon" className="md:hidden">
+                <Search className="h-5 w-5" />
+            </Button>
+           
+           {isSearchOpen && (
+               <div className="absolute top-0 left-0 w-full h-full bg-background z-50 flex items-center px-4 md:hidden">
+                 <form onSubmit={handleSearch} className="w-full">
+                   <Input ref={searchInputRef} name="q" placeholder="Search for products..." className="pr-10" />
+                 </form>
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-4" onClick={() => setIsSearchOpen(false)}>
+                     <X className="h-5 w-5" />
+                 </Button>
+               </div>
+           )}
+
 
           <ModeToggle />
-
-           <Button asChild variant="ghost" size="icon">
-            <Link href="/wishlist">
-              <Heart className="h-6 w-6" />
-              <span className="sr-only">Wishlist</span>
-            </Link>
-          </Button>
 
           <Button asChild variant="ghost" size="icon" className="relative">
             <Link href="/cart">
@@ -230,12 +222,6 @@ export default function Header() {
               </div>
           ) : user ? (
             <>
-               <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-                <Link href="/fund-wallet">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    ₦{accountBalance.toFixed(2)}
-                </Link>
-               </Button>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -247,12 +233,19 @@ export default function Header() {
                     </Avatar>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem disabled>
                     <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.displayName}</p>
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                     <DropdownMenuItem asChild>
+                        <Link href="/fund-wallet">
+                          <Wallet className="mr-2 h-4 w-4" />
+                          <span>Fund Wallet (₦{accountBalance.toFixed(2)})</span>
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {isAdmin && (
@@ -266,9 +259,7 @@ export default function Header() {
                     <DropdownMenuItem asChild>
                         <Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />My Wishlist</Link>
                     </DropdownMenuItem>
-                     <DropdownMenuItem asChild>
-                        <Link href="/fund-wallet"><Wallet className="mr-2 h-4 w-4" />Fund Wallet</Link>
-                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -286,7 +277,7 @@ export default function Header() {
               </Button>
             </div>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
