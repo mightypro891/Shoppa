@@ -114,7 +114,7 @@ export default function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link href="/products" legacyBehavior passHref>
+                <Link href="/products" legacyBehavior={false} passHref>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                     All Products
                   </NavigationMenuLink>
@@ -286,5 +286,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
