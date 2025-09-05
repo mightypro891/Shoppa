@@ -32,6 +32,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  rawIsAdmin: boolean; // The check without considering selected role
   adminRole: AdminRole | null;
   isSuperAdmin: boolean;
   admins: AdminUser[];
@@ -70,9 +71,8 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [admins, setAdmins] = useState<AdminUser[]>(INITIAL_ADMINS);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [accountBalance, setAccountBalance] = useState(2500);
@@ -87,23 +87,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
-      if (roleFromSession) {
-        setSelectedRole(roleFromSession);
-        setHasSelectedRole(true);
-      } else {
-        setHasSelectedRole(false);
-      }
-    } else if (user && !isAdmin) {
-      setSelectedRole('user');
-      setHasSelectedRole(true);
-    } else {
-      setSelectedRole(null);
-      setHasSelectedRole(false);
-    }
-  }, [user, isAdmin]);
+  // Derived states
+  const isAdmin = rawIsAdmin && selectedRole === 'admin';
+  const isSuperAdmin = adminRole === 'Super Admin' && selectedRole === 'admin';
+
 
   const selectRole = (role: SelectedRole) => {
     if (role) {
@@ -123,17 +110,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (currentUser) {
           const adminInfo = admins.find(admin => admin.email === currentUser.email);
-
-          if (adminInfo) {
-              setIsAdmin(true);
+          const userIsAdmin = !!adminInfo;
+          
+          setRawIsAdmin(userIsAdmin);
+          
+          if (userIsAdmin) {
               setAdminRole(adminInfo.role);
-              setIsSuperAdmin(adminInfo.role === 'Super Admin');
               setManagedCategories(adminInfo.managedCategories || null);
+              // Check session storage for a previously selected role
+              const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
+              if(roleFromSession) {
+                  setSelectedRole(roleFromSession);
+                  setHasSelectedRole(true);
+              } else {
+                  setHasSelectedRole(false); // Admin needs to select a role
+              }
           } else {
-              setIsAdmin(false);
+              // It's a regular user
               setAdminRole(null);
-              setIsSuperAdmin(false);
               setManagedCategories(null);
+              selectRole('user'); // Auto-select 'user' role
           }
           
           // In a real app, profile data would be fetched from Firestore
@@ -145,9 +141,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
 
       } else {
-          setIsAdmin(false);
+          // No user logged in
+          setRawIsAdmin(false);
           setAdminRole(null);
-          setIsSuperAdmin(false);
           setUserProfile(null);
           setManagedCategories(null);
           selectRole(null); // Clear role on logout
@@ -180,6 +176,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const emailSignUp = async (name: string, email: string, password: string): Promise<User | null> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
+    // After signing up, we need to refresh the user state to get the displayName
+    updateUserState(userCredential.user);
     return userCredential.user;
   };
 
@@ -236,9 +234,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
-    isAdmin: isAdmin && selectedRole === 'admin', // Use selected role
+    isAdmin, // This is now derived: rawIsAdmin && selectedRole === 'admin'
+    rawIsAdmin,
     adminRole,
-    isSuperAdmin: isSuperAdmin && selectedRole === 'admin', // Use selected role
+    isSuperAdmin, // This is now derived
     admins,
     addAdmin,
     removeAdmin,

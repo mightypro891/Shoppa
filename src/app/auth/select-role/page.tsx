@@ -9,18 +9,24 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Shield, User } from 'lucide-react';
 
 export default function SelectRolePage() {
-  const { user, loading, selectRole, logOut } = useAuth();
+  const { user, loading, isAdmin, selectRole, logOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // If not loading and there's no user, or the user is not an admin, redirect.
+    if (!loading && (!user || !isAdmin)) {
       router.push('/auth/signin');
     }
-  }, [user, loading, router]);
+  }, [user, loading, isAdmin, router]);
 
   const handleRoleSelection = (role: 'admin' | 'user') => {
     selectRole(role);
-    router.push(role === 'admin' ? '/admin' : '/');
+    // The layout will handle the redirection after the role state is updated.
+    if (role === 'admin') {
+      router.push('/admin');
+    } else {
+      router.push('/');
+    }
   };
   
   const handleLogOut = async () => {
@@ -28,6 +34,7 @@ export default function SelectRolePage() {
     router.push('/auth/signin');
   }
 
+  // Show loader while auth is resolving or if user is not available yet
   if (loading || !user) {
     return (
       <div className="flex justify-center items-center h-screen">
