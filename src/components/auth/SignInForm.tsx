@@ -83,9 +83,9 @@ export default function SignInForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Prototype Login</CardTitle>
+        <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
-          Use `user@example.com` or `promiseoyedele07@gmail.com` with any password to sign in.
+          Sign in to your account to continue.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -130,13 +130,13 @@ export default function SignInForm() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-              Or sign in as admin
+              Or continue with
               </span>
           </div>
           </div>
           <Button className="w-full" variant="outline" onClick={handleGoogleSignIn} disabled={isSubmitting}>
             <GoogleIcon />
-            Sign in as Super Admin
+            Sign in with Google
           </Button>
       </CardContent>
        <CardFooter className="flex justify-center text-sm">
