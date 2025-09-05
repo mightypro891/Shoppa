@@ -479,16 +479,16 @@ export default function AdminDashboard() {
                 </Card>
             
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Megaphone className="mr-2 h-5 w-5" />
                         Promotions
                     </CardTitle>
-                    <Megaphone className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
                     <CardDescription>
                         Manage "Today's Deals" and other sales.
                     </CardDescription>
+                </CardHeader>
+                <CardContent>
                     <Button variant="secondary" disabled className="mt-4">
                         Manage Deals (Coming Soon)
                     </Button>
@@ -500,11 +500,11 @@ export default function AdminDashboard() {
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
          <Card>
-           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+           <CardHeader>
+            <CardTitle className="flex items-center">
+              <Star className="mr-2 h-5 w-5" />
               Review Management
             </CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription>
@@ -522,3 +522,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+    
