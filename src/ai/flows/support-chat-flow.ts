@@ -109,7 +109,8 @@ const supportChatFlow = ai.defineFlow(
     },
     async (input) => {
         if (!input.userEmail) {
-            return { answer: "Please log in to check your order status." };
+            const { output } = await prompt({question: input.question});
+            return output!;
         }
         const { output } = await prompt(input);
         return output!;
