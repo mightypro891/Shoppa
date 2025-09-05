@@ -28,20 +28,19 @@ export default function SupportChatWidget() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Use refs to hold the latest data without causing re-renders on every fetch.
   const productsRef = useRef<Product[]>([]);
   const lastOrderRef = useRef<Order | undefined>(undefined);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Pre-fetch data when the widget is about to open.
+
   useEffect(() => {
     if (!open) return;
 
     const fetchInitialData = async () => {
+      setDataLoaded(false);
       try {
-        // Fetch products
         productsRef.current = await getProducts();
         
-        // Fetch last order if user is logged in
         if (user?.email) {
             lastOrderRef.current = await getOrderByUserEmail(user.email);
         } else {
@@ -54,6 +53,8 @@ export default function SupportChatWidget() {
             description: 'Could not load support data. Please try again.',
             variant: 'destructive',
         });
+      } finally {
+        setDataLoaded(true);
       }
     };
     
@@ -61,7 +62,7 @@ export default function SupportChatWidget() {
   }, [open, user, toast]);
 
   const handleSendMessage = async () => {
-    if (message.trim() === '') return;
+    if (message.trim() === '' || !dataLoaded) return;
 
     const userMessage: ChatMessage = { sender: 'user', text: message };
     setChatHistory(prev => [...prev, userMessage]);
@@ -69,8 +70,6 @@ export default function SupportChatWidget() {
     setMessage('');
 
     try {
-        // Pass the pre-fetched data directly to the action.
-        // This avoids any database calls on the server-side of the AI flow.
         const response = await askSupportAgentAction({
             question: message,
             products: productsRef.current.map(({ name, price, description, tags }) => ({ name, price, description, tags: tags || [] })),
@@ -141,9 +140,9 @@ export default function SupportChatWidget() {
                         placeholder="Type your message..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        disabled={loading}
+                        disabled={loading || !dataLoaded}
                     />
-                    <Button type="submit" size="icon" disabled={loading || !message.trim()}>
+                    <Button type="submit" size="icon" disabled={loading || !message.trim() || !dataLoaded}>
                         <Send className="h-4 w-4" />
                     </Button>
                 </form>

@@ -27,8 +27,6 @@ const SimpleOrderSchema = z.object({
 
 const SupportChatInputSchema = z.object({
   question: z.string().describe("The customer's question."),
-  // The client will now be responsible for fetching and passing this data.
-  // This removes the need for the server flow to access the database.
   products: z.array(SimpleProductSchema).optional().describe("A list of available store products."),
   lastOrder: SimpleOrderSchema.describe("The user's most recent order details, if available."),
 });
@@ -54,7 +52,7 @@ const prompt = ai.definePrompt({
     - Use the provided product list to answer questions about product availability or details.
     - If the user asks about their order status, use the 'lastOrder' information provided.
         - If an order is present, inform the user of the status (e.g., "Your order #12345 is currently Out for Delivery").
-        - If the 'lastOrder' field is not present, politely inform them you couldn't find any recent orders for their account.
+        - If the 'lastOrder' field is not present, or the user asks about an order and you have no info, politely inform them you couldn't find any recent orders for their account.
     - Provide brief, helpful answers.
     - If you don't know the answer, politely say that you can't help with that.
     - Do not make up information about products or store policies.
