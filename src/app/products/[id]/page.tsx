@@ -14,6 +14,9 @@ import { useEffect, useState } from 'react';
 import type { Product, Review } from '@/lib/types';
 import { Star, Loader2 } from 'lucide-react';
 import ProductCard from '@/components/products/ProductCard';
+import WishlistButton from '@/components/wishlist/WishlistButton';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 
 export default function ProductDetailPage() {
@@ -84,6 +87,7 @@ export default function ProductDetailPage() {
   }
     
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+  const displayPrice = product.salePrice || product.price;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -111,12 +115,20 @@ export default function ProductDetailPage() {
           </div>
           <p className="text-muted-foreground text-lg mb-6">{product.description}</p>
           
-          <div className="text-4xl font-bold text-primary mb-6">
-            ₦{product.price.toFixed(2)}
+          <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-4xl font-bold text-primary">
+                ₦{displayPrice.toFixed(2)}
+              </span>
+              {product.salePrice && (
+                  <span className="text-xl font-medium text-muted-foreground line-through">
+                      ₦{product.price.toFixed(2)}
+                  </span>
+              )}
           </div>
 
           <div className="flex items-center gap-4">
              <AddToCartButton product={product} />
+             <WishlistButton productId={product.id} />
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import SupportChatWidget from '@/components/layout/SupportChatWidget';
 import CelebrationPopup from '@/components/layout/CelebrationPopup';
+import { WishlistProvider } from '@/context/WishlistContext';
 
 export const metadata: Metadata = {
   title: 'Lautech Shoppa',
@@ -39,12 +40,14 @@ export default function RootLayout({
         >
             <AuthProvider>
             <CartProvider>
+            <WishlistProvider>
                 <Header />
                 <main className="flex-1">{children}</main>
                 <Footer />
                 <SupportChatWidget />
                 <CelebrationPopup />
                 <Toaster />
+            </WishlistProvider>
             </CartProvider>
             </AuthProvider>
         </ThemeProvider>

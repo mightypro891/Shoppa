@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
-import { ShoppingCart, Loader2 } from 'lucide-react';
+import { Loader2, Zap } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import HeroButton from '@/components/layout/HeroButton';
 import { useEffect, useState } from 'react';
+import Countdown from '@/components/ui/countdown';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,6 +38,15 @@ export default function Home() {
   categories.forEach(category => {
     productsByCategory[category] = products.filter(p => p.tags?.includes(category));
   });
+
+  const saleProducts = products.filter(p => p.salePrice).slice(0, 4);
+
+  const getSaleEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + (7 - d.getDay() + 1) % 7); // Next Sunday
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString();
+  }
 
   // Helper to format category names for display
   const formatCategoryName = (slug: string) => {
@@ -71,27 +81,52 @@ export default function Home() {
           <Loader2 className="h-16 w-16 animate-spin text-primary" />
         </div>
       ) : (
-        categories.map(category => (
-          productsByCategory[category]?.length > 0 && (
-            <section key={category} id={category} className="py-12 md:py-16 bg-background even:bg-secondary/20">
+        <>
+          {saleProducts.length > 0 && (
+            <section id="deals" className="py-12 md:py-16 bg-amber-50 dark:bg-amber-950/20">
               <div className="container mx-auto px-4">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize">
-                    {formatCategoryName(category)}
-                  </h2>
-                   <Button asChild variant="outline">
-                    <Link href={`/products/category/${category}`}>View All</Link>
-                  </Button>
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                  <div className='text-center md:text-left'>
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                       <Zap className="h-8 w-8"/> Today's Deals
+                    </h2>
+                    <p className="text-muted-foreground">Don't miss out on these amazing prices!</p>
+                  </div>
+                  <div className="bg-white dark:bg-card p-4 rounded-lg shadow-md">
+                    <Countdown targetDate={getSaleEndDate()} />
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                  {productsByCategory[category].slice(0, 4).map((product) => (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                  {saleProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               </div>
             </section>
-          )
-        ))
+          )}
+
+          {categories.map(category => (
+            productsByCategory[category]?.length > 0 && (
+              <section key={category} id={category} className="py-12 md:py-16 bg-background even:bg-secondary/20">
+                <div className="container mx-auto px-4">
+                  <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize">
+                      {formatCategoryName(category)}
+                    </h2>
+                    <Button asChild variant="outline">
+                      <Link href={`/products/category/${category}`}>View All</Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                    {productsByCategory[category].slice(0, 4).map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )
+          ))}
+        </>
       )}
     </div>
   );

@@ -3,14 +3,15 @@
 
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Product } from '@/lib/types';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -18,6 +19,15 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState('name-asc');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  const allCategories = useMemo(() => {
+    if (products.length === 0) return [];
+    const categories = new Set<string>();
+    products.forEach(p => p.tags?.forEach(tag => categories.add(tag)));
+    return Array.from(categories).sort();
+  }, [products]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,13 +39,49 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = searchTerm
-    ? products.filter(p => 
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+  
+  const filteredProducts = useMemo(() => {
+    let prods = products;
+
+    if (searchTerm) {
+      prods = prods.filter(p => 
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    : products;
+      );
+    }
+    
+    if (selectedCategories.length > 0) {
+      prods = prods.filter(p => p.tags?.some(tag => selectedCategories.includes(tag)));
+    }
+    
+    switch (sortOption) {
+      case 'price-asc':
+        prods.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
+        break;
+      case 'price-desc':
+        prods.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price));
+        break;
+      case 'name-asc':
+        prods.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'name-desc':
+        prods.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        break;
+    }
+
+    return prods;
+  }, [products, searchTerm, sortOption, selectedCategories]);
+
 
   if (loading) {
     return (
@@ -45,27 +91,67 @@ export default function ProductsPage() {
     );
   }
 
+  const formatCategoryName = (slug: string) => slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 font-headline">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h1 className="text-3xl md:text-4xl font-bold font-headline">
           {searchTerm ? `Search results for "${searchTerm}"` : "All Products"}
         </h1>
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-            ))}
+        <div className="flex items-center gap-4">
+            <Select value={sortOption} onValueChange={setSortOption}>
+                <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                    <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                    <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <aside className="md:col-span-1">
+          <div className="sticky top-24">
+            <h3 className="text-lg font-semibold mb-4">Categories</h3>
+            <div className="space-y-2">
+              {allCategories.map(category => (
+                <div key={category} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={category} 
+                    checked={selectedCategories.includes(category)}
+                    onCheckedChange={() => handleCategoryChange(category)}
+                  />
+                  <Label htmlFor={category} className="font-normal capitalize cursor-pointer">
+                    {formatCategoryName(category)}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <Search className="mx-auto h-24 w-24 text-muted-foreground" />
-            <h2 className="mt-4 text-2xl font-semibold">No products found</h2>
-            <p className="mt-2 text-muted-foreground">We couldn't find any products matching your search.</p>
-            <Button asChild className="mt-6">
-              <Link href="/products">View All Products</Link>
-            </Button>
-          </div>
-        )}
+        </aside>
+        <main className="md:col-span-3">
+          {filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Search className="mx-auto h-24 w-24 text-muted-foreground" />
+              <h2 className="mt-4 text-2xl font-semibold">No products found</h2>
+              <p className="mt-2 text-muted-foreground">We couldn't find any products matching your criteria.</p>
+              <Button asChild className="mt-6">
+                <Link href="/products">View All Products</Link>
+              </Button>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

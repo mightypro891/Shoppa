@@ -10,7 +10,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Aromatic, locally grown short-grain rice with a unique nutty flavor. Perfect for Ofada stew.',
         aiHint: 'local rice',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        salePrice: 2700.0
     },
     {
         name: 'Long Grain Parboiled Rice (5kg)',
@@ -140,7 +141,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A reliable and modern smartphone with a great camera and long-lasting battery. Perfect for students.',
         aiHint: 'smartphone',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        salePrice: 89999.0
     },
     {
         name: 'Student Laptop',
@@ -167,7 +169,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Portable and powerful speaker with rich sound and deep bass for music lovers.',
         aiHint: 'bluetooth speaker',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        salePrice: 9999.0
     },
     {
         name: 'Noise-Cancelling Earbuds',
@@ -214,7 +217,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Enjoy healthier fried foods with less oil. Large capacity for the whole hostel.',
         aiHint: 'air fryer',
         tags: ['kitchen-utensils'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        salePrice: 39999.0
     },
 
     // Beddings

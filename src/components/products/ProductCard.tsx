@@ -6,14 +6,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import type { Product } from '@/lib/types';
 import Link from 'next/link';
 import { AddToCartButton } from './AddToCartButton';
+import WishlistButton from '../wishlist/WishlistButton';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const displayPrice = product.salePrice || product.price;
+
   return (
-    <Card className="flex flex-col overflow-hidden bg-card border-2 border-transparent hover:border-primary transition-all duration-300 shadow-md hover:shadow-xl group">
+    <Card className="flex flex-col overflow-hidden bg-card border-2 border-transparent hover:border-primary transition-all duration-300 shadow-md hover:shadow-xl group relative">
+      <WishlistButton productId={product.id} className="absolute top-2 right-2 z-10" />
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow">
         <CardHeader className="p-0">
           <div className="relative aspect-video overflow-hidden">
@@ -32,9 +36,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </Link>
       <CardFooter className="p-4 flex justify-between items-center">
-        <p className="text-xl font-bold text-primary">
-          ₦{product.price.toFixed(2)}
-        </p>
+        <div className="flex flex-col">
+            {product.salePrice && (
+                <p className="text-sm font-medium text-muted-foreground line-through">
+                    ₦{product.price.toFixed(2)}
+                </p>
+            )}
+            <p className="text-xl font-bold text-primary">
+                ₦{displayPrice.toFixed(2)}
+            </p>
+        </div>
         <AddToCartButton product={product} />
       </CardFooter>
     </Card>

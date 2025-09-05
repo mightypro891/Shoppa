@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, ChevronDown, LogOut, User as UserIcon, Shield, Settings, Wallet, Search } from 'lucide-react';
+import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +26,6 @@ import { useEffect, useState } from 'react';
 import { getProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '../ui/navigation-menu';
-import { cn } from '@/lib/utils';
 import React from 'react';
 
 export default function Header() {
@@ -34,14 +33,12 @@ export default function Header() {
   const { user, isAdmin, loading, accountBalance, logOut } = useAuth();
   const router = useRouter();
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
-  const [products, setProducts] = useState<Product[]>([]);
   const [productsByCategory, setProductsByCategory] = useState<Record<string, Product[]>>({});
 
 
   useEffect(() => {
     const fetchProducts = async () => {
       const prods = await getProducts();
-      setProducts(prods);
       
       const byCategory: Record<string, Product[]> = {};
       categories.forEach(category => {
@@ -69,32 +66,6 @@ export default function Header() {
       router.push(`/products?q=${encodeURIComponent(query)}`);
     }
   };
-
-  const ListItem = React.forwardRef<
-    React.ElementRef<"a">,
-    React.ComponentPropsWithoutRef<"a">
-  >(({ className, title, children, ...props }, ref) => {
-    return (
-      <li>
-        <NavigationMenuLink asChild>
-          <a
-            ref={ref}
-            className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-              className
-            )}
-            {...props}
-          >
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-              {children}
-            </p>
-          </a>
-        </NavigationMenuLink>
-      </li>
-    )
-  })
-  ListItem.displayName = "ListItem"
 
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
@@ -217,6 +188,13 @@ export default function Header() {
 
           <ModeToggle />
 
+           <Button asChild variant="ghost" size="icon">
+            <Link href="/wishlist">
+              <Heart className="h-6 w-6" />
+              <span className="sr-only">Wishlist</span>
+            </Link>
+          </Button>
+
           <Button asChild variant="ghost" size="icon" className="relative">
             <Link href="/cart">
               <ShoppingCart className="h-6 w-6" />
@@ -268,6 +246,9 @@ export default function Header() {
                     )}
                     <DropdownMenuItem asChild>
                         <Link href="/profile"><Settings className="mr-2 h-4 w-4" />Profile Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />My Wishlist</Link>
                     </DropdownMenuItem>
                      <DropdownMenuItem asChild>
                         <Link href="/fund-wallet"><Wallet className="mr-2 h-4 w-4" />Fund Wallet</Link>
