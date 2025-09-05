@@ -8,6 +8,8 @@ import OrderStatusTracker from './OrderStatusTracker';
 import { Skeleton } from '../ui/skeleton';
 import Image from 'next/image';
 import { Card, CardContent } from '../ui/card';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface OrderDetailsClientProps {
   orderId: string;
@@ -18,27 +20,28 @@ export default function OrderDetailsClient({ orderId }: OrderDetailsClientProps)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      // Fetch initial order details
-      const fetchedOrder = await getOrderById(orderId);
-      if (fetchedOrder) {
-        setOrder(fetchedOrder);
-      }
-      setLoading(false);
-    };
+    if (!orderId) return;
 
-    fetchOrder();
+    // Set up a real-time listener for the order
+    const orderDocRef = doc(db, 'orders', orderId);
+    
+    const unsubscribe = onSnapshot(orderDocRef, (doc) => {
+        if (doc.exists()) {
+            setOrder({ id: doc.id, ...doc.data() } as Order);
+        } else {
+            console.error("No such order!");
+            setOrder(null);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Error listening to order updates:", error);
+        setLoading(false);
+    });
 
-    // Poll for status updates every 5 seconds
-    const interval = setInterval(async () => {
-       const updatedOrder = await getOrderById(orderId);
-       if (updatedOrder) {
-           setOrder(updatedOrder);
-       }
-    }, 5000);
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+}, [orderId]);
 
-    return () => clearInterval(interval);
-  }, [orderId]);
 
   if (loading) {
     return (

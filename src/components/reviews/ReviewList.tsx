@@ -35,7 +35,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
             <div className="flex items-center justify-between">
                 <p className="font-semibold">{review.authorName}</p>
                 <span className="text-xs text-muted-foreground">
-                    {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                    {review.createdAt ? format(new Date(review.createdAt), 'MMM d, yyyy') : ''}
                 </span>
             </div>
             <div className="my-2">
