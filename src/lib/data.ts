@@ -3,7 +3,7 @@
 
 import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import type { Product, DeletedProduct } from './types';
-import { db } from './firebase-admin'; 
+import { db } from './firebase'; 
 
 // Helper function to convert Firestore doc to Product
 const toProduct = (docSnapshot: any): Product => {
