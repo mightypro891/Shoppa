@@ -1,49 +1,64 @@
 
+'use client';
+
 import { getProductById, getProducts } from '@/lib/data';
-import { notFound } from 'next/navigation';
-import { Metadata } from 'next';
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { ShoppingCart, Star } from 'lucide-react';
-import ProductCard from '@/components/products/ProductCard';
 import { AddToCartButton } from '@/components/products/AddToCartButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewList from '@/components/reviews/ReviewList';
 import { getReviewsForProduct } from '@/lib/reviews';
 import ProductStoryGenerator from '@/components/products/ProductStoryGenerator';
+import { useEffect, useState } from 'react';
+import type { Product, Review } from '@/lib/types';
+import { Star, Loader2 } from 'lucide-react';
+import ProductCard from '@/components/products/ProductCard';
 
-type Props = {
-  params: { id: string };
-};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProductById(params.id);
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  if (!product) {
-    return {
-      title: 'Product Not Found',
+  const [product, setProduct] = useState<Product | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProductData = async () => {
+      setLoading(true);
+      
+      const productData = await getProductById(id);
+      if (!productData) {
+        notFound();
+      }
+      setProduct(productData);
+      
+      const reviewData = await getReviewsForProduct(id);
+      setReviews(reviewData);
+      
+      const allProducts = await getProducts();
+      const related = allProducts
+        .filter(p => p.tags?.some(tag => productData.tags?.includes(tag)) && p.id !== productData.id)
+        .slice(0, 4);
+      setRelatedProducts(related);
+      
+      setLoading(false);
     };
+
+    fetchProductData();
+  }, [id]);
+
+  if (loading || !product) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
   }
-
-  return {
-    title: `${product.name} - Lautech Shoppa`,
-    description: product.description,
-  };
-}
-
-export default async function ProductDetailPage({ params }: Props) {
-  const product = await getProductById(params.id);
-  const allProducts = await getProducts();
-  const reviews = await getReviewsForProduct(params.id);
-
-  if (!product) {
-    notFound();
-  }
-
-  const relatedProducts = allProducts
-    .filter(p => p.tags?.some(tag => product.tags?.includes(tag)) && p.id !== product.id)
-    .slice(0, 4);
     
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
@@ -115,11 +130,4 @@ export default async function ProductDetailPage({ params }: Props) {
       )}
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map(product => ({
-    id: product.id,
-  }));
 }

@@ -1,15 +1,29 @@
 
+'use client';
+
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Loader2 } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import HeroButton from '@/components/layout/HeroButton';
+import { useEffect, useState } from 'react';
 
-export default async function Home() {
-  const products = await getProducts();
+export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const prods = await getProducts();
+      setProducts(prods);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
   
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
@@ -47,28 +61,33 @@ export default async function Home() {
         </div>
       </section>
 
-       {categories.map(category => (
-        productsByCategory[category]?.length > 0 && (
-          <section key={category} id={category} className="py-12 md:py-16 bg-background even:bg-secondary/20">
-            <div className="container mx-auto px-4">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize">
-                  {formatCategoryName(category)}
-                </h2>
-                 <Button asChild variant="outline">
-                  <Link href={`/products/category/${category}`}>View All</Link>
-                </Button>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      ) : (
+        categories.map(category => (
+          productsByCategory[category]?.length > 0 && (
+            <section key={category} id={category} className="py-12 md:py-16 bg-background even:bg-secondary/20">
+              <div className="container mx-auto px-4">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize">
+                    {formatCategoryName(category)}
+                  </h2>
+                   <Button asChild variant="outline">
+                    <Link href={`/products/category/${category}`}>View All</Link>
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                  {productsByCategory[category].slice(0, 4).map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                {productsByCategory[category].slice(0, 4).map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )
-      ))}
-
+            </section>
+          )
+        ))
+      )}
     </div>
   );
 }

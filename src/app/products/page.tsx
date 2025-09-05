@@ -1,34 +1,49 @@
 
+'use client';
+
 import { getProducts } from '@/lib/data';
 import ProductCard from '@/components/products/ProductCard';
-import { Metadata } from 'next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Product } from '@/lib/types';
 
-export const metadata: Metadata = {
-    title: 'All Products - Lautech Shoppa',
-    description: 'Browse all available Nigerian foodstuffs.',
-};
 
-type ProductsPageProps = {
-  searchParams?: {
-    q?: string;
-  };
-};
+export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get('q') || '';
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const products = await getProducts();
-  const searchTerm = searchParams?.q?.toLowerCase() || '';
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const prods = await getProducts();
+      setProducts(prods);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
 
   const filteredProducts = searchTerm
     ? products.filter(p => 
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.description.toLowerCase().includes(searchTerm) ||
-        p.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     : products;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
