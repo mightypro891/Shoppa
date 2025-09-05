@@ -34,7 +34,10 @@ export default function SupportChatWidget() {
     setMessage('');
 
     try {
-        const response = await askSupportAgentAction({ question: message });
+        const response = await askSupportAgentAction({ 
+            question: message,
+            userEmail: user?.email || undefined
+        });
         const aiMessage: ChatMessage = { sender: 'ai', text: response.answer };
         setChatHistory(prev => [...prev, aiMessage]);
     } catch (error) {
@@ -70,7 +73,7 @@ export default function SupportChatWidget() {
                 <div className="space-y-4">
                     {chatHistory.length === 0 && (
                         <div className="text-center text-muted-foreground text-sm py-8">
-                            Ask me anything about products, delivery, or our store!
+                            Ask me anything about products, delivery, or your orders!
                         </div>
                     )}
                     {chatHistory.map((chat, index) => (

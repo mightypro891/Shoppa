@@ -10,15 +10,17 @@
 
 import { ai } from '@/ai/genkit';
 import { getProducts } from '@/lib/data';
+import { getOrderByUserEmail } from '@/lib/orders';
 import { z } from 'zod';
 
 const SupportChatInputSchema = z.object({
-  question: z.string().describe('The customer\'s question.'),
+  question: z.string().describe("The customer's question."),
+  userEmail: z.string().optional().describe("The email of the logged-in user asking the question."),
 });
 export type SupportChatInput = z.infer<typeof SupportChatInputSchema>;
 
 const SupportChatOutputSchema = z.object({
-  answer: z.string().describe('The AI agent\'s answer to the question.'),
+  answer: z.string().describe("The AI agent's answer to the question."),
 });
 export type SupportChatOutput = z.infer<typeof SupportChatOutputSchema>;
 
@@ -53,16 +55,42 @@ const getStoreProducts = ai.defineTool(
     }
 );
 
+const getOrderStatusTool = ai.defineTool(
+    {
+        name: 'getOrderStatus',
+        description: 'Get the status of the most recent order for a specific user.',
+        inputSchema: z.object({
+            userEmail: z.string().describe("The email address of the user to check the order for.")
+        }),
+        outputSchema: z.object({
+            orderId: z.string(),
+            status: z.string(),
+            cartTotal: z.number(),
+        }).optional()
+    },
+    async (input) => {
+        if (!input.userEmail) return undefined;
+        const order = await getOrderByUserEmail(input.userEmail);
+        if (order) {
+            return { orderId: order.id, status: order.status, cartTotal: order.cartTotal };
+        }
+        return undefined;
+    }
+);
 
 const prompt = ai.definePrompt({
     name: 'supportChatPrompt',
     input: { schema: SupportChatInputSchema },
     output: { schema: SupportChatOutputSchema },
-    tools: [getStoreProducts],
+    tools: [getStoreProducts, getOrderStatusTool],
     prompt: `You are a friendly and helpful customer support agent for an online store called "Lautech Shoppa".
     Your goal is to answer customer questions accurately and concisely.
 
     - If the user asks about product availability, use the 'getStoreProducts' tool to check the store's inventory.
+    - If the user asks about their order status (e.g., "where's my stuff?", "delivery status"), use the 'getOrderStatus' tool.
+        - You MUST use the 'userEmail' from the input to call this tool.
+        - If the tool returns an order, inform the user of the status of their order (e.g., "Your order #12345 is currently Out for Delivery").
+        - If the tool returns nothing, politely inform them you couldn't find any recent orders for their account.
     - Provide brief, helpful answers.
     - If you don't know the answer, politely say that you can't help with that.
     - Do not make up information about products or store policies.
@@ -80,6 +108,9 @@ const supportChatFlow = ai.defineFlow(
         outputSchema: SupportChatOutputSchema,
     },
     async (input) => {
+        if (!input.userEmail) {
+            return { answer: "Please log in to check your order status." };
+        }
         const { output } = await prompt(input);
         return output!;
     }

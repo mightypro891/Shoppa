@@ -1,5 +1,5 @@
 
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, query, orderBy, where, limit } from 'firebase/firestore';
 import type { Order, OrderStatus } from './types';
 import { db } from './firebase';
 
@@ -29,6 +29,21 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
   } else {
     return undefined;
   }
+}
+
+export async function getOrderByUserEmail(email: string): Promise<Order | undefined> {
+  const ordersCol = collection(db, ORDERS_COLLECTION);
+  const q = query(
+    ordersCol,
+    where('customer.email', '==', email),
+    orderBy('createdAt', 'desc'),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+      return undefined;
+  }
+  return toOrder(snapshot.docs[0]);
 }
 
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
