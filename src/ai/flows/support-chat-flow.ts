@@ -63,7 +63,7 @@ const prompt = ai.definePrompt({
     Available Products:
     {{#if products}}
         {{#each products}}
-        - Name: {{name}}, Price: {{price}}, Description: {{description}}, Tags: {{join tags ", "}}
+        - Name: {{name}}, Price: {{price}}, Description: {{description}}, Tags: {{#if tags}}{{join tags ", "}}{{/if}}
         {{/each}}
     {{else}}
         No product information available.
