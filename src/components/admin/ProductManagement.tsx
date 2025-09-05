@@ -81,11 +81,19 @@ export default function ProductManagement() {
   };
   
   const handleSeed = async () => {
-      await resetAllProducts();
-      toast({
-          title: 'Data Reset',
-          description: 'Product data has been reset to the initial state.',
-      });
+      const result = await resetAllProducts();
+      if (result.success) {
+        toast({
+            title: 'Data Seeded',
+            description: result.message,
+        });
+      } else {
+         toast({
+            title: 'Seeding Skipped',
+            description: result.message,
+            variant: 'destructive',
+        });
+      }
       await fetchProducts();
   };
 
@@ -126,7 +134,7 @@ export default function ProductManagement() {
                                     {deletedProducts.length > 0 ? deletedProducts.map((dp, index) => (
                                         <TableRow key={index}>
                                             <TableCell>{dp.product.name}</TableCell>
-                                            <TableCell>{format(new Date(dp.deletedAt), 'PPpp')}</TableCell>
+                                            <TableCell>{dp.deletedAt ? format(new Date(dp.deletedAt), 'PPpp') : 'N/A'}</TableCell>
                                             <TableCell>{dp.deletedBy}</TableCell>
                                         </TableRow>
                                     )) : (
@@ -244,5 +252,3 @@ export default function ProductManagement() {
     </div>
   );
 }
-
-    
