@@ -50,7 +50,7 @@ export default function ProductsPage() {
   };
   
   const filteredProducts = useMemo(() => {
-    let prods = products;
+    let prods = [...products];
 
     if (searchTerm) {
       prods = prods.filter(p => 
@@ -189,3 +189,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+    
