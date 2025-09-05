@@ -65,6 +65,22 @@ export default function SignUpForm() {
       }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true);
+    try {
+      googleSignIn();
+      router.push('/');
+    } catch (error: any) {
+       toast({
+        title: 'Google Sign-In Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -130,9 +146,9 @@ export default function SignUpForm() {
               </span>
           </div>
           </div>
-          <Button className="w-full" variant="outline" onClick={googleSignIn} disabled={isSubmitting}>
+          <Button className="w-full" variant="outline" onClick={handleGoogleSignIn} disabled={isSubmitting}>
             <GoogleIcon />
-            Sign in as Super Admin
+            Sign in with Google
           </Button>
       </CardContent>
        <CardFooter className="flex justify-center text-sm">
