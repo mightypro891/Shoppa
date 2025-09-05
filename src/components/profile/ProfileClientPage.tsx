@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -11,9 +12,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateProfile } from 'firebase/auth';
-import { auth, storage } from '@/lib/firebase';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { Loader2, User, Wallet } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
@@ -36,6 +34,7 @@ export default function ProfileClientPage() {
   const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -64,45 +63,29 @@ export default function ProfileClientPage() {
   }, [user, loading, router, form, userProfile]);
 
   const onSubmit = async (data: ProfileFormValues) => {
-    if (!auth.currentUser) return;
-    try {
-      let photoURL = auth.currentUser.photoURL;
+    if (!user) return;
+    setIsSubmitting(true);
+    
+    // Simulate async operation
+    await new Promise(res => setTimeout(res, 500));
+    
+    // In a real app, you would handle file upload here.
+    // For this prototype, we'll just save the rest of the data.
+    
+    saveUserProfile({
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+    });
 
-      // Handle file upload if a new photo is selected
-      if (data.photo && data.photo.length > 0) {
-        const file = data.photo[0];
-        const storageRef = ref(storage, `profile_pictures/${auth.currentUser.uid}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        photoURL = await getDownloadURL(snapshot.ref);
-      }
-      
-      // Update Firebase Auth profile
-      await updateProfile(auth.currentUser, {
-        displayName: data.name,
-        photoURL: photoURL,
-      });
-      
-      // Save other profile info to our local storage "DB"
-      saveUserProfile({
-          phone: data.phone,
-          address: data.address,
-          city: data.city,
-          balance: userProfile?.balance || 0,
-      });
-
-      toast({
-        title: 'Profile Updated',
-        description: 'Your information has been successfully updated.',
-      });
-      // Refresh to ensure all components have the latest user data
-      router.refresh(); 
-    } catch (error: any) {
-      toast({
-        title: 'Update Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Profile Updated',
+      description: 'Your information has been successfully updated.',
+    });
+    
+    setIsSubmitting(false);
+    // You might want to refresh the user object if displayName or photoURL changed
+    router.refresh(); 
   };
   
   if (loading || !user) {
@@ -142,6 +125,7 @@ export default function ProfileClientPage() {
                                                 size="icon" 
                                                 className="absolute bottom-2 right-2 rounded-full"
                                                 onClick={() => fileInputRef.current?.click()}
+                                                disabled
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -153,9 +137,11 @@ export default function ProfileClientPage() {
                                                 ref={fileInputRef} 
                                                 onChange={(e) => field.onChange(e.target.files)}
                                                 accept="image/*"
+                                                disabled
                                             />
                                         </FormControl>
                                         <FormMessage />
+                                        <FormDescription>Photo uploads disabled in prototype.</FormDescription>
                                     </FormItem>
                                 )}
                             />
@@ -217,8 +203,8 @@ export default function ProfileClientPage() {
                                 )}
                             />
                             <div className="flex justify-end">
-                                <Button type="submit" disabled={form.formState.isSubmitting}>
-                                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Save Changes
                                 </Button>
                             </div>
@@ -247,7 +233,7 @@ export default function ProfileClientPage() {
                     <CardDescription>Change your password.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button disabled variant="secondary">Change Password (Coming Soon)</Button>
+                    <Button disabled variant="secondary">Change Password (Disabled)</Button>
                 </CardContent>
             </Card>
              <Card>

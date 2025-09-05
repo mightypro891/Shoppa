@@ -2,13 +2,35 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
-import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
+
+// --- Mock User Data for Prototype ---
+const MOCK_USER = {
+  uid: 'prototype_user_123',
+  displayName: 'Prototype User',
+  email: 'user@example.com',
+  photoURL: 'https://picsum.photos/100/100',
+};
+
+const MOCK_ADMIN = {
+  uid: 'prototype_admin_456',
+  displayName: 'Admin User',
+  email: 'admin@example.com',
+  photoURL: 'https://picsum.photos/100/100?grayscale',
+};
+
+const MOCK_SUPER_ADMIN = {
+  uid: 'prototype_super_admin_789',
+  displayName: 'Super Admin',
+  email: 'superadmin@example.com',
+  photoURL: 'https://picsum.photos/100/100?blur=1',
+};
+
+type MockUser = typeof MOCK_USER;
+
 
 interface AuthContextType {
-  user: User | null;
+  user: MockUser | null;
   loading: boolean;
   isAdmin: boolean;
   adminRole: AdminRole | null;
@@ -27,29 +49,11 @@ interface AuthContextType {
   onlineUsers: number;
   celebrationPopupConfig: CelebrationPopupConfig | null;
   updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
+  // Prototype specific functions
+  loginAs: (role: 'user' | 'admin' | 'superadmin' | null) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  isAdmin: false,
-  adminRole: null,
-  isSuperAdmin: false,
-  admins: [],
-  addAdmin: async () => {},
-  removeAdmin: async () => {},
-  updateAdminRole: async () => {},
-  userProfile: null,
-  saveUserProfile: () => {},
-  accountBalance: 0,
-  fundAccount: () => {},
-  payWithWallet: () => false,
-  managedCategories: null,
-  totalUsers: 0,
-  onlineUsers: 0,
-  celebrationPopupConfig: null,
-  updateCelebrationPopupConfig: () => {},
-});
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -59,13 +63,7 @@ export const useAuth = () => {
   return context;
 };
 
-// --- Local Storage Keys ---
-const USER_PROFILE_KEY_PREFIX = 'user_profile_';
-const ALL_USERS_KEY = 'lautech_shoppa_all_users';
-const USER_ACTIVITY_KEY = 'lautech_shoppa_user_activity';
-const POPUP_CONFIG_KEY = 'lautech_shoppa_popup_config';
-const ONLINE_THRESHOLD = 60 * 1000; // 1 minute
-
+// --- Local Storage Helpers for Prototype State ---
 const getFromStorage = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
     try {
@@ -86,15 +84,16 @@ const saveToStorage = (key: string, data: any) => {
     }
 };
 
+
 const defaultPopupConfig: CelebrationPopupConfig = {
     title: 'Welcome!',
-    message: 'Check out our latest products.',
-    isActive: false,
+    message: 'This is a prototype store. All data is for demonstration purposes.',
+    isActive: true,
 };
 
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
@@ -105,145 +104,96 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState(0);
-  const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(() => getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
+  const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(() => getFromStorage('prototype_popup_config', defaultPopupConfig));
   
-
-  useEffect(() => {
-    // We only want to load from storage once on the client
-    setTotalUsers(getFromStorage<string[]>(ALL_USERS_KEY, []).length);
-    setCelebrationPopupConfig(getFromStorage(POPUP_CONFIG_KEY, defaultPopupConfig));
-  }, []);
-  
-  const fetchAdmins = async () => {
-    const adminsCollection = collection(db, 'admins');
-    const adminSnapshot = await getDocs(adminsCollection);
-    const adminList = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminUser));
-    setAdmins(adminList);
+  const loginAs = (role: 'user' | 'admin' | 'superadmin' | null) => {
+      setLoading(true);
+      if (role === null) {
+          setUser(null);
+          setIsAdmin(false);
+          setIsSuperAdmin(false);
+          setAdminRole(null);
+          setManagedCategories(null);
+          setAccountBalance(0);
+          setUserProfile(null);
+      } else {
+          let mockUser, roleName: AdminRole | null, categories: string[] | null = null;
+          if (role === 'user') {
+              mockUser = MOCK_USER;
+              roleName = null;
+              setIsAdmin(false);
+              setIsSuperAdmin(false);
+          } else if (role === 'admin') {
+              mockUser = MOCK_ADMIN;
+              roleName = 'Normal Admin';
+              categories = ['food', 'kitchen-utensils'];
+              setIsAdmin(true);
+              setIsSuperAdmin(false);
+          } else { // superadmin
+              mockUser = MOCK_SUPER_ADMIN;
+              roleName = 'Super Admin';
+              categories = null;
+              setIsAdmin(true);
+              setIsSuperAdmin(true);
+          }
+          
+          setUser(mockUser);
+          setAdminRole(roleName);
+          setManagedCategories(categories);
+          
+          const profile = getFromStorage<UserProfile | null>(`prototype_profile_${mockUser.uid}`, { phone: '08012345678', address: '123 Prototype Street', city: 'Nextville', balance: 50000 });
+          setUserProfile(profile);
+          setAccountBalance(profile?.balance || 50000);
+      }
+      setTimeout(() => setLoading(false), 300);
   };
   
+  // Simulate initial load and check if a user was previously "logged in"
   useEffect(() => {
-    if(isSuperAdmin) {
-        fetchAdmins();
+    const lastRole = getFromStorage<'user' | 'admin' | 'superadmin' | null>('prototype_last_role', null);
+    if(lastRole) {
+        loginAs(lastRole);
+    } else {
+        setLoading(false);
     }
-  }, [isSuperAdmin]);
-
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true);
-      if (currentUser) {
-        setUser(currentUser);
-
-        // Check admin status from Firestore
-        const adminDocRef = doc(db, 'admins', currentUser.uid);
-        const adminDocSnap = await getDoc(adminDocRef);
-        
-        if (adminDocSnap.exists()) {
-            const adminData = adminDocSnap.data() as AdminUser;
-            setIsAdmin(true);
-            setAdminRole(adminData.role);
-            setIsSuperAdmin(adminData.role === 'Super Admin');
-            setManagedCategories(adminData.managedCategories || null);
-        } else {
-            setIsAdmin(false);
-            setAdminRole(null);
-            setIsSuperAdmin(false);
-            setManagedCategories(null);
-        }
-        
-        // Fetch user profile from localStorage
-        const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${currentUser.uid}`, null);
-        if (profile) {
-            setUserProfile(profile);
-            setAccountBalance(profile.balance || 0);
-        } else {
-            const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
-            setUserProfile(defaultProfile);
-            setAccountBalance(0);
-            saveToStorage(`${USER_PROFILE_KEY_PREFIX}${currentUser.uid}`, defaultProfile);
-        }
-
-        // Track total unique users
-        const allUsers = getFromStorage<string[]>(ALL_USERS_KEY, []);
-        if (!allUsers.includes(currentUser.uid)) {
-            const newAllUsers = [...allUsers, currentUser.uid];
-            saveToStorage(ALL_USERS_KEY, newAllUsers);
-            setTotalUsers(newAllUsers.length);
-        }
-
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setIsSuperAdmin(false);
-        setAdminRole(null);
-        setUserProfile(null);
-        setAccountBalance(0);
-        setManagedCategories(null);
-      }
-      setTimeout(() => setLoading(false), 200);
-    });
-    return () => unsubscribe();
+    setTotalUsers(3); // Mock value
+    setOnlineUsers(2); // Mock value
   }, []);
 
-
-  // Effect for tracking user activity
+  // Persist role on change
   useEffect(() => {
-    let activityInterval: NodeJS.Timeout;
     if (user) {
-        const updateActivity = () => {
-             const activityData = getFromStorage<Record<string, number>>(USER_ACTIVITY_KEY, {});
-             activityData[user.uid] = Date.now();
-             saveToStorage(USER_ACTIVITY_KEY, activityData);
-        };
-        updateActivity(); // Run once immediately
-        activityInterval = setInterval(updateActivity, 30 * 1000); // Update every 30 seconds
+        let role: 'user' | 'admin' | 'superadmin' = 'user';
+        if (isSuperAdmin) role = 'superadmin';
+        else if (isAdmin) role = 'admin';
+        saveToStorage('prototype_last_role', role);
+    } else {
+        saveToStorage('prototype_last_role', null);
     }
-    return () => clearInterval(activityInterval);
-  }, [user]);
+  }, [user, isAdmin, isSuperAdmin]);
 
-  // Effect for checking online users (for admins)
-   useEffect(() => {
-    let onlineCheckInterval: NodeJS.Timeout;
-    if (isAdmin) {
-        const checkOnline = () => {
-            const activityData = getFromStorage<Record<string, number>>(USER_ACTIVITY_KEY, {});
-            const now = Date.now();
-            const onlineCount = Object.values(activityData).filter(
-                lastSeen => now - lastSeen < ONLINE_THRESHOLD
-            ).length;
-            setOnlineUsers(onlineCount);
-        };
-        checkOnline();
-        onlineCheckInterval = setInterval(checkOnline, 15 * 1000); // Check every 15 seconds
-    }
-     return () => clearInterval(onlineCheckInterval);
-   }, [isAdmin]);
 
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
-      // This is a mock implementation. A real app would use a Cloud Function
-      // to find a user's UID by their email and create the admin document.
-      console.warn("This is a mock implementation for addAdmin. You need to manually create the admin document in Firestore for this to fully work.");
-      // For the prototype, we can optimistically add to the local state
+      console.log(`PROTOTYPE: Adding admin ${email} with role ${role}`);
       const newAdmin: AdminUser = { email, role, managedCategories: categories };
       setAdmins(prev => [...prev, newAdmin]);
   };
 
   const removeAdmin = async (email: string) => {
-    console.warn("removeAdmin is a mock implementation.");
+    console.log(`PROTOTYPE: Removing admin ${email}`);
     setAdmins(prev => prev.filter(admin => admin.email !== email));
   };
   
   const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
-    console.warn("updateAdminRole is a mock implementation.");
+    console.log(`PROTOTYPE: Updating role for ${email} to ${role}`);
     setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
   };
 
   const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
       if (user) {
-          const currentProfile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
-          const updatedProfile = { ...currentProfile, ...profile, balance: accountBalance };
-          setUserProfile(updatedProfile);
-          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
+          const updatedProfile = { ...userProfile, ...profile, balance: accountBalance };
+          setUserProfile(updatedProfile as UserProfile);
+          saveToStorage(`prototype_profile_${user.uid}`, updatedProfile);
       }
   };
   
@@ -251,10 +201,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user && amount > 0) {
           const newBalance = accountBalance + amount;
           setAccountBalance(newBalance);
-          const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
-          const updatedProfile = { ...profile!, balance: newBalance };
-          setUserProfile(updatedProfile);
-          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
+          saveUserProfile(userProfile!); // This will re-save with the new balance
       }
   };
 
@@ -262,10 +209,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user && amount > 0 && accountBalance >= amount) {
           const newBalance = accountBalance - amount;
           setAccountBalance(newBalance);
-          const profile = getFromStorage<UserProfile | null>(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, null);
-          const updatedProfile = { ...profile!, balance: newBalance };
-          setUserProfile(updatedProfile);
-          saveToStorage(`${USER_PROFILE_KEY_PREFIX}${user.uid}`, updatedProfile);
+          saveUserProfile(userProfile!);
           return true;
       }
       return false;
@@ -273,7 +217,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateCelebrationPopupConfig = (config: CelebrationPopupConfig) => {
     setCelebrationPopupConfig(config);
-    saveToStorage(POPUP_CONFIG_KEY, config);
+    saveToStorage('prototype_popup_config', config);
   };
 
   const value = { 
@@ -295,7 +239,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       totalUsers,
       onlineUsers,
       celebrationPopupConfig,
-      updateCelebrationPopupConfig
+      updateCelebrationPopupConfig,
+      loginAs
   };
 
   return (
@@ -304,5 +249,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
-    

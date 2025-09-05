@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -27,10 +28,7 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
-  image: z.any().refine(
-      (val) => (val instanceof FileList && val.length > 0) || typeof val === 'string', 
-      'Please upload an image.'
-    ),
+  image: z.any().optional(), // Image is optional in prototype
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
 });
@@ -66,14 +64,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   const onSubmit = async (data: ProductFormValues) => {
     if (!user) return;
     
-    let imageUrl = product?.image || 'https://picsum.photos/400/300?random=9'; // Default placeholder
-
-    if (data.image instanceof FileList && data.image.length > 0) {
-      imageUrl = URL.createObjectURL(data.image[0]);
-    } else if (typeof data.image === 'string') {
-      imageUrl = data.image;
-    }
-
+    let imageUrl = product?.image || 'https://picsum.photos/400/300'; 
 
     const productData: Omit<Product, 'id'> = {
       name: data.name,
@@ -82,12 +73,12 @@ export default function ProductForm({ product }: ProductFormProps) {
       image: imageUrl,
       aiHint: data.aiHint,
       tags: data.tags.split(',').map(tag => tag.trim()),
-      vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@lautechshoppa.com', // Use email as vendorId for prototype
+      vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
     if (isEditing) {
-       // Update logic would go here
-      console.log('Updating product not yet implemented');
+       // Update logic is not implemented for prototype, but we can log it.
+      console.log('PROTOTYPE: Updating product', { id: product?.id, ...productData });
     } else {
       await addProduct(productData);
     }
@@ -161,10 +152,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                   <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
-                      <Input type="file" accept="image/*" {...imageRef} />
+                      <Input type="file" accept="image/*" {...imageRef} disabled />
                     </FormControl>
                     <FormDescription>
-                        {isEditing && typeof product?.image === 'string' && `Current image: ${product.image.split('/').pop()}`}
+                        Image uploads are disabled in the prototype. A placeholder will be used.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

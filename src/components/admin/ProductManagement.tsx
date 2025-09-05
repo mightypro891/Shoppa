@@ -1,7 +1,7 @@
 
 'use client';
 
-import { deleteProduct, getProducts, getDeletedProducts } from '@/lib/data';
+import { deleteProduct, getProducts, getDeletedProducts, resetAllProducts } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -32,7 +32,6 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { format } from 'date-fns';
-import { seedInitialProducts } from '@/lib/seed';
 
 
 export default function ProductManagement() {
@@ -73,14 +72,12 @@ export default function ProductManagement() {
   };
   
   const handleSeed = async () => {
-      const result = await seedInitialProducts();
+      await resetAllProducts();
       toast({
-          title: result.success ? 'Database Seeded' : 'Seeding Skipped',
-          description: result.message,
+          title: 'Data Reset',
+          description: 'Product data has been reset to the initial state.',
       });
-      if (result.success) {
-          fetchProducts();
-      }
+      await fetchProducts();
   };
 
   if (loading && products.length === 0) {
@@ -221,7 +218,7 @@ export default function ProductManagement() {
                         <p>No products found in the database.</p>
                          <Button onClick={handleSeed} className="mt-4">
                             <DatabaseZap className="mr-2 h-4 w-4" />
-                            Seed Initial Products
+                            Reset to Initial Products
                         </Button>
                     </div>
                 )}

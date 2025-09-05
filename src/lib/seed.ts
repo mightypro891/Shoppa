@@ -1,11 +1,7 @@
 
-'use server';
-
-import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
 import type { Product } from './types';
 
-const initialProducts: Omit<Product, 'id'>[] = [
+export const initialProducts: Omit<Product, 'id'>[] = [
     // Food
     {
         name: 'Ofada Rice',
@@ -254,20 +250,3 @@ const initialProducts: Omit<Product, 'id'>[] = [
         vendorId: 'adedolapotamara@gmail.com'
     }
 ];
-
-export async function seedInitialProducts() {
-    const productsCollection = collection(db, 'products');
-    const snapshot = await getDocs(productsCollection);
-
-    if (snapshot.empty) {
-        console.log('No products found, seeding initial data...');
-        for (const product of initialProducts) {
-            await addDoc(productsCollection, product);
-        }
-        console.log('Seeding complete.');
-        return { success: true, message: 'Initial products have been seeded.' };
-    } else {
-        console.log('Products collection is not empty, skipping seed.');
-        return { success: false, message: 'Database already contains products.' };
-    }
-}

@@ -17,8 +17,6 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/AuthContext';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
@@ -33,7 +31,7 @@ import React from 'react';
 
 export default function Header() {
   const { itemCount } = useCart();
-  const { user, isAdmin, loading, accountBalance } = useAuth();
+  const { user, isAdmin, loading, accountBalance, loginAs } = useAuth();
   const router = useRouter();
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,7 +53,7 @@ export default function Header() {
   }, []);
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    loginAs(null);
     router.push('/');
   };
   
@@ -114,8 +112,8 @@ export default function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/products">All Products</Link>
+                <NavigationMenuLink asChild>
+                   <Link href="/products" className={navigationMenuTriggerStyle()}>All Products</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
                <NavigationMenuItem>

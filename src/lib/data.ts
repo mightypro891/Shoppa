@@ -1,68 +1,75 @@
 
 'use server';
 
-import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import type { Product, DeletedProduct } from './types';
-import { db } from './firebase'; 
+import { initialProducts } from './seed';
 
-// Helper function to convert Firestore doc to Product
-const toProduct = (docSnapshot: any): Product => {
-    const data = docSnapshot.data();
-    return {
-        id: docSnapshot.id,
-        ...data,
-    } as Product;
-};
+// --- In-memory database for prototype ---
+let products: Product[] = [];
+let deletedProducts: DeletedProduct[] = [];
 
-export async function getProducts(): Promise<Product[]> {
-    const productsCol = collection(db, 'products');
-    const q = query(productsCol, orderBy('name'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(toProduct);
+// Function to initialize/reset the product list
+function initializeProducts() {
+    products = initialProducts.map((p, index) => ({
+        ...p,
+        id: `prod_${index + 1}`
+    }));
 }
 
+// Initialize on first load
+if (products.length === 0) {
+    initializeProducts();
+}
+
+// Helper function to simulate database latency
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+export async function getProducts(): Promise<Product[]> {
+    await delay(100);
+    return JSON.parse(JSON.stringify(products));
+}
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-    const docRef = doc(db, 'products', id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        return toProduct(docSnap);
-    } else {
-        return undefined;
-    }
+    await delay(50);
+    const product = products.find(p => p.id === id);
+    return product ? JSON.parse(JSON.stringify(product)) : undefined;
 }
 
 export async function addProduct(productData: Omit<Product, 'id'>): Promise<Product> {
-    const docRef = await addDoc(collection(db, 'products'), productData);
-    return {
-        id: docRef.id,
-        ...productData
+    await delay(150);
+    const newProduct: Product = {
+        ...productData,
+        id: `prod_${Date.now()}`
     };
+    products.push(newProduct);
+    return JSON.parse(JSON.stringify(newProduct));
 }
 
 export async function deleteProduct(productId: string, deletedBy: string): Promise<void> {
-    const productRef = doc(db, 'products', productId);
-    const productSnap = await getDoc(productRef);
+    await delay(150);
+    const productIndex = products.findIndex(p => p.id === productId);
 
-    if (productSnap.exists()) {
-        const productData = toProduct(productSnap);
+    if (productIndex > -1) {
+        const [productToDelete] = products.splice(productIndex, 1);
         
-        await addDoc(collection(db, 'deletedProducts'), {
-            product: productData,
+        const deletedRecord: DeletedProduct = {
+            product: productToDelete,
             deletedBy: deletedBy,
             deletedAt: new Date().toISOString(),
-        });
-
-        await deleteDoc(productRef);
+        };
+        deletedProducts.push(deletedRecord);
     } else {
         console.error("Product not found for deletion:", productId);
     }
 }
 
 export async function getDeletedProducts(): Promise<DeletedProduct[]> {
-    const deletedCol = collection(db, 'deletedProducts');
-    const q = query(deletedCol, orderBy('deletedAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => d.data() as DeletedProduct);
+    await delay(100);
+    return JSON.parse(JSON.stringify(deletedProducts));
+}
+
+export async function resetAllProducts(): Promise<void> {
+    await delay(50);
+    initializeProducts();
+    deletedProducts = [];
 }

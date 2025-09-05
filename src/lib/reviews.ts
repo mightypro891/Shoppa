@@ -1,40 +1,48 @@
 
 import type { Review } from './types';
-import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from './firebase';
 
-const REVIEWS_COLLECTION = 'reviews';
+// --- In-memory database for prototype ---
+let reviews: Review[] = [
+    {
+        id: 'rev_1',
+        productId: 'prod_1',
+        authorName: 'Aisha Bello',
+        rating: 5,
+        text: 'This Ofada rice is the best! It has that authentic, local flavor I was looking for. Will definitely buy again.',
+        createdAt: new Date('2023-10-20T10:00:00Z').toISOString(),
+    },
+    {
+        id: 'rev_2',
+        productId: 'prod_1',
+        authorName: 'Chidi Okoro',
+        rating: 4,
+        text: 'Very good quality rice, but a bit pricey compared to the market. Still, worth it for the convenience.',
+        createdAt: new Date('2023-10-22T14:30:00Z').toISOString(),
+    }
+];
 
-const toReview = (doc: any): Review => {
-    const data = doc.data();
-    return {
-        id: doc.id,
-        ...data
-    } as Review;
-}
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function getReviewsForProduct(productId: string): Promise<Review[]> {
-  const reviewsCol = collection(db, REVIEWS_COLLECTION);
-  const q = query(reviewsCol, where("productId", "==", productId), orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(toReview);
+  await delay(100);
+  const productReviews = reviews.filter(r => r.productId === productId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return JSON.parse(JSON.stringify(productReviews));
 }
 
 export async function getAllReviews(): Promise<Review[]> {
-    const reviewsCol = collection(db, REVIEWS_COLLECTION);
-    const q = query(reviewsCol, orderBy("createdAt", "desc"));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(toReview);
+    await delay(100);
+    const allReviews = [...reviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return JSON.parse(JSON.stringify(allReviews));
 }
 
 export async function addReview(reviewData: Omit<Review, 'id' | 'createdAt'>): Promise<Review> {
-  const reviewWithTimestamp = {
-      ...reviewData,
-      createdAt: new Date().toISOString(),
+  await delay(150);
+  const newReview: Review = {
+    id: `rev_${Date.now()}`,
+    ...reviewData,
+    createdAt: new Date().toISOString(),
   };
-  const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), reviewWithTimestamp);
-  return {
-      id: docRef.id,
-      ...reviewWithTimestamp
-  };
+  reviews.push(newReview);
+  return JSON.parse(JSON.stringify(newReview));
 }
