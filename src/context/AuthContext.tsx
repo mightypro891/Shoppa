@@ -122,8 +122,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setLoading(true);
-      setUser(currentUser);
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -157,27 +161,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUserProfile(profileData);
           setAccountBalance(profileData.balance || 0);
         } else {
-          // Create a default profile if it doesn't exist
           const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
           await setDoc(profileDocRef, defaultProfile);
           setUserProfile(defaultProfile);
           setAccountBalance(0);
         }
+        setLoading(false); // Set loading to false after profile is handled
       });
       
-      setLoading(false);
       return () => {
         unsubscribeAdmin();
         unsubscribeProfile();
       };
     } else {
-      setUser(null);
+      // When user is null, reset all related states
       setIsAdmin(false);
       setAdminRole(null);
       setIsSuperAdmin(false);
-      setLoading(false);
-      setAccountBalance(0);
+      setManagedCategories(null);
       setUserProfile(null);
+      setAccountBalance(0);
     }
   }, [user]);
   
