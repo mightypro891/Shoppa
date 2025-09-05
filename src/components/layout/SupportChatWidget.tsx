@@ -1,16 +1,18 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MessageSquare, Send, X, Loader2, Sparkles } from 'lucide-react';
-import { Textarea } from '../ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { MessageSquare, Send, X, Loader2 } from 'lucide-react';
 import { Input } from '../ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { askSupportAgentAction } from '@/app/actions';
 import { ScrollArea } from '../ui/scroll-area';
 import { useAuth } from '@/context/AuthContext';
+import { getProducts } from '@/lib/data';
+import type { Product } from '@/lib/types';
+
 
 interface ChatMessage {
     sender: 'user' | 'ai';
@@ -24,6 +26,20 @@ export default function SupportChatWidget() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    // Pre-fetch products when the component mounts so we can pass them to the AI.
+    const fetchProducts = async () => {
+      try {
+        const prods = await getProducts();
+        setProducts(prods);
+      } catch (error) {
+        console.error("Failed to fetch products for support widget:", error);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleSendMessage = async () => {
     if (message.trim() === '') return;
@@ -34,9 +50,11 @@ export default function SupportChatWidget() {
     setMessage('');
 
     try {
-        const response = await askSupportAgentAction({ 
+        // Now we pass the product list directly to the action.
+        const response = await askSupportAgentAction({
             question: message,
-            userEmail: user?.email || undefined
+            userEmail: user?.email || undefined,
+            products: products.map(({ name, price, description, tags }) => ({ name, price, description, tags: tags || [] })),
         });
         const aiMessage: ChatMessage = { sender: 'ai', text: response.answer };
         setChatHistory(prev => [...prev, aiMessage]);

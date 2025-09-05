@@ -9,13 +9,23 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getProducts } from '@/lib/data';
 import { getOrderByUserEmail } from '@/lib/orders';
 import { z } from 'zod';
+import type { Product } from '@/lib/types';
+
+
+const SimpleProductSchema = z.object({
+    name: z.string(),
+    price: z.number(),
+    description: z.string(),
+    tags: z.array(z.string()).optional(),
+});
 
 const SupportChatInputSchema = z.object({
   question: z.string().describe("The customer's question."),
   userEmail: z.string().optional().describe("The email of the logged-in user asking the question."),
+  // Pass product data directly to the flow to avoid permission issues.
+  products: z.array(SimpleProductSchema).optional().describe("A list of available store products."),
 });
 export type SupportChatInput = z.infer<typeof SupportChatInputSchema>;
 
@@ -24,36 +34,6 @@ const SupportChatOutputSchema = z.object({
 });
 export type SupportChatOutput = z.infer<typeof SupportChatOutputSchema>;
 
-
-const getStoreProducts = ai.defineTool(
-    {
-        name: 'getStoreProducts',
-        description: 'Get a list of all available products in the store to answer questions about product availability or details.',
-        inputSchema: z.object({
-            query: z.string().optional().describe('A search query to filter products by name, description, or tags.')
-        }),
-        outputSchema: z.array(z.object({
-            name: z.string(),
-            price: z.number(),
-            description: z.string(),
-            tags: z.array(z.string()).optional(),
-        }))
-    },
-    async (input) => {
-        const products = await getProducts();
-        let filteredProducts = products;
-        if (input.query) {
-            const searchTerm = input.query.toLowerCase();
-            filteredProducts = products.filter(p =>
-                p.name.toLowerCase().includes(searchTerm) ||
-                p.description.toLowerCase().includes(searchTerm) ||
-                p.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
-            );
-        }
-        // Return a simplified product list to the model
-        return filteredProducts.map(({ name, price, description, tags }) => ({ name, price, description, tags }));
-    }
-);
 
 const getOrderStatusTool = ai.defineTool(
     {
@@ -70,6 +50,8 @@ const getOrderStatusTool = ai.defineTool(
     },
     async (input) => {
         if (!input.userEmail) return undefined;
+        // This is a server-to-server call, so it requires Firestore rules that allow read
+        // for authenticated users on the orders collection, which is already set up.
         const order = await getOrderByUserEmail(input.userEmail);
         if (order) {
             return { orderId: order.id, status: order.status, cartTotal: order.cartTotal };
@@ -82,11 +64,11 @@ const prompt = ai.definePrompt({
     name: 'supportChatPrompt',
     input: { schema: SupportChatInputSchema },
     output: { schema: SupportChatOutputSchema },
-    tools: [getStoreProducts, getOrderStatusTool],
+    tools: [getOrderStatusTool],
     prompt: `You are a friendly and helpful customer support agent for an online store called "Lautech Shoppa".
     Your goal is to answer customer questions accurately and concisely.
 
-    - If the user asks about product availability, use the 'getStoreProducts' tool to check the store's inventory.
+    - Use the provided product list to answer questions about product availability or details. The product list is provided in the 'products' input field.
     - If the user asks about their order status (e.g., "where's my stuff?", "delivery status"), use the 'getOrderStatus' tool.
         - You MUST use the 'userEmail' from the input to call this tool.
         - If the tool returns an order, inform the user of the status of their order (e.g., "Your order #12345 is currently Out for Delivery").
@@ -95,6 +77,15 @@ const prompt = ai.definePrompt({
     - If you don't know the answer, politely say that you can't help with that.
     - Do not make up information about products or store policies.
     - The store delivers only within Ogbomoso, Nigeria. Delivery is free and takes 1-2 business days.
+
+    Available Products:
+    {{#if products}}
+        {{#each products}}
+        - Name: {{name}}, Price: {{price}}, Description: {{description}}, Tags: {{join tags ", "}}
+        {{/each}}
+    {{else}}
+        No product information available.
+    {{/if}}
 
     Customer question: {{{question}}}
     `,
@@ -108,10 +99,6 @@ const supportChatFlow = ai.defineFlow(
         outputSchema: SupportChatOutputSchema,
     },
     async (input) => {
-        if (!input.userEmail) {
-            const { output } = await prompt({question: input.question});
-            return output!;
-        }
         const { output } = await prompt(input);
         return output!;
     }
