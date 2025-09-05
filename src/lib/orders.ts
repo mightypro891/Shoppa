@@ -1,47 +1,56 @@
 
-import type { Order, OrderStatus, CartItem, CustomerDetails } from './types';
+'use server';
 
-// --- In-memory database for prototype ---
-let orders: Order[] = [];
+import type { Order, OrderStatus } from './types';
+import { db } from './firebase';
+import { collection, doc, getDocs, getDoc, addDoc, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function getAllOrders(): Promise<Order[]> {
-  await delay(100);
-  // Return orders sorted by date, descending
-  return [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const ordersCol = collection(db, 'orders');
+  const q = query(ordersCol, orderBy('createdAt', 'desc'));
+  const orderSnapshot = await getDocs(q);
+  return orderSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
 }
 
 export async function getOrderById(id: string): Promise<Order | undefined> {
-  await delay(50);
-  return orders.find(o => o.id === id);
+  const orderRef = doc(db, 'orders', id);
+  const orderSnap = await getDoc(orderRef);
+  if (orderSnap.exists()) {
+    return { id: orderSnap.id, ...orderSnap.data() } as Order;
+  }
+  return undefined;
 }
 
 export async function getOrderByUserEmail(email: string): Promise<Order | undefined> {
-  await delay(50);
-  const userOrders = orders.filter(o => o.customer.email === email)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return userOrders[0];
+    const ordersCol = collection(db, 'orders');
+    const q = query(
+        ordersCol, 
+        where('customer.email', '==', email),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as Order;
+    }
+    return undefined;
 }
 
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
-  await delay(200);
-  const newOrder: Order = {
-    id: `order_${Date.now()}`,
+  const newOrderData = {
     ...orderData,
     status: 'Order Placed' as OrderStatus,
     createdAt: new Date().toISOString(),
   };
-  orders.push(newOrder);
-  return newOrder;
+  const ordersCol = collection(db, 'orders');
+  const docRef = await addDoc(ordersCol, newOrderData);
+  return { id: docRef.id, ...newOrderData };
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order | undefined> {
-    await delay(100);
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex > -1) {
-        orders[orderIndex].status = status;
-        return { ...orders[orderIndex] }; // Return a copy
-    }
-    return undefined;
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, { status: status });
+    return await getOrderById(orderId);
 }

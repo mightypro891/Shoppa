@@ -57,6 +57,7 @@ export interface AdminUser {
 export interface Review {
   id: string;
   productId: string;
+  userId: string;
   authorName: string;
   authorImage?: string | null;
   rating: number; // 1 to 5

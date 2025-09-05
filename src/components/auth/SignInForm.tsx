@@ -1,12 +1,27 @@
 
 'use client';
 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+
+const formSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+});
+
+type SignInFormValues = z.infer<typeof formSchema>;
+
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -17,53 +32,95 @@ const GoogleIcon = () => (
 
 export default function SignInForm() {
   const router = useRouter();
-  const { user, loading, loginAs } = useAuth();
-  
+  const { user, loading, googleSignIn, emailSignIn } = useAuth();
+  const { toast } = useToast();
+
+  const form = useForm<SignInFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { email: '', password: '' },
+  });
+
   useEffect(() => {
     if (!loading && user) {
       router.push('/');
     }
   }, [user, loading, router]);
   
-  const handleLogin = (role: 'user' | 'admin' | 'superadmin') => {
-      loginAs(role);
-      router.push('/');
-  }
+  const onSubmit = async (data: SignInFormValues) => {
+      try {
+          await emailSignIn(data.email, data.password);
+          router.push('/');
+      } catch (error: any) {
+          toast({
+              title: 'Sign In Failed',
+              description: error.message,
+              variant: 'destructive',
+          });
+      }
+  };
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Prototype Login</CardTitle>
-        <CardDescription>Select a user role to sign in.</CardDescription>
+        <CardTitle className="text-2xl">Sign In</CardTitle>
+        <CardDescription>Sign in to your Lautech Shoppa account.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Button className="w-full" onClick={() => handleLogin('user')}>
-          Login as Standard User
-        </Button>
-         <Button className="w-full" variant="secondary" onClick={() => handleLogin('admin')}>
-          Login as Admin
-        </Button>
-         <Button className="w-full" variant="outline" onClick={() => handleLogin('superadmin')}>
-          Login as Super Admin
-        </Button>
+      <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                            <Input placeholder="name@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                 />
+                 <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                 />
+                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Sign In
+                </Button>
+            </form>
+          </Form>
 
-        <div className="relative">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or
+              Or continue with
             </span>
           </div>
         </div>
-        <Button className="w-full" variant="outline" disabled>
+        <Button className="w-full" variant="outline" onClick={googleSignIn}>
           <GoogleIcon />
-          Sign in with Google (Disabled)
+          Google
         </Button>
       </CardContent>
-       <CardFooter className="justify-center text-sm">
-        <p>This is a prototype. No sign up is needed.</p>
+       <CardFooter className="flex justify-center text-sm">
+            <p>Don't have an account?&nbsp;</p>
+            <Link href="/auth/signup" className="text-primary hover:underline">
+             Sign Up
+            </Link>
       </CardFooter>
     </Card>
   );

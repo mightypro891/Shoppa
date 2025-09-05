@@ -31,7 +31,7 @@ import React from 'react';
 
 export default function Header() {
   const { itemCount } = useCart();
-  const { user, isAdmin, loading, accountBalance, loginAs } = useAuth();
+  const { user, isAdmin, loading, accountBalance, logOut } = useAuth();
   const router = useRouter();
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,7 +53,7 @@ export default function Header() {
   }, []);
 
   const handleSignOut = async () => {
-    loginAs(null);
+    logOut();
     router.push('/');
   };
   
@@ -103,7 +103,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Lautech Shoppa
+              Naija Shoppa
             </span>
           </Link>
         </div>

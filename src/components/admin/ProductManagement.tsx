@@ -44,10 +44,19 @@ export default function ProductManagement() {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const prods = await getProducts();
-    const deletedProds = await getDeletedProducts();
-    setProducts(prods);
-    setDeletedProducts(deletedProds);
+    try {
+        const prods = await getProducts();
+        const deletedProds = await getDeletedProducts();
+        setProducts(prods);
+        setDeletedProducts(deletedProds);
+    } catch(e) {
+        console.error(e);
+        toast({
+            title: "Error fetching products",
+            description: "Please check console for details",
+            variant: "destructive"
+        })
+    }
     setLoading(false);
   };
 
@@ -56,12 +65,12 @@ export default function ProductManagement() {
   }, []);
 
   const handleDelete = async (productId: string) => {
-    if (!user) {
+    if (!user || !user.email) {
         toast({ title: 'Authentication Error', description: 'You must be logged in.', variant: 'destructive'});
         return;
     }
     setDeletingId(productId);
-    await deleteProduct(productId, user.email || 'unknown@admin.com');
+    await deleteProduct(productId, user.email);
     toast({
       title: 'Product Deleted',
       description: 'The product has been moved to the deleted products log.',
@@ -218,7 +227,7 @@ export default function ProductManagement() {
                         <p>No products found in the database.</p>
                          <Button onClick={handleSeed} className="mt-4">
                             <DatabaseZap className="mr-2 h-4 w-4" />
-                            Reset to Initial Products
+                            Seed Initial Products
                         </Button>
                     </div>
                 )}

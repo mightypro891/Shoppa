@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -45,7 +46,7 @@ export default function FundWalletClient() {
     // Simulate payment gateway processing
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    fundAccount(data.amount);
+    await fundAccount(data.amount);
 
     toast({
       title: 'Wallet Funded!',

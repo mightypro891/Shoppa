@@ -46,6 +46,7 @@ export default function ReviewForm({ productId }: ReviewFormProps) {
       authorImage: user.photoURL,
       rating: data.rating,
       text: data.text,
+      userId: user.uid
     });
 
     toast({
@@ -61,9 +62,9 @@ export default function ReviewForm({ productId }: ReviewFormProps) {
     return (
       <div className="text-center text-muted-foreground p-4 border-t">
         Please{' '}
-        <a href="/auth/signin" className="text-primary underline">
+        <Link href="/auth/signin" className="text-primary underline">
           sign in
-        </a>{' '}
+        </Link>{' '}
         to leave a review.
       </div>
     );

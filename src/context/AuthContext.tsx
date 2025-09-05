@@ -1,36 +1,14 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot, collection, query, getDocs } from 'firebase/firestore';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
 
-// --- Mock User Data for Prototype ---
-const MOCK_USER = {
-  uid: 'prototype_user_123',
-  displayName: 'Prototype User',
-  email: 'user@example.com',
-  photoURL: 'https://picsum.photos/100/100',
-};
-
-const MOCK_ADMIN = {
-  uid: 'prototype_admin_456',
-  displayName: 'Admin User',
-  email: 'admin@example.com',
-  photoURL: 'https://picsum.photos/100/100?grayscale',
-};
-
-const MOCK_SUPER_ADMIN = {
-  uid: 'prototype_super_admin_789',
-  displayName: 'Super Admin',
-  email: 'superadmin@example.com',
-  photoURL: 'https://picsum.photos/100/100?blur=1',
-};
-
-type MockUser = typeof MOCK_USER;
-
-
 interface AuthContextType {
-  user: MockUser | null;
+  user: User | null;
   loading: boolean;
   isAdmin: boolean;
   adminRole: AdminRole | null;
@@ -49,8 +27,10 @@ interface AuthContextType {
   onlineUsers: number;
   celebrationPopupConfig: CelebrationPopupConfig | null;
   updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
-  // Prototype specific functions
-  loginAs: (role: 'user' | 'admin' | 'superadmin' | null) => void;
+  googleSignIn: () => void;
+  logOut: () => void;
+  emailSignUp: (email:string, password:string) => Promise<User>;
+  emailSignIn: (email:string, password:string) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -63,37 +43,8 @@ export const useAuth = () => {
   return context;
 };
 
-// --- Local Storage Helpers for Prototype State ---
-const getFromStorage = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') return defaultValue;
-    try {
-        const saved = localStorage.getItem(key);
-        return saved ? JSON.parse(saved) : defaultValue;
-    } catch (error) {
-        console.error(`Failed to parse ${key} from localStorage`, error);
-        return defaultValue;
-    }
-}
-
-const saveToStorage = (key: string, data: any) => {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-        console.error(`Failed to save ${key} to localStorage`, error);
-    }
-};
-
-
-const defaultPopupConfig: CelebrationPopupConfig = {
-    title: 'Welcome!',
-    message: 'This is a prototype store. All data is for demonstration purposes.',
-    isActive: true,
-};
-
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<MockUser | null>(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
@@ -104,148 +55,180 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState(0);
-  const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(() => getFromStorage('prototype_popup_config', defaultPopupConfig));
-  
-  const loginAs = (role: 'user' | 'admin' | 'superadmin' | null) => {
-      setLoading(true);
-      if (role === null) {
-          setUser(null);
-          setIsAdmin(false);
-          setIsSuperAdmin(false);
-          setAdminRole(null);
-          setManagedCategories(null);
-          setAccountBalance(0);
-          setUserProfile(null);
-      } else {
-          let mockUser, roleName: AdminRole | null, categories: string[] | null = null;
-          if (role === 'user') {
-              mockUser = MOCK_USER;
-              roleName = null;
-              setIsAdmin(false);
-              setIsSuperAdmin(false);
-          } else if (role === 'admin') {
-              mockUser = MOCK_ADMIN;
-              roleName = 'Normal Admin';
-              categories = ['food', 'kitchen-utensils'];
-              setIsAdmin(true);
-              setIsSuperAdmin(false);
-          } else { // superadmin
-              mockUser = MOCK_SUPER_ADMIN;
-              roleName = 'Super Admin';
-              categories = null;
-              setIsAdmin(true);
-              setIsSuperAdmin(true);
-          }
-          
-          setUser(mockUser);
-          setAdminRole(roleName);
-          setManagedCategories(categories);
-          
-          const profile = getFromStorage<UserProfile | null>(`prototype_profile_${mockUser.uid}`, { phone: '08012345678', address: '123 Prototype Street', city: 'Nextville', balance: 50000 });
-          setUserProfile(profile);
-          setAccountBalance(profile?.balance || 50000);
-      }
-      setTimeout(() => setLoading(false), 300);
+  const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>(null);
+
+  const googleSignIn = () => {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider);
+  };
+
+  const emailSignUp = async (email:string, password:string):Promise<User> => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  }
+   const emailSignIn = async (email:string, password:string):Promise<User> => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  }
+
+  const logOut = () => {
+    signOut(auth);
   };
   
-  // Simulate initial load and check if a user was previously "logged in"
-  useEffect(() => {
-    const lastRole = getFromStorage<'user' | 'admin' | 'superadmin' | null>('prototype_last_role', null);
-    if(lastRole) {
-        loginAs(lastRole);
-    } else {
-        setLoading(false);
-    }
-    setTotalUsers(3); // Mock value
-    setOnlineUsers(2); // Mock value
-  }, []);
-
-  // Persist role on change
-  useEffect(() => {
-    if (user) {
-        let role: 'user' | 'admin' | 'superadmin' = 'user';
-        if (isSuperAdmin) role = 'superadmin';
-        else if (isAdmin) role = 'admin';
-        saveToStorage('prototype_last_role', role);
-    } else {
-        saveToStorage('prototype_last_role', null);
-    }
-  }, [user, isAdmin, isSuperAdmin]);
-
-
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
-      console.log(`PROTOTYPE: Adding admin ${email} with role ${role}`);
-      const newAdmin: AdminUser = { email, role, managedCategories: categories };
-      setAdmins(prev => [...prev, newAdmin]);
+    const adminRef = doc(db, 'admins', email);
+    await setDoc(adminRef, { role, managedCategories: categories });
   };
-
+  
   const removeAdmin = async (email: string) => {
-    console.log(`PROTOTYPE: Removing admin ${email}`);
-    setAdmins(prev => prev.filter(admin => admin.email !== email));
-  };
-  
-  const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
-    console.log(`PROTOTYPE: Updating role for ${email} to ${role}`);
-    setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
+    const adminRef = doc(db, 'admins', email);
+    await setDoc(adminRef, { role: 'user' }); // Or delete the document
   };
 
-  const saveUserProfile = (profile: Omit<UserProfile, 'balance'>) => {
-      if (user) {
-          const updatedProfile = { ...userProfile, ...profile, balance: accountBalance };
-          setUserProfile(updatedProfile as UserProfile);
-          saveToStorage(`prototype_profile_${user.uid}`, updatedProfile);
-      }
+  const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
+     const adminRef = doc(db, 'admins', email);
+     await setDoc(adminRef, { role, managedCategories: categories }, { merge: true });
   };
-  
-  const fundAccount = (amount: number) => {
-      if (user && amount > 0) {
-          const newBalance = accountBalance + amount;
-          setAccountBalance(newBalance);
-          saveUserProfile(userProfile!); // This will re-save with the new balance
-      }
+
+  const saveUserProfile = async (profileData: Omit<UserProfile, 'balance'>) => {
+    if (user) {
+      const profileRef = doc(db, 'profiles', user.uid);
+      await setDoc(profileRef, profileData, { merge: true });
+    }
+  };
+
+  const fundAccount = async (amount: number) => {
+    if (user && amount > 0) {
+      const newBalance = accountBalance + amount;
+      const profileRef = doc(db, 'profiles', user.uid);
+      await setDoc(profileRef, { balance: newBalance }, { merge: true });
+    }
   };
 
   const payWithWallet = (amount: number): boolean => {
-      if (user && amount > 0 && accountBalance >= amount) {
-          const newBalance = accountBalance - amount;
-          setAccountBalance(newBalance);
-          saveUserProfile(userProfile!);
-          return true;
-      }
-      return false;
+    if (user && amount > 0 && accountBalance >= amount) {
+      const newBalance = accountBalance - amount;
+      const profileRef = doc(db, 'profiles', user.uid);
+      setDoc(profileRef, { balance: newBalance }, { merge: true });
+      return true;
+    }
+    return false;
+  };
+  
+  const updateCelebrationPopupConfig = async (config: CelebrationPopupConfig) => {
+    const configRef = doc(db, 'config', 'celebrationPopup');
+    await setDoc(configRef, config);
   };
 
-  const updateCelebrationPopupConfig = (config: CelebrationPopupConfig) => {
-    setCelebrationPopupConfig(config);
-    saveToStorage('prototype_popup_config', config);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setLoading(true);
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const adminDocRef = doc(db, 'admins', user.email!);
+      const unsubscribeAdmin = onSnapshot(adminDocRef, (doc) => {
+        if (doc.exists()) {
+          const adminData = doc.data() as AdminUser;
+          setIsAdmin(true);
+          setAdminRole(adminData.role);
+          setIsSuperAdmin(adminData.role === 'Super Admin');
+          if (adminData.role === 'Normal Admin' && adminData.managedCategories) {
+            setManagedCategories(adminData.managedCategories);
+          } else {
+            setManagedCategories(null);
+          }
+        } else {
+          setIsAdmin(false);
+          setAdminRole(null);
+          setIsSuperAdmin(false);
+          setManagedCategories(null);
+        }
+      });
+
+      const profileDocRef = doc(db, 'profiles', user.uid);
+      const unsubscribeProfile = onSnapshot(profileDocRef, async (doc) => {
+        if (doc.exists()) {
+          const profileData = doc.data() as UserProfile;
+          setUserProfile(profileData);
+          setAccountBalance(profileData.balance || 0);
+        } else {
+          // Create a default profile if it doesn't exist
+          const defaultProfile: UserProfile = { phone: '', address: '', city: '', balance: 0 };
+          await setDoc(profileDocRef, defaultProfile);
+          setUserProfile(defaultProfile);
+          setAccountBalance(0);
+        }
+      });
+      
+      setLoading(false);
+      return () => {
+        unsubscribeAdmin();
+        unsubscribeProfile();
+      };
+    } else {
+      setUser(null);
+      setIsAdmin(false);
+      setAdminRole(null);
+      setIsSuperAdmin(false);
+      setLoading(false);
+      setAccountBalance(0);
+      setUserProfile(null);
+    }
+  }, [user]);
+  
+  useEffect(() => {
+        const fetchAdmins = async () => {
+            const q = query(collection(db, 'admins'));
+            const querySnapshot = await getDocs(q);
+            const adminList = querySnapshot.docs.map(doc => ({ email: doc.id, ...doc.data() } as AdminUser));
+            setAdmins(adminList);
+        };
+        if(isSuperAdmin) {
+            fetchAdmins();
+        }
+  }, [isSuperAdmin]);
+  
+    useEffect(() => {
+        const configRef = doc(db, 'config', 'celebrationPopup');
+        const unsubscribe = onSnapshot(configRef, (doc) => {
+            if (doc.exists()) {
+                setCelebrationPopupConfig(doc.data() as CelebrationPopupConfig);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+
+  const value = {
+    user,
+    loading,
+    isAdmin,
+    adminRole,
+    isSuperAdmin,
+    admins,
+    addAdmin,
+    removeAdmin,
+    updateAdminRole,
+    userProfile,
+    saveUserProfile,
+    accountBalance,
+    fundAccount,
+    payWithWallet,
+    managedCategories,
+    totalUsers,
+    onlineUsers,
+    celebrationPopupConfig,
+    updateCelebrationPopupConfig,
+    googleSignIn,
+    logOut,
+    emailSignUp,
+    emailSignIn,
   };
 
-  const value = { 
-      user, 
-      loading, 
-      isAdmin, 
-      adminRole, 
-      isSuperAdmin, 
-      admins, 
-      addAdmin, 
-      removeAdmin, 
-      updateAdminRole, 
-      userProfile, 
-      saveUserProfile,
-      accountBalance,
-      fundAccount,
-      payWithWallet,
-      managedCategories,
-      totalUsers,
-      onlineUsers,
-      celebrationPopupConfig,
-      updateCelebrationPopupConfig,
-      loginAs
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

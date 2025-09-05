@@ -17,13 +17,15 @@ import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Pencil } from 'lucide-react';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { updateProfile } from 'firebase/auth';
 
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
-  phone: z.string().min(10, 'Please enter a valid phone number.'),
-  address: z.string().min(10, 'Please enter a full address.'),
-  city: z.string().min(2, 'Please enter a city.'),
+  phone: z.string().min(10, 'Please enter a valid phone number.').optional().or(z.literal('')),
+  address: z.string().min(10, 'Please enter a full address.').optional().or(z.literal('')),
+  city: z.string().min(2, 'Please enter a city.').optional().or(z.literal('')),
   photo: z.any(),
 });
 
@@ -35,6 +37,7 @@ export default function ProfileClientPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -59,6 +62,7 @@ export default function ProfileClientPage() {
         city: userProfile?.city || '',
         photo: user.photoURL || null,
       });
+      setPhotoPreview(user.photoURL);
     }
   }, [user, loading, router, form, userProfile]);
 
@@ -66,28 +70,59 @@ export default function ProfileClientPage() {
     if (!user) return;
     setIsSubmitting(true);
     
-    // Simulate async operation
-    await new Promise(res => setTimeout(res, 500));
-    
-    // In a real app, you would handle file upload here.
-    // For this prototype, we'll just save the rest of the data.
-    
-    saveUserProfile({
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-    });
+    try {
+        let photoURL = user.photoURL;
 
-    toast({
-      title: 'Profile Updated',
-      description: 'Your information has been successfully updated.',
-    });
-    
-    setIsSubmitting(false);
-    // You might want to refresh the user object if displayName or photoURL changed
-    router.refresh(); 
+        // Handle photo upload
+        if (data.photo && data.photo[0] instanceof File) {
+            const file = data.photo[0];
+            const storage = getStorage();
+            const storageRef = ref(storage, `profile_pictures/${user.uid}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            photoURL = await getDownloadURL(snapshot.ref);
+        }
+
+        // Update Firebase Auth profile
+        if (data.name !== user.displayName || photoURL !== user.photoURL) {
+            await updateProfile(user, {
+                displayName: data.name,
+                photoURL: photoURL,
+            });
+        }
+        
+        // Save additional profile info to Firestore
+        await saveUserProfile({
+            phone: data.phone || '',
+            address: data.address || '',
+            city: data.city || '',
+        });
+
+        toast({
+            title: 'Profile Updated',
+            description: 'Your information has been successfully updated.',
+        });
+        router.refresh(); 
+
+    } catch (error) {
+        console.error("Profile update error:", error);
+        toast({
+            title: 'Update Failed',
+            description: 'Could not update your profile. Please try again.',
+            variant: 'destructive',
+        })
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            form.setValue('photo', e.target.files);
+            setPhotoPreview(URL.createObjectURL(file));
+        }
+    };
+
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center p-10">
@@ -114,7 +149,7 @@ export default function ProfileClientPage() {
                                     <FormItem className="flex flex-col items-center">
                                         <div className="relative">
                                             <Avatar className="w-32 h-32">
-                                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'user'} />
+                                                <AvatarImage src={photoPreview || undefined} alt={user.displayName || 'user'} />
                                                 <AvatarFallback>
                                                     <User className="w-16 h-16" />
                                                 </AvatarFallback>
@@ -125,7 +160,6 @@ export default function ProfileClientPage() {
                                                 size="icon" 
                                                 className="absolute bottom-2 right-2 rounded-full"
                                                 onClick={() => fileInputRef.current?.click()}
-                                                disabled
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -135,13 +169,11 @@ export default function ProfileClientPage() {
                                                 type="file" 
                                                 className="hidden" 
                                                 ref={fileInputRef} 
-                                                onChange={(e) => field.onChange(e.target.files)}
+                                                onChange={handlePhotoChange}
                                                 accept="image/*"
-                                                disabled
                                             />
                                         </FormControl>
                                         <FormMessage />
-                                        <FormDescription>Photo uploads disabled in prototype.</FormDescription>
                                     </FormItem>
                                 )}
                             />

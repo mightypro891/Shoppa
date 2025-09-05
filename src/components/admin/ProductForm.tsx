@@ -23,12 +23,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { addProduct } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
-  image: z.any().optional(), // Image is optional in prototype
+  image: z.any(),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
 });
@@ -44,6 +46,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   const { toast } = useToast();
   const { user, managedCategories, adminRole } = useAuth();
   const isEditing = !!product;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
   const availableCategories = adminRole === 'Normal Admin' ? (managedCategories || []) : allCategories;
@@ -57,14 +60,23 @@ export default function ProductForm({ product }: ProductFormProps) {
       description: product?.description || '',
       image: product?.image || '',
       aiHint: product?.aiHint || '',
-      tags: product?.tags?.join(', ') || '',
+      tags: product?.tags?.[0] || '',
     },
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    if (!user) return;
+    if (!user || !user.email) return;
+    setIsSubmitting(true);
     
-    let imageUrl = product?.image || 'https://picsum.photos/400/300'; 
+    let imageUrl = product?.image || 'https://picsum.photos/400/300';
+    
+    if (data.image && data.image[0] instanceof File) {
+        const file = data.image[0];
+        const storage = getStorage();
+        const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(snapshot.ref);
+    }
 
     const productData: Omit<Product, 'id'> = {
       name: data.name,
@@ -72,22 +84,26 @@ export default function ProductForm({ product }: ProductFormProps) {
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
-      tags: data.tags.split(',').map(tag => tag.trim()),
+      tags: [data.tags],
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
     if (isEditing) {
-       // Update logic is not implemented for prototype, but we can log it.
+       // Update logic is not fully implemented in this prototype
       console.log('PROTOTYPE: Updating product', { id: product?.id, ...productData });
+       toast({
+        title: 'Note: Update Not Implemented',
+        description: `Product edits are not saved in this prototype version.`,
+      });
     } else {
       await addProduct(productData);
+      toast({
+        title: 'Product Created',
+        description: `The product "${data.name}" has been saved.`,
+      });
     }
 
-    toast({
-      title: isEditing ? 'Product Updated' : 'Product Created',
-      description: `The product "${data.name}" has been saved.`,
-    });
-
+    setIsSubmitting(false);
     router.push('/admin/products');
     router.refresh(); 
   };
@@ -152,10 +168,10 @@ export default function ProductForm({ product }: ProductFormProps) {
                   <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
-                      <Input type="file" accept="image/*" {...imageRef} disabled />
+                      <Input type="file" accept="image/*" {...imageRef} />
                     </FormControl>
                     <FormDescription>
-                        Image uploads are disabled in the prototype. A placeholder will be used.
+                        {isEditing ? 'Leave blank to keep the current image.' : 'Upload a product image.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -207,7 +223,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                     <Button type="button" variant="outline" onClick={() => router.back()}>
                         Cancel
                     </Button>
-                    <Button type="submit">{isEditing ? 'Save Changes' : 'Create Product'}</Button>
+                    <Button type="submit" disabled={isSubmitting}>{isEditing ? 'Save Changes' : 'Create Product'}</Button>
                 </div>
             </form>
             </Form>
