@@ -20,7 +20,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
   };
 
   return (
-     <Button onClick={handleAddToCart} size="sm" className="bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary">
+     <Button onClick={handleAddToCart} size="sm" variant="outline" className="text-primary hover:bg-primary hover:text-primary-foreground border-primary border-2">
         <ShoppingCart className="mr-2 h-4 w-4" />
         Add to Cart
     </Button>

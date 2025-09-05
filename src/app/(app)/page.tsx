@@ -187,11 +187,24 @@ export default function Home() {
                       <Link href={`/products/category/${category}`}>View All</Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                    {productsByCategory[category].slice(0, 4).map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
+                    <Carousel
+                        opts={{
+                            align: "start",
+                        }}
+                        className="w-full"
+                    >
+                        <CarouselContent className="-ml-4">
+                            {productsByCategory[category].map((product) => (
+                                <CarouselItem key={product.id} className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                                    <div className="p-1">
+                                        <ProductCard product={product} />
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="hidden md:flex" />
+                        <CarouselNext className="hidden md:flex" />
+                    </Carousel>
                 </div>
               </section>
             )
