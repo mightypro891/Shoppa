@@ -11,6 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -20,12 +24,35 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
 import { ModeToggle } from './ModeToggle';
 import { Input } from '../ui/input';
+import { useEffect, useState } from 'react';
+import { getProducts } from '@/lib/data';
+import type { Product } from '@/lib/types';
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '../ui/navigation-menu';
+import { cn } from '@/lib/utils';
+import React from 'react';
 
 export default function Header() {
   const { itemCount } = useCart();
   const { user, isAdmin, loading, accountBalance } = useAuth();
   const router = useRouter();
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsByCategory, setProductsByCategory] = useState<Record<string, Product[]>>({});
+
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const prods = await getProducts();
+      setProducts(prods);
+      
+      const byCategory: Record<string, Product[]> = {};
+      categories.forEach(category => {
+        byCategory[category] = prods.filter(p => p.tags?.includes(category));
+      });
+      setProductsByCategory(byCategory);
+    };
+    fetchProducts();
+  }, []);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -45,6 +72,32 @@ export default function Header() {
     }
   };
 
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a">
+  >(({ className, title, children, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <a
+            ref={ref}
+            className={cn(
+              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
+            )}
+            {...props}
+          >
+            <div className="text-sm font-medium leading-none">{title}</div>
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          </a>
+        </NavigationMenuLink>
+      </li>
+    )
+  })
+  ListItem.displayName = "ListItem"
+
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
@@ -56,6 +109,36 @@ export default function Header() {
             </span>
           </Link>
         </div>
+
+        <nav className="hidden md:flex">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <Link href="/products" legacyBehavior passHref>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    All Products
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+               <NavigationMenuItem>
+                  <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                      {categories.map((category) => (
+                        <ListItem
+                          key={category}
+                          href={`/products/category/${category}`}
+                          title={formatCategoryName(category)}
+                        >
+                          {productsByCategory[category]?.slice(0, 3).map(p => p.name).join(', ')}...
+                        </ListItem>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </nav>
 
         <div className="flex-1 max-w-md hidden md:flex">
           <form onSubmit={handleSearch} className="w-full relative">
@@ -73,15 +156,38 @@ export default function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end">
                <DropdownMenuItem asChild>
                   <Link href="/products">All Products</Link>
               </DropdownMenuItem>
-              {categories.map((category) => (
-                <DropdownMenuItem key={category} asChild>
-                  <Link href={`/products/category/${category}`} className="capitalize">{formatCategoryName(category)}</Link>
-                </DropdownMenuItem>
-              ))}
+               <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <span>Categories</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {categories.map((category) => (
+                         <DropdownMenuSub key={category}>
+                            <DropdownMenuSubTrigger>
+                                <Link href={`/products/category/${category}`}>{formatCategoryName(category)}</Link>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                               <DropdownMenuSubContent>
+                                {productsByCategory[category]?.length > 0 ? productsByCategory[category].map(product => (
+                                    <DropdownMenuItem key={product.id} asChild>
+                                        <Link href={`/products/${product.id}`}>{product.name}</Link>
+                                    </DropdownMenuItem>
+                                )) : (
+                                    <DropdownMenuItem disabled>No products</DropdownMenuItem>
+                                )}
+                               </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                         </DropdownMenuSub>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+               </DropdownMenuSub>
+
               {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
