@@ -33,7 +33,7 @@ const GoogleIcon = () => (
 );
 
 const firebaseApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-const isFirebaseConfigured = firebaseApiKey && firebaseApiKey !== 'YOUR_API_KEY';
+const isFirebaseConfigured = firebaseApiKey && firebaseApiKey !== 'YOUR_API_KEY' && firebaseApiKey !== '';
 
 export default function SignUpForm() {
   const router = useRouter();
