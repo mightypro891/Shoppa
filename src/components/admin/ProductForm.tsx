@@ -19,12 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Product } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { addProduct, updateProduct } from '@/lib/data';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { addProduct, updateProduct, submitDeal } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useState } from 'react';
+import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -34,6 +35,7 @@ const formSchema = z.object({
   image: z.any(),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
+  dealPrice: z.coerce.number().optional(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -45,7 +47,7 @@ interface ProductFormProps {
 export default function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, managedCategories, adminRole } = useAuth();
+  const { user, managedCategories, adminRole, isSuperAdmin } = useAuth();
   const isEditing = !!product;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,6 +65,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       image: product?.image || '',
       aiHint: product?.aiHint || '',
       tags: product?.tags?.[0] || '',
+      dealPrice: undefined,
     },
   });
 
@@ -83,7 +86,8 @@ export default function ProductForm({ product }: ProductFormProps) {
     const productData: Omit<Product, 'id'> = {
       name: data.name,
       price: data.price,
-      salePrice: data.salePrice || undefined,
+      // Only Super Admins can set the sale price directly
+      salePrice: isSuperAdmin ? data.salePrice : product?.salePrice,
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
@@ -91,18 +95,36 @@ export default function ProductForm({ product }: ProductFormProps) {
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
+    let newOrUpdatedProduct = product;
+
     if (isEditing && product) {
-       await updateProduct(product.id, productData);
+       newOrUpdatedProduct = await updateProduct(product.id, productData);
        toast({
         title: 'Product Updated',
         description: `The product "${data.name}" has been saved.`,
       });
     } else {
-      await addProduct(productData);
+      newOrUpdatedProduct = await addProduct(productData);
       toast({
         title: 'Product Created',
         description: `The product "${data.name}" has been saved.`,
       });
+    }
+
+    // Handle deal submission
+    if (isEditing && data.dealPrice && data.dealPrice > 0 && data.dealPrice < data.price) {
+        await submitDeal({
+            productId: product.id,
+            productName: data.name,
+            productImage: imageUrl,
+            originalPrice: data.price,
+            proposedPrice: data.dealPrice,
+            submittedBy: user.email,
+        });
+        toast({
+            title: 'Deal Submitted',
+            description: `Your deal for "${data.name}" has been submitted for approval.`,
+        });
     }
 
     setIsSubmitting(false);
@@ -137,8 +159,7 @@ export default function ProductForm({ product }: ProductFormProps) {
                     </FormItem>
                 )}
                 />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
+                 <FormField
                     control={form.control}
                     name="price"
                     render={({ field }) => (
@@ -150,24 +171,27 @@ export default function ProductForm({ product }: ProductFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}
-                    />
+                />
+
+                {isSuperAdmin && (
                     <FormField
                     control={form.control}
                     name="salePrice"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Sale Price (Optional)</FormLabel>
+                        <FormLabel>Sale Price (Super Admin Only)</FormLabel>
                         <FormControl>
                             <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
                         </FormControl>
                         <FormDescription>
-                            Adds item to "Today's Deals"
+                            Directly set the deal price. This will override any submissions.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                </div>
+                )}
+                
                 <FormField
                 control={form.control}
                 name="description"
@@ -247,9 +271,35 @@ export default function ProductForm({ product }: ProductFormProps) {
                 </div>
             </form>
             </Form>
+            
+            {isEditing && !isSuperAdmin && (
+                 <>
+                    <Separator className="my-8" />
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Submit for "Today's Deals"</h3>
+                        <p className="text-sm text-muted-foreground">Propose a sale price for this item. A Super Admin will need to approve it before it goes live.</p>
+                         <Form {...form}>
+                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="dealPrice"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Proposed Deal Price</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.01" placeholder={`e.g. ${product.price * 0.9}`} {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button type="submit" variant="secondary" disabled={isSubmitting}>Submit Deal for Approval</Button>
+                            </form>
+                        </Form>
+                    </div>
+                 </>
+            )}
         </CardContent>
     </Card>
   );
 }
-
-    

@@ -71,3 +71,17 @@ export interface CelebrationPopupConfig {
     message: string;
     isActive: boolean;
 }
+
+export type DealStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DealSubmission {
+    id: string;
+    productId: string;
+    productName: string;
+    productImage: string;
+    originalPrice: number;
+    proposedPrice: number;
+    submittedBy: string;
+    submittedAt: string;
+    status: DealStatus;
+}

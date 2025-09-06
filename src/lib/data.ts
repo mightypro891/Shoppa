@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Product, DeletedProduct } from './types';
+import type { Product, DeletedProduct, DealSubmission, DealStatus } from './types';
 import { initialProducts } from './seed';
 import { db } from './firebase';
 import { 
@@ -15,6 +15,8 @@ import {
     query,
     where,
     writeBatch, 
+    serverTimestamp,
+    orderBy,
 } from 'firebase/firestore';
 
 
@@ -26,6 +28,8 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 const productsCollection = collection(db, 'products');
 const deletedProductsLogCollection = collection(db, 'deletedProductsLog');
+const dealSubmissionsCollection = collection(db, 'dealSubmissions');
+
 
 export async function getProducts(): Promise<Product[]> {
     await delay(500); // Simulate network call
@@ -100,4 +104,45 @@ export async function resetAllProducts(): Promise<{success: boolean, message: st
 
     await batch.commit();
     return { success: true, message: "Initial products seeded successfully." };
+}
+
+// --- DEAL SUBMISSION FUNCTIONS ---
+
+export async function submitDeal(submission: Omit<DealSubmission, 'id' | 'submittedAt' | 'status'>): Promise<void> {
+    await addDoc(dealSubmissionsCollection, {
+        ...submission,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+    });
+}
+
+export async function getDealSubmissions(): Promise<DealSubmission[]> {
+    const q = query(dealSubmissionsCollection, orderBy('submittedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DealSubmission));
+}
+
+export async function approveDeal(submissionId: string, productId: string, salePrice: number): Promise<void> {
+    const batch = writeBatch(db);
+    
+    const submissionRef = doc(db, 'dealSubmissions', submissionId);
+    batch.update(submissionRef, { status: 'approved' });
+
+    const productRef = doc(db, 'products', productId);
+    batch.update(productRef, { salePrice });
+
+    await batch.commit();
+}
+
+export async function rejectDeal(submissionId: string, productId: string): Promise<void> {
+     const batch = writeBatch(db);
+
+    const submissionRef = doc(db, 'dealSubmissions', submissionId);
+    batch.update(submissionRef, { status: 'rejected' });
+    
+    // Also remove the sale price from the product if it was somehow set
+    const productRef = doc(db, 'products', productId);
+    batch.update(productRef, { salePrice: undefined });
+
+    await batch.commit();
 }

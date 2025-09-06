@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi, PartyPopper } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi, PartyPopper, ThumbsUp, ThumbsDown, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import ProductPieChart from './charts/ProductPieChart';
@@ -14,7 +14,7 @@ import ProductBarChart from './charts/ProductBarChart';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
-import { AdminRole, AdminUser, CelebrationPopupConfig } from '@/lib/types';
+import { AdminRole, AdminUser, CelebrationPopupConfig, DealSubmission } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,12 +23,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { getDealSubmissions, approveDeal, rejectDeal } from '@/lib/data';
+import Image from 'next/image';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog';
 
 
 export default function AdminDashboard() {
@@ -57,6 +69,7 @@ export default function AdminDashboard() {
       message: '',
       isActive: false,
   });
+  const [dealSubmissions, setDealSubmissions] = useState<DealSubmission[]>([]);
 
   const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
@@ -67,8 +80,28 @@ export default function AdminDashboard() {
      if (celebrationPopupConfig) {
       setPopupSettings(celebrationPopupConfig);
     }
-  }, [isAdmin, loading, router, celebrationPopupConfig]);
+    if (isSuperAdmin) {
+        fetchDeals();
+    }
+  }, [isAdmin, loading, router, celebrationPopupConfig, isSuperAdmin]);
   
+  const fetchDeals = async () => {
+    const submissions = await getDealSubmissions();
+    setDealSubmissions(submissions);
+  };
+  
+  const handleApproveDeal = async (submission: DealSubmission) => {
+    await approveDeal(submission.id, submission.productId, submission.proposedPrice);
+    toast({ title: 'Deal Approved', description: `${submission.productName} is now on sale.` });
+    fetchDeals();
+  };
+
+  const handleRejectDeal = async (submission: DealSubmission) => {
+    await rejectDeal(submission.id, submission.productId);
+    toast({ title: 'Deal Rejected', description: `The deal for ${submission.productName} has been rejected.`, variant: 'destructive' });
+    fetchDeals();
+  };
+
   const formatCategoryName = (slug: string) => {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
@@ -441,57 +474,122 @@ export default function AdminDashboard() {
       {isSuperAdmin && (
           <div className='mt-6 space-y-6'>
             <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center"><PartyPopper className="mr-2 h-5 w-5" /> Celebration Pop-up Management</CardTitle>
-                        <CardDescription>Control a site-wide pop-up for special announcements or greetings.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <Switch 
-                                id="popup-active" 
-                                checked={popupSettings.isActive}
-                                onCheckedChange={(checked) => setPopupSettings(prev => ({...prev, isActive: checked}))}
-                            />
-                            <Label htmlFor="popup-active">Activate Pop-up</Label>
+                <CardHeader>
+                    <CardTitle className="flex items-center"><Megaphone className="mr-2 h-5 w-5" /> Today's Deals Approval</CardTitle>
+                    <CardDescription>Approve or reject deal submissions from other admins.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="pending">
+                        <TabsList>
+                            <TabsTrigger value="pending">Pending ({dealSubmissions.filter(d => d.status === 'pending').length})</TabsTrigger>
+                            <TabsTrigger value="approved">Approved ({dealSubmissions.filter(d => d.status === 'approved').length})</TabsTrigger>
+                            <TabsTrigger value="rejected">Rejected ({dealSubmissions.filter(d => d.status === 'rejected').length})</TabsTrigger>
+                        </TabsList>
+                        <div className="mt-4 space-y-4 max-h-96 overflow-y-auto">
+                            <TabsContent value="pending">
+                                {dealSubmissions.filter(d => d.status === 'pending').map(sub => (
+                                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                                        <div className="flex items-center gap-4">
+                                            <Image src={sub.productImage} alt={sub.productName} width={50} height={50} className="rounded-md object-cover" />
+                                            <div>
+                                                <p className="font-semibold">{sub.productName}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    <span className="line-through">₦{sub.originalPrice.toFixed(2)}</span>
+                                                    <span className="text-destructive font-bold ml-2">₦{sub.proposedPrice.toFixed(2)}</span>
+                                                </p>
+                                                <p className="text-xs text-muted-foreground italic">Submitted by: {sub.submittedBy}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700"><ThumbsUp /></Button></AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader><AlertDialogTitle>Approve Deal?</AlertDialogTitle><AlertDialogDescription>This will set the sale price for {sub.productName} to ₦{sub.proposedPrice.toFixed(2)} and make it live.</AlertDialogDescription></AlertDialogHeader>
+                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproveDeal(sub)} className="bg-green-600 hover:bg-green-700">Approve</AlertDialogAction></AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><ThumbsDown /></Button></AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader><AlertDialogTitle>Reject Deal?</AlertDialogTitle><AlertDialogDescription>This will reject the deal submission for {sub.productName}. The price will not be changed.</AlertDialogDescription></AlertDialogHeader>
+                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRejectDeal(sub)} className="bg-destructive hover:bg-destructive/90">Reject</AlertDialogAction></AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </div>
+                                ))}
+                                {dealSubmissions.filter(d => d.status === 'pending').length === 0 && <p className="text-muted-foreground text-center py-4">No pending deals.</p>}
+                            </TabsContent>
+                            <TabsContent value="approved">
+                                {dealSubmissions.filter(d => d.status === 'approved').map(sub => (
+                                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg border bg-green-50 dark:bg-green-950/20">
+                                       <div className="flex items-center gap-4">
+                                            <Image src={sub.productImage} alt={sub.productName} width={50} height={50} className="rounded-md object-cover" />
+                                            <div>
+                                                <p className="font-semibold">{sub.productName}</p>
+                                                <p className="text-sm"><span className="line-through">₦{sub.originalPrice.toFixed(2)}</span><span className="text-green-600 font-bold ml-2">₦{sub.proposedPrice.toFixed(2)}</span></p>
+                                            </div>
+                                        </div>
+                                        <Check className="text-green-600" />
+                                    </div>
+                                ))}
+                                {dealSubmissions.filter(d => d.status === 'approved').length === 0 && <p className="text-muted-foreground text-center py-4">No approved deals yet.</p>}
+                            </TabsContent>
+                            <TabsContent value="rejected">
+                                 {dealSubmissions.filter(d => d.status === 'rejected').map(sub => (
+                                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg border bg-red-50 dark:bg-red-950/20">
+                                        <div className="flex items-center gap-4">
+                                            <Image src={sub.productImage} alt={sub.productName} width={50} height={50} className="rounded-md object-cover" />
+                                            <div>
+                                                <p className="font-semibold">{sub.productName}</p>
+                                                <p className="text-sm text-muted-foreground line-through">₦{sub.proposedPrice.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        <X className="text-red-600" />
+                                    </div>
+                                ))}
+                                {dealSubmissions.filter(d => d.status === 'rejected').length === 0 && <p className="text-muted-foreground text-center py-4">No rejected deals.</p>}
+                            </TabsContent>
                         </div>
-                        <div>
-                            <Label htmlFor="popup-title">Pop-up Title</Label>
-                            <Input 
-                                id="popup-title"
-                                placeholder="e.g., Happy Holidays!"
-                                value={popupSettings.title}
-                                onChange={(e) => setPopupSettings(prev => ({...prev, title: e.target.value}))}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="popup-message">Pop-up Message</Label>
-                            <Textarea
-                                id="popup-message"
-                                placeholder="e.g., All items are 10% off this week."
-                                value={popupSettings.message}
-                                onChange={(e) => setPopupSettings(prev => ({...prev, message: e.target.value}))}
-                            />
-                        </div>
-                        <div className="flex justify-end">
-                            <Button onClick={handleSavePopupSettings}>Save Pop-up Settings</Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                    </Tabs>
+                </CardContent>
+            </Card>
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <Megaphone className="mr-2 h-5 w-5" />
-                        Promotions
-                    </CardTitle>
-                    <CardDescription>
-                        Manage "Today's Deals" and other sales.
-                    </CardDescription>
+                    <CardTitle className="flex items-center"><PartyPopper className="mr-2 h-5 w-5" /> Site-wide Promotions</CardTitle>
+                    <CardDescription>Control a site-wide pop-up for special announcements or greetings.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Button variant="secondary" disabled className="mt-4">
-                        Manage Deals (Coming Soon)
-                    </Button>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch 
+                            id="popup-active" 
+                            checked={popupSettings.isActive}
+                            onCheckedChange={(checked) => setPopupSettings(prev => ({...prev, isActive: checked}))}
+                        />
+                        <Label htmlFor="popup-active">Activate Pop-up</Label>
+                    </div>
+                    <div>
+                        <Label htmlFor="popup-title">Pop-up Title</Label>
+                        <Input 
+                            id="popup-title"
+                            placeholder="e.g., Happy Holidays!"
+                            value={popupSettings.title}
+                            onChange={(e) => setPopupSettings(prev => ({...prev, title: e.target.value}))}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="popup-message">Pop-up Message</Label>
+                        <Textarea
+                            id="popup-message"
+                            placeholder="e.g., All items are 10% off this week."
+                            value={popupSettings.message}
+                            onChange={(e) => setPopupSettings(prev => ({...prev, message: e.target.value}))}
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button onClick={handleSavePopupSettings}>Save Pop-up Settings</Button>
+                    </div>
                 </CardContent>
             </Card>
           </div>
@@ -522,5 +620,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-    
