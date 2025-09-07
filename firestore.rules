@@ -2,8 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to everyone for development purposes.
-    // WARNING: This is insecure for production.
+    // This rule allows anyone with your project's credentials to read and write
+    // to your Firestore database. This is good for development, but for a
+    // production app, you should secure your data.
+    // Learn more about security rules at: https://firebase.google.com/docs/firestore/security/get-started
     match /{document=**} {
       allow read, write: if true;
     }
