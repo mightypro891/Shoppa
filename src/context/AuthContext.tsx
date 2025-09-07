@@ -54,7 +54,7 @@ interface AuthContextType {
   emailSignUp: (name:string, email:string, password:string) => Promise<User | null>;
   emailSignIn: (email:string, password:string) => Promise<User | null>;
   selectedRole: SelectedRole;
-  selectRole: (role: SelectedRole) => void;
+  selectRole: (role: SelectedRole) => Promise<void>;
   hasSelectedRole: boolean;
 }
 
@@ -92,16 +92,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isSuperAdmin = adminRole === 'Super Admin' && selectedRole === 'admin';
 
 
-  const selectRole = (role: SelectedRole) => {
-    if (role) {
-      sessionStorage.setItem('selectedRole', role);
-      setSelectedRole(role);
-      setHasSelectedRole(true);
-    } else {
-      sessionStorage.removeItem('selectedRole');
-      setSelectedRole(null);
-      setHasSelectedRole(false);
-    }
+  const selectRole = async (role: SelectedRole) => {
+    return new Promise<void>((resolve) => {
+      if (role) {
+        sessionStorage.setItem('selectedRole', role);
+        setSelectedRole(role);
+        setHasSelectedRole(true);
+      } else {
+        sessionStorage.removeItem('selectedRole');
+        setSelectedRole(null);
+        setHasSelectedRole(false);
+      }
+      // Give React a moment to update the state before resolving
+      setTimeout(resolve, 50);
+    });
   }
 
 
@@ -126,10 +130,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   setHasSelectedRole(false); // Admin needs to select a role
               }
           } else {
-              // It's a regular user
+              // It's a regular user, so we can set their role automatically.
               setAdminRole(null);
               setManagedCategories(null);
-              selectRole('user'); // Auto-select 'user' role
+              setSelectedRole('user');
+              setHasSelectedRole(true);
           }
           
           // In a real app, profile data would be fetched from Firestore
@@ -146,7 +151,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setAdminRole(null);
           setUserProfile(null);
           setManagedCategories(null);
-          selectRole(null); // Clear role on logout
+          setSelectedRole(null); // Clear role on logout
+          setHasSelectedRole(false);
       }
       
       setLoading(false);
@@ -184,7 +190,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logOut = async () => {
     await signOut(auth);
-    selectRole(null); // Clear selected role on logout
+    await selectRole(null); // Clear selected role on logout
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {

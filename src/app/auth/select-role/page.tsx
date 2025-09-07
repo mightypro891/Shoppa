@@ -3,25 +3,28 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Shield, User } from 'lucide-react';
 
 export default function SelectRolePage() {
-  const { user, loading, isAdmin, selectRole, logOut } = useAuth();
+  const { user, loading, rawIsAdmin, selectRole, logOut } = useAuth();
   const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // If not loading and there's no user, or the user is not an admin, redirect.
-    if (!loading && (!user || !isAdmin)) {
+    if (!loading && (!user || !rawIsAdmin)) {
       router.push('/auth/signin');
     }
-  }, [user, loading, isAdmin, router]);
+  }, [user, loading, rawIsAdmin, router]);
 
-  const handleRoleSelection = (role: 'admin' | 'user') => {
-    selectRole(role);
-    // The layout will handle the redirection after the role state is updated.
+  const handleRoleSelection = async (role: 'admin' | 'user') => {
+    setIsProcessing(true);
+    await selectRole(role);
+    // The state update needs a moment to propagate.
+    // The redirection will now be handled by the AppLayout's useEffect.
     if (role === 'admin') {
       router.push('/admin');
     } else {
@@ -35,7 +38,7 @@ export default function SelectRolePage() {
   }
 
   // Show loader while auth is resolving or if user is not available yet
-  if (loading || !user) {
+  if (loading || !user || isProcessing) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -57,8 +60,9 @@ export default function SelectRolePage() {
             size="lg"
             className="w-full"
             onClick={() => handleRoleSelection('admin')}
+            disabled={isProcessing}
           >
-            <Shield className="mr-2 h-5 w-5" />
+            {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Shield className="mr-2 h-5 w-5" />}
             Proceed as Admin
           </Button>
           <Button
@@ -66,8 +70,9 @@ export default function SelectRolePage() {
             variant="outline"
             className="w-full"
             onClick={() => handleRoleSelection('user')}
+            disabled={isProcessing}
           >
-            <User className="mr-2 h-5 w-5" />
+             {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <User className="mr-2 h-5 w-5" />}
             Continue as a Customer
           </Button>
           <div className="pt-4">
