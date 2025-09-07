@@ -23,35 +23,28 @@ import {
 // --- PRODUCTION DATA STORE ---
 // This file now uses Firestore as the permanent database.
 
-// Helper function to simulate database latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
 const productsCollection = collection(db, 'products');
 const deletedProductsLogCollection = collection(db, 'deletedProductsLog');
 const dealSubmissionsCollection = collection(db, 'dealSubmissions');
 
 
 export async function getProducts(): Promise<Product[]> {
-    await delay(500); // Simulate network call
     const snapshot = await getDocs(productsCollection);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-    await delay(200);
     const docRef = doc(db, 'products', id);
     const docSnap = await getDoc(docRef);
     return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Product : undefined;
 }
 
 export async function addProduct(productData: Omit<Product, 'id'>): Promise<Product> {
-    await delay(300);
     const docRef = await addDoc(productsCollection, productData);
     return { id: docRef.id, ...productData };
 }
 
 export async function updateProduct(id: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product | undefined> {
-    await delay(300);
     const docRef = doc(db, 'products', id);
     await updateDoc(docRef, productData);
     const updatedDoc = await getDoc(docRef);
@@ -60,7 +53,6 @@ export async function updateProduct(id: string, productData: Partial<Omit<Produc
 
 
 export async function deleteProduct(productId: string, deletedBy: string): Promise<void> {
-    await delay(300);
     const productRef = doc(db, 'products', productId);
     const productSnap = await getDoc(productRef);
 
@@ -80,15 +72,12 @@ export async function deleteProduct(productId: string, deletedBy: string): Promi
 }
 
 export async function getDeletedProducts(): Promise<DeletedProduct[]> {
-    await delay(200);
     const snapshot = await getDocs(deletedProductsLogCollection);
     return snapshot.docs.map(doc => doc.data() as DeletedProduct);
 }
 
 
 export async function resetAllProducts(): Promise<{success: boolean, message: string}> {
-    await delay(500);
-    
     // Check if products already exist
     const productsSnapshot = await getDocs(productsCollection);
     if (!productsSnapshot.empty) {

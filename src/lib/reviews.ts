@@ -15,13 +15,9 @@ import {
 // --- PRODUCTION DATA STORE ---
 // This file now uses Firestore as the permanent database.
 
-// Helper function to simulate database latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
 const reviewsCollection = collection(db, 'reviews');
 
 export async function getReviewsForProduct(productId: string): Promise<Review[]> {
-  await delay(300);
   const q = query(
       reviewsCollection, 
       where('productId', '==', productId),
@@ -32,14 +28,12 @@ export async function getReviewsForProduct(productId: string): Promise<Review[]>
 }
 
 export async function getAllReviews(): Promise<Review[]> {
-    await delay(300);
     const q = query(reviewsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
 }
 
 export async function addReview(reviewData: Omit<Review, 'id' | 'createdAt'>): Promise<Review> {
-    await delay(300);
     const newReviewData = {
         ...reviewData,
         createdAt: new Date().toISOString(),

@@ -20,27 +20,21 @@ import {
 // --- PRODUCTION DATA STORE ---
 // This file now uses Firestore as the permanent database.
 
-// Helper function to simulate database latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
 const ordersCollection = collection(db, 'orders');
 
 export async function getAllOrders(): Promise<Order[]> {
-    await delay(500); // Simulate network call
     const q = query(ordersCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
 }
 
 export async function getOrderById(id: string): Promise<Order | undefined> {
-  await delay(200);
   const docRef = doc(db, 'orders', id);
   const docSnap = await getDoc(docRef);
   return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Order : undefined;
 }
 
 export async function getOrderByUserEmail(email: string): Promise<Order | undefined> {
-    await delay(300);
     const q = query(
         ordersCollection, 
         where('customer.email', '==', email),
@@ -57,7 +51,6 @@ export async function getOrderByUserEmail(email: string): Promise<Order | undefi
 
 
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
-  await delay(400);
   const orderPayload = {
       ...orderData,
       status: 'Order Placed' as OrderStatus,
@@ -69,7 +62,6 @@ export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'crea
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order | undefined> {
-    await delay(300);
     const docRef = doc(db, 'orders', orderId);
     await updateDoc(docRef, { status });
     const updatedDoc = await getDoc(docRef);
