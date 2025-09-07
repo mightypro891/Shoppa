@@ -190,6 +190,15 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com'
     },
+    {
+        name: 'Smart Watch',
+        price: 25000.0,
+        image: 'https://picsum.photos/400/300',
+        description: 'Stay connected and track your fitness with this sleek and modern smart watch.',
+        aiHint: 'smart watch',
+        tags: ['gadgets'],
+        vendorId: 'promiseoyedele07@gmail.com'
+    },
 
     // Kitchen Utensils
     {
