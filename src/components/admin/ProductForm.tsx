@@ -30,7 +30,7 @@ import { Separator } from '../ui/separator';
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   price: z.coerce.number().min(0, 'Price must be a positive number.'),
-  salePrice: z.coerce.number().optional(),
+  salePrice: z.coerce.number().optional().nullable(),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   image: z.any(),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
@@ -60,7 +60,7 @@ export default function ProductForm({ product }: ProductFormProps) {
     defaultValues: {
       name: product?.name || '',
       price: product?.price || 0,
-      salePrice: product?.salePrice || undefined,
+      salePrice: product?.salePrice || null,
       description: product?.description || '',
       image: product?.image || '',
       aiHint: product?.aiHint || '',
@@ -87,7 +87,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       name: data.name,
       price: data.price,
       // Only Super Admins can set the sale price directly
-      salePrice: isSuperAdmin ? data.salePrice : product?.salePrice,
+      salePrice: isSuperAdmin ? data.salePrice || undefined : product?.salePrice,
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
@@ -181,10 +181,17 @@ export default function ProductForm({ product }: ProductFormProps) {
                         <FormItem>
                         <FormLabel>Sale Price (Super Admin Only)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="e.g. 800" {...field} />
+                            <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="e.g. 800" 
+                                {...field} 
+                                value={field.value ?? ""}
+                                onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)}
+                            />
                         </FormControl>
                         <FormDescription>
-                            Directly set the deal price. This will override any submissions.
+                            Directly set the deal price. This will override any submissions. Leave blank to remove sale price.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>

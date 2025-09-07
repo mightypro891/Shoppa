@@ -17,6 +17,7 @@ import {
     writeBatch, 
     serverTimestamp,
     orderBy,
+    deleteField,
 } from 'firebase/firestore';
 
 
@@ -46,7 +47,19 @@ export async function addProduct(productData: Omit<Product, 'id'>): Promise<Prod
 
 export async function updateProduct(id: string, productData: Partial<Omit<Product, 'id'>>): Promise<Product | undefined> {
     const docRef = doc(db, 'products', id);
-    await updateDoc(docRef, productData);
+    
+    // Firestore cannot store 'undefined' values. We need to handle them.
+    const cleanData: {[key: string]: any} = {};
+    for (const key in productData) {
+        if (productData[key as keyof typeof productData] !== undefined) {
+            cleanData[key] = productData[key as keyof typeof productData];
+        } else {
+            // If the value is undefined, we delete the field from the document.
+            cleanData[key] = deleteField();
+        }
+    }
+
+    await updateDoc(docRef, cleanData);
     const updatedDoc = await getDoc(docRef);
     return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as Product : undefined;
 }
@@ -129,9 +142,10 @@ export async function rejectDeal(submissionId: string, productId: string): Promi
     const submissionRef = doc(db, 'dealSubmissions', submissionId);
     batch.update(submissionRef, { status: 'rejected' });
     
-    // Also remove the sale price from the product if it was somehow set
+    // Also remove the sale price from the product.
     const productRef = doc(db, 'products', productId);
-    batch.update(productRef, { salePrice: undefined });
+    // Use deleteField() to properly remove the field in Firestore.
+    batch.update(productRef, { salePrice: deleteField() });
 
     await batch.commit();
 }
