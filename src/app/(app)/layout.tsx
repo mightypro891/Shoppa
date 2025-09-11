@@ -36,7 +36,7 @@ export default function AppLayout({
   }, [user, loading, rawIsAdmin, hasSelectedRole, userProfile, router]);
 
   // Show a loader while auth state is resolving OR for redirects.
-  if (loading || (user && rawIs-Admin && !hasSelectedRole) || (user && !rawIsAdmin && userProfile && !userProfile.isComplete)) {
+  if (loading || (user && rawIsAdmin && !hasSelectedRole) || (user && !rawIsAdmin && userProfile && !userProfile.isComplete)) {
      return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
