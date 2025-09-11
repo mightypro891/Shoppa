@@ -11,10 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import type { OAuth2Client } from 'google-auth-library';
-
-const { google } = require('googleapis');
-
 
 const OrderConfirmationInputSchema = z.object({
     orderId: z.string().describe('The unique identifier for the order.'),
@@ -42,44 +38,23 @@ export async function sendOrderConfirmation(input: OrderConfirmationInput): Prom
   await sendOrderConfirmationFlow(input);
 }
 
-
-// Helper function to create a Nodemailer transporter using OAuth2
+// Helper function to create a Nodemailer transporter using SMTP
 const createTransporter = async (): Promise<Transporter | null> => {
-    if (!process.env.OAUTH_CLIENT_ID || !process.env.OAUTH_CLIENT_SECRET || !process.env.OAUTH_REFRESH_TOKEN || !process.env.SENDER_EMAIL) {
-        console.warn("Email service (OAuth2) is not configured. Skipping email sending.");
+    if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.warn("Email service (SMTP) is not configured. Skipping email sending.");
         return null;
     }
 
-    const OAuth2 = google.auth.OAuth2;
-    const oauth2Client: OAuth2Client = new OAuth2(
-        process.env.OAUTH_CLIENT_ID,
-        process.env.OAUTH_CLIENT_SECRET,
-        "https://developers.google.com/oauthplayground" // Redirect URL
-    );
-
-    oauth2Client.setCredentials({
-        refresh_token: process.env.OAUTH_REFRESH_TOKEN,
-    });
-    
     try {
-        const { token } = await oauth2Client.getAccessToken();
-
-        if (!token) {
-            throw new Error("Failed to create access token.");
-        }
-
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT, 10),
+            secure: parseInt(process.env.EMAIL_PORT, 10) === 465, // true for 465, false for other ports
             auth: {
-                type: 'OAuth2',
-                user: process.env.SENDER_EMAIL,
-                clientId: process.env.OAUTH_CLIENT_ID,
-                clientSecret: process.env.OAUTH_CLIENT_SECRET,
-                refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-                accessToken: token,
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS, // This should be the App Password
             },
         });
-
         return transporter;
     } catch (error) {
         console.error("Failed to create Nodemailer transporter:", error);
@@ -144,7 +119,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
         return;
     }
     
-    const senderEmail = process.env.SENDER_EMAIL!;
+    const senderEmail = process.env.EMAIL_USER!;
     const superAdminEmail = "promiseoyedele07@gmail.com"; 
 
     // 1. Generate and send customer email
