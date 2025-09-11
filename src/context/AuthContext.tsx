@@ -25,6 +25,7 @@ const INITIAL_ADMINS: AdminUser[] = [
     { email: 'websiteadmin@example.com', role: 'Website Admin'},
     { email: 'productsadmin@example.com', role: 'Products Admin'},
     { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
+    { email: 'adedoyinadunni0106@gmail.com', role: 'Products Admin' },
 ];
 
 type SelectedRole = 'admin' | 'user' | null;
