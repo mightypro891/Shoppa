@@ -15,18 +15,28 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading, rawIsAdmin, hasSelectedRole } = useAuth();
+  const { user, loading, rawIsAdmin, hasSelectedRole, userProfile } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // If not loading, there's a user, they are an admin, but they haven't picked a role yet
-    if (!loading && user && rawIsAdmin && !hasSelectedRole) {
-      router.push('/auth/select-role');
-    }
-  }, [user, loading, rawIsAdmin, hasSelectedRole, router]);
+    if (loading) return; // Wait for auth state to resolve
 
-  // Show a loader while auth state is resolving OR if an admin hasn't selected a role yet.
-  if (loading || (user && rawIsAdmin && !hasSelectedRole)) {
+    // Redirect admin to role selection if they haven't chosen one
+    if (user && rawIsAdmin && !hasSelectedRole) {
+      router.push('/auth/select-role');
+      return;
+    }
+    
+    // Redirect new users to the welcome form if their profile is incomplete
+    if (user && !rawIsAdmin && userProfile && !userProfile.isComplete) {
+      router.push('/auth/welcome');
+      return;
+    }
+
+  }, [user, loading, rawIsAdmin, hasSelectedRole, userProfile, router]);
+
+  // Show a loader while auth state is resolving OR for redirects.
+  if (loading || (user && rawIs-Admin && !hasSelectedRole) || (user && !rawIsAdmin && userProfile && !userProfile.isComplete)) {
      return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />

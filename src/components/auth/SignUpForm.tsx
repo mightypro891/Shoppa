@@ -34,7 +34,7 @@ const GoogleIcon = () => (
 
 export default function SignUpForm() {
   const router = useRouter();
-  const { user, loading, googleSignIn, emailSignUp, admins } = useAuth();
+  const { googleSignIn, emailSignUp } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,22 +44,19 @@ export default function SignUpForm() {
     defaultValues: { name: '', email: '', password: '' },
   });
 
-  const handleSuccessfulLogin = (loggedInUser: {email?: string | null}) => {
-    const isAdmin = admins.some(admin => admin.email === loggedInUser.email);
-    if (isAdmin) {
-        router.push('/auth/select-role');
+  const handleSuccessfulLogin = (isNewUser: boolean) => {
+    if (isNewUser) {
+      router.push('/auth/welcome');
     } else {
-        router.push('/');
+      router.push('/');
     }
   }
 
   const onSubmit = async (data: SignUpFormValues) => {
       setIsSubmitting(true);
       try {
-          const signedUpUser = await emailSignUp(data.name, data.email, data.password);
-          if (signedUpUser) {
-            handleSuccessfulLogin(signedUpUser);
-          }
+          const { isNewUser } = await emailSignUp(data.name, data.email, data.password);
+          handleSuccessfulLogin(isNewUser);
       } catch (error: any) {
           toast({
               title: 'Sign Up Failed',
@@ -74,10 +71,8 @@ export default function SignUpForm() {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const loggedInUser = await googleSignIn();
-      if (loggedInUser) {
-        handleSuccessfulLogin(loggedInUser);
-      }
+      const { isNewUser } = await googleSignIn();
+      handleSuccessfulLogin(isNewUser);
     } catch (error: any) {
        toast({
         title: 'Google Sign-In Failed',

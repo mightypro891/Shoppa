@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { UserProfile, AdminUser, AdminRole, CelebrationPopupConfig } from '@/lib/types';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { 
     onAuthStateChanged,
     GoogleAuthProvider,
@@ -15,10 +15,8 @@ import {
     updateProfile,
     User
 } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
-// --- PRODUCTION AUTH SYSTEM ---
-// This context now uses Firebase Authentication.
-// User profiles and admin roles are still managed locally for now.
 
 const INITIAL_ADMINS: AdminUser[] = [
     { email: 'promiseoyedele07@gmail.com', role: 'Super Admin'},
@@ -42,18 +40,18 @@ interface AuthContextType {
   removeAdmin: (email: string) => Promise<void>;
   updateAdminRole: (email: string, role: AdminRole, categories?: string[]) => Promise<void>;
   userProfile: UserProfile | null;
-  saveUserProfile: (profile: Omit<UserProfile, 'balance'>) => void;
+  saveUserProfile: (profile: Omit<UserProfile, 'balance' | 'isComplete'>) => Promise<void>;
   accountBalance: number;
-  fundAccount: (amount: number) => void;
+  fundAccount: (amount: number) => Promise<void>;
   payWithWallet: (amount: number) => boolean;
   managedCategories: string[] | null;
   totalUsers: number;
   onlineUsers: number;
   celebrationPopupConfig: CelebrationPopupConfig | null;
   updateCelebrationPopupConfig: (config: CelebrationPopupConfig) => void;
-  googleSignIn: () => Promise<User | null>;
+  googleSignIn: () => Promise<{user: User; isNewUser: boolean}>;
   logOut: () => Promise<void>;
-  emailSignUp: (name:string, email:string, password:string) => Promise<User | null>;
+  emailSignUp: (name:string, email:string, password:string) => Promise<{user: User; isNewUser: boolean}>;
   emailSignIn: (email:string, password:string) => Promise<User | null>;
   sendPasswordReset: (email: string) => Promise<void>;
   selectedRole: SelectedRole;
@@ -78,10 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>(INITIAL_ADMINS);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [accountBalance, setAccountBalance] = useState(2500);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
-  const [totalUsers, setTotalUsers] = useState(0); // This would come from a db
-  const [onlineUsers, setOnlineUsers] = useState(1); // This would come from a db
+  const [totalUsers, setTotalUsers] = useState(0); 
+  const [onlineUsers, setOnlineUsers] = useState(1);
   const [celebrationPopupConfig, setCelebrationPopupConfig] = useState<CelebrationPopupConfig | null>({
       title: 'Welcome Back!',
       message: 'Thanks for trying out the prototype. All items are 10% off!',
@@ -90,10 +87,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
-  // Derived states
+  const accountBalance = userProfile?.balance ?? 0;
   const isAdmin = rawIsAdmin && selectedRole === 'admin';
   const isSuperAdmin = adminRole === 'Super Admin' && selectedRole === 'admin';
-
 
   const selectRole = async (role: SelectedRole) => {
     return new Promise<void>((resolve) => {
@@ -106,11 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSelectedRole(null);
         setHasSelectedRole(false);
       }
-      // Give React a moment to update the state before resolving
       setTimeout(resolve, 50);
     });
   }
-
 
   const updateUserState = (currentUser: User | null) => {
       setUser(currentUser);
@@ -124,40 +118,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userIsAdmin) {
               setAdminRole(adminInfo.role);
               setManagedCategories(adminInfo.managedCategories || null);
-              // Check session storage for a previously selected role
               const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
               if(roleFromSession) {
                   setSelectedRole(roleFromSession);
                   setHasSelectedRole(true);
               } else {
-                  setHasSelectedRole(false); // Admin needs to select a role
+                  setHasSelectedRole(false);
               }
           } else {
-              // It's a regular user, so we can set their role automatically.
               setAdminRole(null);
               setManagedCategories(null);
               setSelectedRole('user');
               setHasSelectedRole(true);
           }
-          
-          // In a real app, profile data would be fetched from Firestore
-          setUserProfile({
-              phone: '', // placeholder
-              address: '', // placeholder
-              city: '', // placeholder
-              balance: accountBalance,
-          });
-
       } else {
-          // No user logged in
           setRawIsAdmin(false);
           setAdminRole(null);
           setUserProfile(null);
           setManagedCategories(null);
-          setSelectedRole(null); // Clear role on logout
+          setSelectedRole(null);
           setHasSelectedRole(false);
       }
-      
       setLoading(false);
   }
   
@@ -166,15 +147,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         updateUserState(currentUser);
     });
-
     return () => unsubscribe();
-  }, [admins, accountBalance]);
+  }, [admins]);
 
+  useEffect(() => {
+    if (user) {
+        const profileDocRef = doc(db, 'profiles', user.uid);
+        const unsubscribe = onSnapshot(profileDocRef, (doc) => {
+            if (doc.exists()) {
+                setUserProfile(doc.data() as UserProfile);
+            } else {
+                // For new users, create a default profile structure
+                setUserProfile({
+                    phone: '',
+                    address: '',
+                    city: '',
+                    balance: 0,
+                    isComplete: false,
+                });
+            }
+        });
+        return () => unsubscribe();
+    } else {
+        setUserProfile(null);
+    }
+  }, [user]);
 
-  const googleSignIn = async (): Promise<User | null> => {
+  const googleSignIn = async (): Promise<{user: User; isNewUser: boolean}> => {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    return result.user;
+    const profileRef = doc(db, 'profiles', result.user.uid);
+    const profileSnap = await getDoc(profileRef);
+    return { user: result.user, isNewUser: !profileSnap.exists() };
   };
   
   const emailSignIn = async (email: string, password: string): Promise<User | null> => {
@@ -182,75 +186,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return userCredential.user;
   };
 
-  const emailSignUp = async (name: string, email: string, password: string): Promise<User | null> => {
+  const emailSignUp = async (name: string, email: string, password: string): Promise<{user: User; isNewUser: boolean}> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
-    // After signing up, we need to refresh the user state to get the displayName
     updateUserState(userCredential.user);
-    return userCredential.user;
+    return { user: userCredential.user, isNewUser: true };
   };
 
   const sendPasswordReset = async (email: string): Promise<void> => {
     await sendPasswordResetEmail(auth, email);
   };
 
-
   const logOut = async () => {
     await signOut(auth);
-    await selectRole(null); // Clear selected role on logout
+    await selectRole(null);
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
-    // In real app, this would update Firestore
     setAdmins(prev => [...prev, { email, role, managedCategories: categories }]);
   };
   
   const removeAdmin = async (email: string) => {
-    // In real app, this would update Firestore
     setAdmins(prev => prev.filter(admin => admin.email !== email));
   };
 
   const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
-    // In real app, this would update Firestore
     setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
   };
 
-  const saveUserProfile = async (profileData: Omit<UserProfile, 'balance'>) => {
-     // In real app, this would update Firestore
+  const saveUserProfile = async (profileData: Omit<UserProfile, 'balance' | 'isComplete'>) => {
      if (user) {
-         setUserProfile({ ...profileData, balance: accountBalance });
+         const profileRef = doc(db, 'profiles', user.uid);
+         await setDoc(profileRef, { 
+             ...profileData, 
+             balance: userProfile?.balance || 0,
+             isComplete: true 
+            }, { merge: true });
      }
   };
 
   const fundAccount = async (amount: number) => {
     if (user && amount > 0) {
-      // In real app, this would be a transaction
-      setAccountBalance(prev => prev + amount);
+      const profileRef = doc(db, 'profiles', user.uid);
+      const newBalance = (userProfile?.balance || 0) + amount;
+      await setDoc(profileRef, { balance: newBalance }, { merge: true });
     }
   };
 
   const payWithWallet = (amount: number): boolean => {
     if (user && amount > 0 && accountBalance >= amount) {
-      // In real app, this would be a transaction
-      setAccountBalance(prev => prev - amount);
+      const profileRef = doc(db, 'profiles', user.uid);
+      const newBalance = accountBalance - amount;
+      setDoc(profileRef, { balance: newBalance }, { merge: true });
       return true;
     }
     return false;
   };
   
   const updateCelebrationPopupConfig = (config: CelebrationPopupConfig) => {
-    // In real app, this would update Firestore/Remote Config
     setCelebrationPopupConfig(config);
   };
-
 
   const value = {
     user,
     loading,
-    isAdmin, // This is now derived: rawIsAdmin && selectedRole === 'admin'
+    isAdmin,
     rawIsAdmin,
     adminRole,
-    isSuperAdmin, // This is now derived
+    isSuperAdmin,
     admins,
     addAdmin,
     removeAdmin,

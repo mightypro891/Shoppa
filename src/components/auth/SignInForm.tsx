@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
@@ -33,7 +33,8 @@ const GoogleIcon = () => (
 
 export default function SignInForm() {
   const router = useRouter();
-  const { user, loading, googleSignIn, emailSignIn, admins } = useAuth();
+  const searchParams = useSearchParams();
+  const { googleSignIn, emailSignIn, admins } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,28 +43,25 @@ export default function SignInForm() {
     resolver: zodResolver(formSchema),
     defaultValues: { email: '', password: '' },
   });
+  
+  const handleSuccessfulLogin = (user: { email?: string | null }, isNewUser: boolean = false) => {
+    const isAdmin = admins.some(admin => admin.email === user.email);
+    const redirectUrl = searchParams.get('redirect') || '/';
 
-  const handleSuccessfulLogin = (loggedInUser: {email?: string | null}) => {
-    const isAdmin = admins.some(admin => admin.email === loggedInUser.email);
-    if (isAdmin) {
+    if (isNewUser) {
+        router.push('/auth/welcome');
+    } else if (isAdmin) {
         router.push('/auth/select-role');
     } else {
-        router.push('/');
+        router.push(redirectUrl);
     }
   }
 
-  useEffect(() => {
-    // This effect is tricky because of the role selection.
-    // Let's remove the auto-redirect from here and handle it explicitly after login.
-  }, [user, loading, router]);
-  
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const loggedInUser = await googleSignIn();
-      if(loggedInUser) {
-        handleSuccessfulLogin(loggedInUser);
-      }
+      const { user, isNewUser } = await googleSignIn();
+      handleSuccessfulLogin(user, isNewUser);
     } catch (error: any) {
        toast({
         title: 'Google Sign-In Failed',
@@ -80,7 +78,7 @@ export default function SignInForm() {
       try {
           const loggedInUser = await emailSignIn(data.email, data.password);
            if(loggedInUser) {
-            handleSuccessfulLogin(loggedInUser);
+            handleSuccessfulLogin(loggedInUser, false);
           }
       } catch (error: any) {
           toast({

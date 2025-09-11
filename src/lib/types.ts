@@ -45,6 +45,7 @@ export interface UserProfile {
     address: string;
     city: string;
     balance: number;
+    isComplete: boolean;
 }
 
 export type AdminRole = 'Super Admin' | 'Website Admin' | 'Products Admin' | 'Normal Admin';
