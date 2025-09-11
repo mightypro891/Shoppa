@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 
 const formSchema = z.object({
@@ -37,6 +37,7 @@ export default function SignUpForm() {
   const { user, loading, googleSignIn, emailSignUp, admins } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(formSchema),
@@ -129,9 +130,20 @@ export default function SignUpForm() {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
+                        <div className="relative">
+                            <FormControl>
+                                <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
+                            </FormControl>
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                onClick={() => setShowPassword(prev => !prev)}
+                            >
+                                {showPassword ? <EyeOff /> : <Eye />}
+                            </Button>
+                        </div>
                         <FormMessage />
                         </FormItem>
                     )}
