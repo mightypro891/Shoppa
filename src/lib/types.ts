@@ -9,7 +9,9 @@ export interface Product {
   aiHint: string;
   tags?: string[];
   vendorId?: string; // To associate product with a "Normal Admin"
-  campus: 'Ogbomoso' | 'Iseyin'; // New campus field
+  campus: 'Ogbomoso' | 'Iseyin';
+  intraCampusFee: number; // Delivery fee within the same campus
+  interCampusFee: number; // Delivery fee to the other campus
 }
 
 export interface DeletedProduct {
@@ -45,7 +47,7 @@ export interface UserProfile {
     phone: string;
     address: string;
     city: string;
-    campus: 'Ogbomoso' | 'Iseyin'; // New campus field
+    campus: 'Ogbomoso' | 'Iseyin';
     balance: number;
     isComplete: boolean;
 }

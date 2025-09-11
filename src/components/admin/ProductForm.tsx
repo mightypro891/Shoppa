@@ -36,6 +36,8 @@ const formSchema = z.object({
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
   campus: z.enum(['Ogbomoso', 'Iseyin'], { required_error: 'Please select a campus location.' }),
+  intraCampusFee: z.coerce.number().min(0, 'Intra-campus fee must be a positive number.'),
+  interCampusFee: z.coerce.number().min(0, 'Inter-campus fee must be a positive number.'),
   dealPrice: z.coerce.number().optional(),
 });
 
@@ -67,6 +69,8 @@ export default function ProductForm({ product }: ProductFormProps) {
       aiHint: product?.aiHint || '',
       tags: product?.tags?.[0] || '',
       campus: product?.campus || 'Ogbomoso',
+      intraCampusFee: product?.intraCampusFee || 0,
+      interCampusFee: product?.interCampusFee || 0,
       dealPrice: undefined,
     },
   });
@@ -88,13 +92,14 @@ export default function ProductForm({ product }: ProductFormProps) {
     const productData: Omit<Product, 'id'> = {
       name: data.name,
       price: data.price,
-      // Only Super Admins can set the sale price directly
       salePrice: isSuperAdmin ? data.salePrice || undefined : product?.salePrice,
       description: data.description,
       image: imageUrl,
       aiHint: data.aiHint,
       tags: [data.tags],
       campus: data.campus,
+      intraCampusFee: data.intraCampusFee,
+      interCampusFee: data.interCampusFee,
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
@@ -114,7 +119,6 @@ export default function ProductForm({ product }: ProductFormProps) {
       });
     }
 
-    // Handle deal submission
     if (isEditing && data.dealPrice && data.dealPrice > 0 && data.dealPrice < data.price) {
         await submitDeal({
             productId: product.id,
@@ -297,6 +301,41 @@ export default function ProductForm({ product }: ProductFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="intraCampusFee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Intra-Campus Fee</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="10" placeholder="e.g. 500" {...field} />
+                        </FormControl>
+                         <FormDescription>
+                           Fee for delivery within the same campus.
+                         </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="interCampusFee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Inter-Campus Fee</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="10" placeholder="e.g. 1500" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Fee for delivery to the other campus.
+                         </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
 
                 <div className="flex justify-end gap-4">
