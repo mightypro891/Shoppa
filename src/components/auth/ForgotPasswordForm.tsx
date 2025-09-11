@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
+  email: z.string().min(1, { message: 'Email is required.' }).email({ message: 'Please enter a valid email format.' }),
 });
 
 type ForgotPasswordFormValues = z.infer<typeof formSchema>;
@@ -36,17 +36,22 @@ export default function ForgotPasswordForm() {
     setIsSubmitting(true);
     try {
       await sendPasswordReset(data.email);
+      // For security reasons, we show a success message even if the email doesn't exist.
+      // This prevents attackers from guessing which emails are registered.
       toast({
         title: 'Check Your Email',
-        description: 'A password reset link has been sent to your email address.',
+        description: 'If an account exists for this email, a password reset link has been sent.',
       });
       router.push('/auth/signin');
     } catch (error: any) {
+      // We still show a generic success message on the frontend.
+      // The actual error is logged in the console for debugging but not shown to the user.
+      console.error("Password reset error:", error.message);
       toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
+        title: 'Check Your Email',
+        description: 'If an account exists for this email, a password reset link has been sent.',
       });
+      router.push('/auth/signin');
     } finally {
       setIsSubmitting(false);
     }
