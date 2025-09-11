@@ -10,8 +10,8 @@ export interface Product {
   tags?: string[];
   vendorId?: string; // To associate product with a "Normal Admin"
   campus: 'Ogbomoso' | 'Iseyin';
-  intraCampusFee: number; // Delivery fee within the same campus
-  interCampusFee: number; // Delivery fee to the other campus
+  intraCampusFee?: number; // Delivery fee within the same campus
+  interCampusFee?: number; // Delivery fee to the other campus
 }
 
 export interface DeletedProduct {
@@ -38,7 +38,9 @@ export interface Order {
   id: string;
   customer: CustomerDetails;
   cartItems: CartItem[];
-  cartTotal: number;
+  subTotal: number;
+  deliveryFee: number;
+  total: number;
   status: OrderStatus;
   createdAt: string;
 }

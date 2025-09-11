@@ -30,7 +30,7 @@ const checkoutSchema = z.object({
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, subTotal, deliveryFee, total, clearCart } = useCart();
   const { user, userProfile, accountBalance, payWithWallet } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -73,7 +73,9 @@ export default function CheckoutForm() {
         const newOrder = await createOrder({
             customer: { ...data, email: user.email },
             cartItems,
-            cartTotal,
+            subTotal,
+            deliveryFee,
+            total,
         });
         
         await sendOrderConfirmationAction({
@@ -83,7 +85,9 @@ export default function CheckoutForm() {
                 email: user.email,
             },
             cartItems: cartItems, // Pass the full cart items
-            cartTotal,
+            subTotal,
+            deliveryFee,
+            total,
         });
 
         toast({
@@ -109,7 +113,7 @@ export default function CheckoutForm() {
 
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsSubmitting(true);
-    const success = payWithWallet(cartTotal);
+    const success = payWithWallet(total);
     if (success) {
         await handleOrderPlacement(data);
     } else {
@@ -197,7 +201,7 @@ export default function CheckoutForm() {
               />
               <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting || cartItems.length === 0}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{cartTotal.toFixed(2)})
+                <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{total.toFixed(2)})
               </Button>
                <div className="text-center text-sm text-muted-foreground">
                 Your balance: ₦{accountBalance.toFixed(2)}
@@ -224,7 +228,7 @@ export default function CheckoutForm() {
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                   </div>
                 </div>
-                <p className="font-semibold">₦{(item.price * item.quantity).toFixed(2)}</p>
+                <p className="font-semibold">₦{((item.salePrice || item.price) * item.quantity).toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -232,16 +236,16 @@ export default function CheckoutForm() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <p>Subtotal</p>
-              <p>₦{cartTotal.toFixed(2)}</p>
+              <p>₦{subTotal.toFixed(2)}</p>
             </div>
             <div className="flex justify-between">
-              <p>Shipping</p>
-              <p>Free</p>
+              <p>Delivery Fee</p>
+              <p>{deliveryFee > 0 ? `₦${deliveryFee.toFixed(2)}` : 'Free'}</p>
             </div>
             <hr className="my-2" />
             <div className="flex justify-between font-bold text-lg">
               <p>Total</p>
-              <p>₦{cartTotal.toFixed(2)}</p>
+              <p>₦{total.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>

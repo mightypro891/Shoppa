@@ -12,7 +12,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
         salePrice: 2700.0,
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Long Grain Parboiled Rice (5kg)',
@@ -22,7 +24,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'white rice',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Black Eyed Beans (Oloyin)',
@@ -32,7 +36,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'brown beans',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Garri (Ijebu)',
@@ -42,7 +48,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'grain powder',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
 
     // Food - Iseyin
@@ -54,7 +62,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'yellow powder',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'Poundo Yam Flour (1kg)',
@@ -64,7 +74,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'yam flour',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'Egusi (Ground)',
@@ -74,7 +86,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'ground seeds',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'Palm Oil (1 Litre)',
@@ -84,7 +98,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'red oil',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Smoked Catfish (Medium)',
@@ -94,7 +110,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'smoked fish',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Plantain (Bunch)',
@@ -104,7 +122,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'plantain bunch',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
 
     // Skin Care
@@ -116,7 +136,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'perfume bottle',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 2000,
     },
     {
         name: 'Vitamin C Face Serum',
@@ -126,7 +148,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'skincare product',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 2000,
     },
     {
         name: 'African Black Soap',
@@ -136,7 +160,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'black soap',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Raw Shea Butter',
@@ -146,7 +172,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'shea butter',
         tags: ['skin-care'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
 
     // Gadgets
@@ -159,7 +187,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
         salePrice: 89999.0,
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 800,
+        interCampusFee: 2500,
     },
     {
         name: 'Student Laptop',
@@ -169,7 +199,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'laptop computer',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 1000,
+        interCampusFee: 3000,
     },
     {
         name: 'High-Capacity Power Bank',
@@ -179,7 +211,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'power bank',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'Wireless Bluetooth Speaker',
@@ -190,7 +224,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
         salePrice: 9999.0,
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Noise-Cancelling Earbuds',
@@ -200,7 +236,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'wireless earbuds',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'USB-C Hub Multiport Adapter',
@@ -210,7 +248,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'usb hub',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Smart Watch',
@@ -220,7 +260,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'smart watch',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
 
     // Kitchen Utensils
@@ -232,7 +274,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'cooking pots',
         tags: ['kitchen-utensils'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 600,
+        interCampusFee: 2000,
     },
     {
         name: 'Electric Blender & Grinder',
@@ -242,7 +286,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'kitchen blender',
         tags: ['kitchen-utensils'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1800,
     },
      {
         name: 'Digital Air Fryer',
@@ -253,7 +299,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         tags: ['kitchen-utensils'],
         vendorId: 'adedolapotamara@gmail.com',
         salePrice: 39999.0,
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 600,
+        interCampusFee: 2000,
     },
 
     // Beddings
@@ -265,7 +313,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'bed sheets',
         tags: ['beddings'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'All-Season Duvet Comforter',
@@ -275,7 +325,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'duvet comforter',
         tags: ['beddings'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 600,
+        interCampusFee: 2000,
     },
      {
         name: 'Orthopedic Pillow',
@@ -285,7 +337,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'bed pillow',
         tags: ['beddings'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
 
     // Home Decors
@@ -297,7 +351,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'wall art',
         tags: ['home-decors'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
     {
         name: 'Scented Candle (Lavender)',
@@ -307,7 +363,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'scented candle',
         tags: ['home-decors'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'LED Desk Lamp',
@@ -317,7 +375,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'desk lamp',
         tags: ['home-decors', 'gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     },
 
     // Intimate Apparel
@@ -329,7 +389,9 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'lace lingerie',
         tags: ['intimate-apparel'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Ogbomoso'
+        campus: 'Ogbomoso',
+        intraCampusFee: 500,
+        interCampusFee: 1500,
     },
     {
         name: 'Silk Pajama Set',
@@ -339,6 +401,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'silk pajamas',
         tags: ['intimate-apparel'],
         vendorId: 'adedolapotamara@gmail.com',
-        campus: 'Iseyin'
+        campus: 'Iseyin',
+        intraCampusFee: 400,
+        interCampusFee: 1500,
     }
 ];

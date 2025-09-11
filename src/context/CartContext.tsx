@@ -1,9 +1,10 @@
 
 'use client';
 
-import type { CartItem, Product } from '@/lib/types';
+import type { CartItem, Product, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -11,7 +12,9 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
-  cartTotal: number;
+  subTotal: number;
+  deliveryFee: number;
+  total: number;
   itemCount: number;
 }
 
@@ -28,6 +31,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const { userProfile } = useAuth();
 
   useEffect(() => {
     try {
@@ -89,12 +93,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCartItems([]);
   };
 
-  const cartTotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+  const subTotal = cartItems.reduce(
+    (total, item) => total + (item.salePrice || item.price) * item.quantity,
     0
   );
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  
+  const deliveryFee = React.useMemo(() => {
+    if (!userProfile || cartItems.length === 0) {
+      return 0;
+    }
+    
+    const fees = cartItems.map(item => {
+      if (item.campus === userProfile.campus) {
+        return item.intraCampusFee || 0;
+      } else {
+        return item.interCampusFee || 0;
+      }
+    });
+
+    // Return the highest delivery fee among all items in the cart
+    return Math.max(...fees);
+  }, [cartItems, userProfile]);
+
+  const total = subTotal + deliveryFee;
 
   const value = {
     cartItems,
@@ -102,7 +125,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
-    cartTotal,
+    subTotal,
+    deliveryFee,
+    total,
     itemCount,
   };
 

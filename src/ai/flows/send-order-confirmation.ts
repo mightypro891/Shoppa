@@ -28,8 +28,13 @@ const OrderConfirmationInputSchema = z.object({
         aiHint: z.string(),
         tags: z.array(z.string()).optional(),
         vendorId: z.string().optional(), // This is the vendor's email
+        campus: z.enum(['Ogbomoso', 'Iseyin']),
+        intraCampusFee: z.number().optional(),
+        interCampusFee: z.number().optional(),
     })).describe('The items in the order.'),
-    cartTotal: z.number().describe('The total price of the order.'),
+    subTotal: z.number().describe('The subtotal price of the items.'),
+    deliveryFee: z.number().describe('The calculated delivery fee for the order.'),
+    total: z.number().describe('The total price of the order including delivery.'),
 });
 
 export type OrderConfirmationInput = z.infer<typeof OrderConfirmationInputSchema>;
@@ -81,7 +86,6 @@ const generateHtmlEmail = (title: string, preheader: string, body: string) => {
             .item-list th, .item-list td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
             .item-list th { background-color: #f1f5f9; }
             .total { text-align: right; font-size: 1.2em; font-weight: bold; margin-top: 20px; }
-            .footer { background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; }
         </style>
     </head>
     <body>
@@ -111,7 +115,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const { orderId, customer, cartItems, cartTotal } = input;
+    const { orderId, customer, cartItems, subTotal, deliveryFee, total } = input;
     const transporter = await createTransporter();
     
     if (!transporter) {
@@ -140,7 +144,11 @@ const sendOrderConfirmationFlow = ai.defineFlow(
                 ${cartItems.map(item => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>₦${(item.price * item.quantity).toFixed(2)}</td></tr>`).join('')}
             </tbody>
         </table>
-        <p class="total">Total: ₦${cartTotal.toFixed(2)}</p>
+        <div style="text-align: right; margin-top: 20px;">
+          <p>Subtotal: ₦${subTotal.toFixed(2)}</p>
+          <p>Delivery Fee: ₦${deliveryFee.toFixed(2)}</p>
+          <p class="total">Total: ₦${total.toFixed(2)}</p>
+        </div>
         <p>We'll notify you again once your order is out for delivery.</p>
         <p>Thanks,<br/>The Lautech Shoppa Team</p>
     `;

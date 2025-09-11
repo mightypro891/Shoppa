@@ -30,15 +30,14 @@ const dealSubmissionsCollection = collection(db, 'dealSubmissions');
 
 
 export async function getProducts(campus?: UserProfile['campus']): Promise<Product[]> {
-    let productsQuery = query(productsCollection);
-    
-    // If a campus is provided, filter products by that campus.
+    const snapshot = await getDocs(productsCollection);
+    const allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+
     if (campus) {
-        productsQuery = query(productsCollection, where('campus', '==', campus));
+        return allProducts.filter(p => p.campus === campus);
     }
     
-    const snapshot = await getDocs(productsQuery);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+    return allProducts;
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {

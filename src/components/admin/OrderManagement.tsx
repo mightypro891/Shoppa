@@ -102,7 +102,7 @@ export default function OrderManagement() {
                                 <TableCell className="font-mono text-sm">#{order.id.substring(0, 5)}</TableCell>
                                 <TableCell>{format(parseISO(order.createdAt), "MMM d, yyyy")}</TableCell>
                                 <TableCell>{order.customer.name}</TableCell>
-                                <TableCell>₦{order.cartTotal.toFixed(2)}</TableCell>
+                                <TableCell>₦{order.total.toFixed(2)}</TableCell>
                                 <TableCell>
                                     <Badge className={`text-white ${statusColors[order.status]}`}>{order.status}</Badge>
                                 </TableCell>
@@ -167,8 +167,10 @@ export default function OrderManagement() {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex justify-end font-bold text-lg pt-4 border-t">
-                                    Total: ₦{order.cartTotal.toFixed(2)}
+                                <div className="border-t pt-4 mt-4 space-y-2">
+                                    <div className="flex justify-between"><span>Subtotal:</span> <span>₦{order.subTotal.toFixed(2)}</span></div>
+                                    <div className="flex justify-between"><span>Delivery:</span> <span>₦{order.deliveryFee.toFixed(2)}</span></div>
+                                    <div className="flex justify-between font-bold text-lg"><span>Total:</span> <span>₦{order.total.toFixed(2)}</span></div>
                                 </div>
                             </DialogContent>
                           </Dialog>
