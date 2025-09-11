@@ -11,6 +11,7 @@ import {
     signOut,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
+    sendPasswordResetEmail,
     updateProfile,
     User
 } from 'firebase/auth';
@@ -53,6 +54,7 @@ interface AuthContextType {
   logOut: () => Promise<void>;
   emailSignUp: (name:string, email:string, password:string) => Promise<User | null>;
   emailSignIn: (email:string, password:string) => Promise<User | null>;
+  sendPasswordReset: (email: string) => Promise<void>;
   selectedRole: SelectedRole;
   selectRole: (role: SelectedRole) => Promise<void>;
   hasSelectedRole: boolean;
@@ -187,6 +189,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return userCredential.user;
   };
 
+  const sendPasswordReset = async (email: string): Promise<void> => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
 
   const logOut = async () => {
     await signOut(auth);
@@ -262,6 +268,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logOut,
     emailSignUp,
     emailSignIn,
+    sendPasswordReset,
     selectedRole,
     selectRole,
     hasSelectedRole,

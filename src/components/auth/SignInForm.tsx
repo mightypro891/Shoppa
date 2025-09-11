@@ -121,7 +121,12 @@ export default function SignInForm() {
                     name="password"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <div className="flex justify-between items-center">
+                            <FormLabel>Password</FormLabel>
+                            <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+                                Forgot Password?
+                            </Link>
+                        </div>
                         <FormControl>
                             <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
