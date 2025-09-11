@@ -15,17 +15,22 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAllReviews } from '@/lib/reviews';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+  const { userProfile } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!userProfile && userProfile !== null) return; // Wait for profile to be loaded or confirmed null
+      
       setLoading(true);
       try {
-        const prods = await getProducts();
+        // Pass user's campus to get filtered products, or undefined if no user
+        const prods = await getProducts(userProfile?.campus);
         const allReviews = await getAllReviews();
         setProducts(prods);
         setReviews(allReviews.slice(0, 4)); // Get latest 4 reviews
@@ -36,7 +41,7 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [userProfile]);
   
   const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
@@ -78,7 +83,7 @@ export default function Home() {
             Your One-Stop Campus Shop
           </h1>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-primary-foreground/90">
-            From foodstuffs to gadgets, skincare to home decor, get everything you need delivered to your doorstep.
+            From foodstuffs to gadgets, get everything you need at <span className="font-bold text-primary">{userProfile?.campus || 'your campus'}</span>, delivered to your doorstep.
           </p>
           <HeroButton />
         </div>

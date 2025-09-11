@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Pencil } from 'lucide-react';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 const profileSchema = z.object({
@@ -26,6 +27,7 @@ const profileSchema = z.object({
   phone: z.string().min(10, 'Please enter a valid phone number.').optional().or(z.literal('')),
   address: z.string().min(10, 'Please enter a full address.').optional().or(z.literal('')),
   city: z.string().min(2, 'Please enter a city.').optional().or(z.literal('')),
+  campus: z.enum(['Ogbomoso', 'Iseyin'], { required_error: 'Please select your campus.' }),
   photo: z.any(),
 });
 
@@ -46,6 +48,7 @@ export default function ProfileClientPage() {
       phone: '',
       address: '',
       city: '',
+      campus: 'Ogbomoso',
       photo: null,
     },
   });
@@ -60,6 +63,7 @@ export default function ProfileClientPage() {
         phone: userProfile?.phone || '',
         address: userProfile?.address || '',
         city: userProfile?.city || '',
+        campus: userProfile?.campus || 'Ogbomoso',
         photo: user.photoURL || null,
       });
       setPhotoPreview(user.photoURL);
@@ -95,6 +99,7 @@ export default function ProfileClientPage() {
             phone: data.phone || '',
             address: data.address || '',
             city: data.city || '',
+            campus: data.campus,
         });
 
         toast({
@@ -196,6 +201,31 @@ export default function ProfileClientPage() {
                                 <Input disabled value={user.email || 'No email associated'} />
                             </FormItem>
                              <FormField
+                              control={form.control}
+                              name="campus"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Campus Location</FormLabel>
+                                  <Select onValueChange={(value: 'Ogbomoso' | 'Iseyin') => {
+                                      field.onChange(value);
+                                      form.setValue('city', value); // Also update city for convenience
+                                  }} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select your campus" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="Ogbomoso">Ogbomoso</SelectItem>
+                                      <SelectItem value="Iseyin">Iseyin</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription>This will show you products available at your location.</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
                                 control={form.control}
                                 name="phone"
                                 render={({ field }) => (
@@ -228,7 +258,7 @@ export default function ProfileClientPage() {
                                     <FormItem>
                                     <FormLabel>City / Town</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Ogbomoso" {...field} />
+                                        <Input {...field} disabled />
                                     </FormControl>
                                      <FormMessage />
                                     </FormItem>

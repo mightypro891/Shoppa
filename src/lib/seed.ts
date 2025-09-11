@@ -2,7 +2,7 @@
 import type { Product } from './types';
 
 export const initialProducts: Omit<Product, 'id'>[] = [
-    // Food
+    // Food - Ogbomoso
     {
         name: 'Ofada Rice (2kg)',
         price: 3000.0,
@@ -11,7 +11,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'local rice',
         tags: ['food'],
         vendorId: 'adedolapotamara@gmail.com',
-        salePrice: 2700.0
+        salePrice: 2700.0,
+        campus: 'Ogbomoso'
     },
     {
         name: 'Long Grain Parboiled Rice (5kg)',
@@ -20,7 +21,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A versatile staple, fluffy and separate when cooked. Ideal for Jollof rice and fried rice.',
         aiHint: 'white rice',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Black Eyed Beans (Oloyin)',
@@ -29,7 +31,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Sweet, honey-flavored brown beans. A favorite for making Ewa Aganyin or bean porridge.',
         aiHint: 'brown beans',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Garri (Ijebu)',
@@ -38,34 +41,40 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Crisp, sour, and fine-grained, perfect for soaking or making Eba.',
         aiHint: 'grain powder',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
+
+    // Food - Iseyin
      {
         name: 'Garri (Yellow)',
-        price: 1500.0,
+        price: 1600.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fyellow-garri.jpg?alt=media&token=a8d5f9b1-5f6e-4b2c-8f3a-9e1e2c6f1d2e',
-        description: 'Fortified with palm oil, giving it a yellow color and a smoother texture for Eba.',
+        description: 'Fortified with palm oil, giving it a yellow color and a smoother texture for Eba. Sourced from Iseyin.',
         aiHint: 'yellow powder',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Poundo Yam Flour (1kg)',
-        price: 2500.0,
+        price: 2600.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fpoundo-yam.jpg?alt=media&token=b3f5b0a-4b2c-4e8c-8f3a-9e1e2c6f1d2e',
-        description: 'A smooth, fluffy swallow made from yam flour. A staple for any soup.',
+        description: 'A smooth, fluffy swallow made from yam flour. A staple for any soup. Available in Iseyin.',
         aiHint: 'yam flour',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Egusi (Ground)',
-        price: 1250.0,
+        price: 1300.0,
         image: 'https://firebasestorage.googleapis.com/v0/b/naija-shoppa.appspot.com/o/images%2Fegusi.jpg?alt=media&token=c8a1d82e-9f3a-4e2b-8c63-44143494773c',
-        description: 'Ground melon seeds, the essential ingredient for the iconic Egusi soup.',
+        description: 'Ground melon seeds, the essential ingredient for the iconic Egusi soup. Iseyin Campus stock.',
         aiHint: 'ground seeds',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Palm Oil (1 Litre)',
@@ -74,7 +83,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Rich, flavorful, and red, this oil is the soul of Nigerian cooking.',
         aiHint: 'red oil',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Smoked Catfish (Medium)',
@@ -83,7 +93,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A smoky, savory fish that adds deep flavor to soups and stews.',
         aiHint: 'smoked fish',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Plantain (Bunch)',
@@ -92,7 +103,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Sweet and versatile, perfect for frying as dodo or boiling.',
         aiHint: 'plantain bunch',
         tags: ['food'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
 
     // Skin Care
@@ -103,7 +115,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'An exotic and long-lasting fragrance with deep woody notes.',
         aiHint: 'perfume bottle',
         tags: ['skin-care'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Vitamin C Face Serum',
@@ -112,7 +125,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Brightens and revitalizes skin, reducing dark spots for a radiant glow.',
         aiHint: 'skincare product',
         tags: ['skin-care'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'African Black Soap',
@@ -121,7 +135,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Traditional soap known for its cleansing and clarifying properties. Great for all skin types.',
         aiHint: 'black soap',
         tags: ['skin-care'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Raw Shea Butter',
@@ -130,7 +145,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Unrefined shea butter, deeply moisturizing for skin and hair. A natural wonder.',
         aiHint: 'shea butter',
         tags: ['skin-care'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
 
     // Gadgets
@@ -142,7 +158,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'smartphone',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        salePrice: 89999.0
+        salePrice: 89999.0,
+        campus: 'Ogbomoso'
     },
     {
         name: 'Student Laptop',
@@ -151,7 +168,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A powerful and lightweight laptop for work, study, and entertainment on the go.',
         aiHint: 'laptop computer',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'High-Capacity Power Bank',
@@ -160,7 +178,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Never run out of battery again. This 20,000mAh power bank can charge your devices multiple times.',
         aiHint: 'power bank',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Wireless Bluetooth Speaker',
@@ -170,7 +189,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'bluetooth speaker',
         tags: ['gadgets'],
         vendorId: 'promiseoyedele07@gmail.com',
-        salePrice: 9999.0
+        salePrice: 9999.0,
+        campus: 'Ogbomoso'
     },
     {
         name: 'Noise-Cancelling Earbuds',
@@ -179,7 +199,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Immerse yourself in sound with these comfortable, noise-cancelling wireless earbuds.',
         aiHint: 'wireless earbuds',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'USB-C Hub Multiport Adapter',
@@ -188,7 +209,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Expand your laptop\'s connectivity with this multi-port USB-C hub.',
         aiHint: 'usb hub',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Smart Watch',
@@ -197,7 +219,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Stay connected and track your fitness with this sleek and modern smart watch.',
         aiHint: 'smart watch',
         tags: ['gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Ogbomoso'
     },
 
     // Kitchen Utensils
@@ -208,7 +231,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A complete set of durable non-stick pots for all your cooking needs.',
         aiHint: 'cooking pots',
         tags: ['kitchen-utensils'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Electric Blender & Grinder',
@@ -217,7 +241,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'High-speed blender perfect for smoothies, soups, and grinding pepper or beans.',
         aiHint: 'kitchen blender',
         tags: ['kitchen-utensils'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
      {
         name: 'Digital Air Fryer',
@@ -227,7 +252,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         aiHint: 'air fryer',
         tags: ['kitchen-utensils'],
         vendorId: 'adedolapotamara@gmail.com',
-        salePrice: 39999.0
+        salePrice: 39999.0,
+        campus: 'Iseyin'
     },
 
     // Beddings
@@ -238,7 +264,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Soft and breathable 100% cotton bed sheets for a comfortable night\'s sleep.',
         aiHint: 'bed sheets',
         tags: ['beddings'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'All-Season Duvet Comforter',
@@ -247,7 +274,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A plush and warm duvet to keep you cozy during cold nights.',
         aiHint: 'duvet comforter',
         tags: ['beddings'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
      {
         name: 'Orthopedic Pillow',
@@ -256,7 +284,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Memory foam pillow that provides excellent neck and shoulder support for restful sleep.',
         aiHint: 'bed pillow',
         tags: ['beddings'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
 
     // Home Decors
@@ -267,7 +296,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Modern abstract canvas painting to beautify your living space.',
         aiHint: 'wall art',
         tags: ['home-decors'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     },
     {
         name: 'Scented Candle (Lavender)',
@@ -276,7 +306,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A lavender-scented candle to create a relaxing and calming atmosphere.',
         aiHint: 'scented candle',
         tags: ['home-decors'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'LED Desk Lamp',
@@ -285,7 +316,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A flexible and bright LED lamp, perfect for late-night study sessions.',
         aiHint: 'desk lamp',
         tags: ['home-decors', 'gadgets'],
-        vendorId: 'promiseoyedele07@gmail.com'
+        vendorId: 'promiseoyedele07@gmail.com',
+        campus: 'Iseyin'
     },
 
     // Intimate Apparel
@@ -296,7 +328,8 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'A comfortable and elegant lace bralette and panty set.',
         aiHint: 'lace lingerie',
         tags: ['intimate-apparel'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Ogbomoso'
     },
     {
         name: 'Silk Pajama Set',
@@ -305,6 +338,7 @@ export const initialProducts: Omit<Product, 'id'>[] = [
         description: 'Luxurious silk pajamas for a comfortable and stylish night.',
         aiHint: 'silk pajamas',
         tags: ['intimate-apparel'],
-        vendorId: 'adedolapotamara@gmail.com'
+        vendorId: 'adedolapotamara@gmail.com',
+        campus: 'Iseyin'
     }
 ];

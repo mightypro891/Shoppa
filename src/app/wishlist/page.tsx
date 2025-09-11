@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 
 export default function WishlistPage() {
   const { wishlist } = useWishlist();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, userProfile } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -27,13 +27,14 @@ export default function WishlistPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
+    if (!userProfile && userProfile !== null) return;
     const fetchAllProducts = async () => {
-      const prods = await getProducts();
+      const prods = await getProducts(userProfile?.campus);
       setAllProducts(prods);
       setLoading(false);
     };
     fetchAllProducts();
-  }, []);
+  }, [userProfile]);
 
   const wishlistProducts = allProducts.filter(p => wishlist.includes(p.id));
 

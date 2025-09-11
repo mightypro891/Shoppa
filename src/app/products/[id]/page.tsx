@@ -18,11 +18,13 @@ import ProductCard from '@/components/products/ProductCard';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const { userProfile } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -47,7 +49,7 @@ export default function ProductDetailPage() {
         const reviewData = await getReviewsForProduct(id);
         setReviews(reviewData);
         
-        const allProducts = await getProducts();
+        const allProducts = await getProducts(userProfile?.campus);
         const related = allProducts
           .filter(p => p.tags?.some(tag => productData.tags?.includes(tag)) && p.id !== productData.id)
           .slice(0, 4);
@@ -61,7 +63,7 @@ export default function ProductDetailPage() {
     };
 
     fetchProductData();
-  }, [id]);
+  }, [id, userProfile]);
 
   if (loading) {
     return (

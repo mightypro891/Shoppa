@@ -14,11 +14,13 @@ import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const profileSchema = z.object({
   phone: z.string().min(10, 'Please enter a valid phone number.'),
   address: z.string().min(10, 'Please enter a full street address.'),
   city: z.string().min(2, 'Please enter your city.'),
+  campus: z.enum(['Ogbomoso', 'Iseyin'], { required_error: 'Please select your campus.' }),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -35,6 +37,7 @@ export default function WelcomeForm() {
       phone: '',
       address: '',
       city: 'Ogbomoso',
+      campus: 'Ogbomoso',
     },
   });
 
@@ -53,6 +56,7 @@ export default function WelcomeForm() {
         phone: data.phone,
         address: data.address,
         city: data.city,
+        campus: data.campus,
       });
 
       toast({
@@ -89,6 +93,31 @@ export default function WelcomeForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+             <FormField
+              control={form.control}
+              name="campus"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Campus Location</FormLabel>
+                  <Select onValueChange={(value: 'Ogbomoso' | 'Iseyin') => {
+                    field.onChange(value);
+                    form.setValue('city', value); // Also update city for convenience
+                  }} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your campus" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Ogbomoso">Ogbomoso</SelectItem>
+                      <SelectItem value="Iseyin">Iseyin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>This will show you products available at your location.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="phone"
@@ -122,7 +151,7 @@ export default function WelcomeForm() {
                 <FormItem>
                   <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

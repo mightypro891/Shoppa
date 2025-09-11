@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { format } from 'date-fns';
+import { Badge } from '../ui/badge';
 
 
 export default function ProductManagement() {
@@ -45,7 +46,8 @@ export default function ProductManagement() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-        const prods = await getProducts();
+        // Fetch all products regardless of campus for the admin view
+        const prods = await getProducts(); 
         const deletedProds = await getDeletedProducts();
         setProducts(prods);
         setDeletedProducts(deletedProds);
@@ -159,7 +161,7 @@ export default function ProductManagement() {
         <Card>
             <CardHeader>
                 <CardTitle>All Products</CardTitle>
-                <CardDescription>A list of all products in your store.</CardDescription>
+                <CardDescription>A list of all products in your store across all campuses.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
@@ -168,6 +170,7 @@ export default function ProductManagement() {
                             <TableRow>
                             <TableHead className="w-[80px]">Image</TableHead>
                             <TableHead>Name</TableHead>
+                            <TableHead>Campus</TableHead>
                             <TableHead>Price</TableHead>
                             <TableHead>Sale Price</TableHead>
                             <TableHead>Tags</TableHead>
@@ -187,6 +190,7 @@ export default function ProductManagement() {
                                     />
                                 </TableCell>
                                 <TableCell className="font-medium">{product.name}</TableCell>
+                                <TableCell><Badge variant="outline">{product.campus}</Badge></TableCell>
                                 <TableCell>₦{product.price.toFixed(2)}</TableCell>
                                 <TableCell>
                                     {product.salePrice ? (

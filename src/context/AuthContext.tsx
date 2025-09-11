@@ -162,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     phone: '',
                     address: '',
                     city: '',
+                    campus: 'Ogbomoso',
                     balance: 0,
                     isComplete: false,
                 });

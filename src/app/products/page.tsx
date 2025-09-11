@@ -15,10 +15,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get('q') || '';
+  const { userProfile } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,14 +35,16 @@ export default function ProductsPage() {
   }, [products]);
 
   useEffect(() => {
+    if (!userProfile && userProfile !== null) return;
+    
     const fetchProducts = async () => {
       setLoading(true);
-      const prods = await getProducts();
+      const prods = await getProducts(userProfile?.campus);
       setProducts(prods);
       setLoading(false);
     };
     fetchProducts();
-  }, []);
+  }, [userProfile]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev => 

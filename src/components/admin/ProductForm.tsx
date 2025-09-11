@@ -35,6 +35,7 @@ const formSchema = z.object({
   image: z.any(),
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
+  campus: z.enum(['Ogbomoso', 'Iseyin'], { required_error: 'Please select a campus location.' }),
   dealPrice: z.coerce.number().optional(),
 });
 
@@ -65,6 +66,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       image: product?.image || '',
       aiHint: product?.aiHint || '',
       tags: product?.tags?.[0] || '',
+      campus: product?.campus || 'Ogbomoso',
       dealPrice: undefined,
     },
   });
@@ -92,6 +94,7 @@ export default function ProductForm({ product }: ProductFormProps) {
       image: imageUrl,
       aiHint: data.aiHint,
       tags: [data.tags],
+      campus: data.campus,
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
@@ -241,6 +244,32 @@ export default function ProductForm({ product }: ProductFormProps) {
                     </FormItem>
                 )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="campus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campus Location</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select product location" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Ogbomoso">Ogbomoso</SelectItem>
+                          <SelectItem value="Iseyin">Iseyin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select the campus where this product is available.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="tags"

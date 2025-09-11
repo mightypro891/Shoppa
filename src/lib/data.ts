@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Product, DeletedProduct, DealSubmission, DealStatus } from './types';
+import type { Product, DeletedProduct, DealSubmission, DealStatus, UserProfile } from './types';
 import { initialProducts } from './seed';
 import { db } from './firebase';
 import { 
@@ -29,8 +29,15 @@ const deletedProductsLogCollection = collection(db, 'deletedProductsLog');
 const dealSubmissionsCollection = collection(db, 'dealSubmissions');
 
 
-export async function getProducts(): Promise<Product[]> {
-    const snapshot = await getDocs(productsCollection);
+export async function getProducts(campus?: UserProfile['campus']): Promise<Product[]> {
+    let productsQuery = query(productsCollection);
+    
+    // If a campus is provided, filter products by that campus.
+    if (campus) {
+        productsQuery = query(productsCollection, where('campus', '==', campus));
+    }
+    
+    const snapshot = await getDocs(productsQuery);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
 }
 
