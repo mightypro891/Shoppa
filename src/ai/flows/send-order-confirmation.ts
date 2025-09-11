@@ -10,6 +10,11 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
+import type { OAuth2Client } from 'google-auth-library';
+
+const { google } = require('googleapis');
+
 
 const OrderConfirmationInputSchema = z.object({
     orderId: z.string().describe('The unique identifier for the order.'),
@@ -38,21 +43,48 @@ export async function sendOrderConfirmation(input: OrderConfirmationInput): Prom
 }
 
 
-// Helper function to create a Nodemailer transporter
-const createTransporter = () => {
-    if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn("Email service is not configured. Skipping email sending.");
+// Helper function to create a Nodemailer transporter using OAuth2
+const createTransporter = async (): Promise<Transporter | null> => {
+    if (!process.env.OAUTH_CLIENT_ID || !process.env.OAUTH_CLIENT_SECRET || !process.env.OAUTH_REFRESH_TOKEN || !process.env.SENDER_EMAIL) {
+        console.warn("Email service (OAuth2) is not configured. Skipping email sending.");
         return null;
     }
-    return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT || '587'),
-        secure: (process.env.EMAIL_PORT || '587') === '465',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
+
+    const OAuth2 = google.auth.OAuth2;
+    const oauth2Client: OAuth2Client = new OAuth2(
+        process.env.OAUTH_CLIENT_ID,
+        process.env.OAUTH_CLIENT_SECRET,
+        "https://developers.google.com/oauthplayground" // Redirect URL
+    );
+
+    oauth2Client.setCredentials({
+        refresh_token: process.env.OAUTH_REFRESH_TOKEN,
     });
+    
+    try {
+        const { token } = await oauth2Client.getAccessToken();
+
+        if (!token) {
+            throw new Error("Failed to create access token.");
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: 'OAuth2',
+                user: process.env.SENDER_EMAIL,
+                clientId: process.env.OAUTH_CLIENT_ID,
+                clientSecret: process.env.OAUTH_CLIENT_SECRET,
+                refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+                accessToken: token,
+            },
+        });
+
+        return transporter;
+    } catch (error) {
+        console.error("Failed to create Nodemailer transporter:", error);
+        return null;
+    }
 };
 
 const generateHtmlEmail = (title: string, preheader: string, body: string) => {
@@ -105,14 +137,14 @@ const sendOrderConfirmationFlow = ai.defineFlow(
   async (input) => {
     
     const { orderId, customer, cartItems, cartTotal } = input;
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
     
-    // If transporter is null, it means email service is not configured.
     if (!transporter) {
         console.log("Skipping email notifications because email service is not configured.");
         return;
     }
-
+    
+    const senderEmail = process.env.SENDER_EMAIL!;
     const superAdminEmail = "promiseoyedele07@gmail.com"; 
 
     // 1. Generate and send customer email
@@ -141,7 +173,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     
     try {
         await transporter.sendMail({
-            from: `"Lautech Shoppa" <${process.env.EMAIL_USER}>`,
+            from: `"Lautech Shoppa" <${senderEmail}>`,
             to: customer.email,
             subject: customerEmailSubject,
             html: customerHtml,
@@ -191,7 +223,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
 
        try {
             await transporter.sendMail({
-                from: `"Lautech Shoppa" <${process.env.EMAIL_USER}>`,
+                from: `"Lautech Shoppa" <${senderEmail}>`,
                 to: vendorEmail,
                 subject: vendorEmailSubject,
                 html: vendorHtml,
@@ -202,7 +234,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
             if (vendorEmail !== superAdminEmail) {
                 try {
                      await transporter.sendMail({
-                        from: `"Lautech Shoppa System" <${process.env.EMAIL_USER}>`,
+                        from: `"Lautecha Shoppa System" <${senderEmail}>`,
                         to: superAdminEmail,
                         subject: `Failed to notify vendor for order #${orderId}`,
                         text: `The system failed to send an order notification to ${vendorEmail} for order #${orderId}. Please notify them manually. Error: ${error instanceof Error ? error.message : String(error)}`,
