@@ -4,7 +4,7 @@
 import AppLayout from '@/app/(app)/layout';
 import { useWishlist } from '@/context/WishlistContext';
 import { getProducts } from '@/lib/data';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import ProductCard from '@/components/products/ProductCard';
 import { Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import type { Product } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
-export default function WishlistPage() {
+function WishlistPageComponent() {
   const { wishlist } = useWishlist();
   const { user, loading: authLoading, userProfile } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -73,4 +73,18 @@ export default function WishlistPage() {
       </div>
     </AppLayout>
   );
+}
+
+export default function WishlistPage() {
+  return (
+    <Suspense fallback={
+       <AppLayout>
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    }>
+      <WishlistPageComponent />
+    </Suspense>
+  )
 }

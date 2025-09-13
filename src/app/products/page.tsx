@@ -8,7 +8,7 @@ import { Search, Loader2, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { Product } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 
-export default function ProductsPage() {
+function ProductsPageComponent() {
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get('q') || '';
   const { userProfile } = useAuth();
@@ -197,4 +197,18 @@ export default function ProductsPage() {
       </div>
     </AppLayout>
   );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout>
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    }>
+      <ProductsPageComponent />
+    </Suspense>
+  )
 }
