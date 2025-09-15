@@ -22,6 +22,7 @@ import Link from 'next/link';
 import type { DeliveryMethod } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '@/lib/utils';
+import { Label } from '../ui/label';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -157,12 +158,12 @@ export default function CheckoutForm() {
             </CardHeader>
             <CardContent>
                 <RadioGroup value={deliveryMethod} onValueChange={(value: DeliveryMethod) => setDeliveryMethod(value)} className="grid grid-cols-2 gap-4">
-                     <Label htmlFor="delivery" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", deliveryMethod === 'delivery' && "border-primary")}>
+                     <Label htmlFor="delivery" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", deliveryMethod === 'delivery' && "border-primary")}>
                          <RadioGroupItem value="delivery" id="delivery" className="sr-only" />
                         <Bike className="mb-3 h-6 w-6" />
                         Delivery
                     </Label>
-                    <Label htmlFor="pickup" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", deliveryMethod === 'pickup' && "border-primary")}>
+                    <Label htmlFor="pickup" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer", deliveryMethod === 'pickup' && "border-primary")}>
                          <RadioGroupItem value="pickup" id="pickup" className="sr-only" />
                         <Package className="mb-3 h-6 w-6" />
                         Pickup
