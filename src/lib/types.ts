@@ -36,6 +36,7 @@ export type DeliveryMethod = 'delivery' | 'pickup';
 
 export interface Order {
   id: string;
+  userId: string; // Add userId to link order to user
   customer: CustomerDetails;
   cartItems: CartItem[];
   subTotal: number;
@@ -100,5 +101,3 @@ export interface DeliveryRoute {
     to: 'Ogbomoso' | 'Iseyin';
     price: number;
 }
-
-    

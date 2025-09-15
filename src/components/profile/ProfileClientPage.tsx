@@ -290,20 +290,24 @@ export default function ProfileClientPage() {
             </Card>
             <Card>
                 <CardHeader>
+                    <CardTitle>Order History</CardTitle>
+                    <CardDescription>View your past orders.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                       <Link href="/profile/orders">
+                            <History className="mr-2 h-4 w-4" /> View Orders
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
                     <CardTitle>Account Security</CardTitle>
                     <CardDescription>Change your password.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button disabled variant="secondary">Change Password (Disabled)</Button>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Order History</CardTitle>
-                    <CardDescription>View your past orders.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button disabled variant="secondary">View Orders (Coming Soon)</Button>
                 </CardContent>
             </Card>
         </div>

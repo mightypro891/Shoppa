@@ -34,6 +34,20 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
   return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Order : undefined;
 }
 
+export async function getOrdersByUserId(userId: string): Promise<Order[]> {
+    const q = query(
+        ordersCollection, 
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+}
+
+
 export async function getOrderByUserEmail(email: string): Promise<Order | undefined> {
     const q = query(
         ordersCollection, 

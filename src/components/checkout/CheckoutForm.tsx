@@ -116,6 +116,7 @@ export default function CheckoutForm() {
     
     try {
         const newOrder = await createOrder({
+            userId: user.uid,
             customer: { ...data, email: user.email },
             cartItems,
             subTotal,
@@ -349,5 +350,3 @@ export default function CheckoutForm() {
     </div>
   );
 }
-
-    
