@@ -220,7 +220,6 @@ export default function ProfileClientPage() {
                                       <SelectItem value="Iseyin">Iseyin</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                  <FormDescription>This will show you products available at your location.</FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}

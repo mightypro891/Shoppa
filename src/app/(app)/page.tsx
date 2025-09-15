@@ -70,8 +70,8 @@ export default function Home() {
     <div className="flex flex-col">
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white overflow-hidden">
         <Image
-          src="https://picsum.photos/1600/900"
-          alt="Nigerian food market"
+          src="https://picsum.photos/seed/1/1600/900"
+          alt="Online campus shopping"
           data-ai-hint="online shopping"
           fill
           className="object-cover"
