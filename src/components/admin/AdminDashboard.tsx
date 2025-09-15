@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi, PartyPopper, ThumbsUp, ThumbsDown, Check, X } from 'lucide-react';
+import { ShieldAlert, Package, Star, Megaphone, ShoppingCart, Users, Trash2, PlusCircle, ChevronDown, Wifi, PartyPopper, ThumbsUp, ThumbsDown, Check, X, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import ProductPieChart from './charts/ProductPieChart';
@@ -14,7 +14,7 @@ import ProductBarChart from './charts/ProductBarChart';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
-import { AdminRole, AdminUser, CelebrationPopupConfig, DealSubmission } from '@/lib/types';
+import { AdminRole, AdminUser, CelebrationPopupConfig, DealSubmission, DeliveryRoute } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '../ui/alert-dialog';
+import { addDeliveryRoute, getDeliveryRoutes, deleteDeliveryRoute } from '@/lib/locations';
 
 
 export default function AdminDashboard() {
@@ -70,8 +71,15 @@ export default function AdminDashboard() {
       isActive: false,
   });
   const [dealSubmissions, setDealSubmissions] = useState<DealSubmission[]>([]);
+  const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
+  const [newRoute, setNewRoute] = useState({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
 
   const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
+
+  const fetchRoutes = async () => {
+    const routes = await getDeliveryRoutes();
+    setDeliveryRoutes(routes);
+  }
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -82,6 +90,7 @@ export default function AdminDashboard() {
     }
     if (isSuperAdmin) {
         fetchDeals();
+        fetchRoutes();
     }
   }, [isAdmin, loading, router, celebrationPopupConfig, isSuperAdmin]);
   
@@ -101,6 +110,24 @@ export default function AdminDashboard() {
     toast({ title: 'Deal Rejected', description: `The deal for ${submission.productName} has been rejected.`, variant: 'destructive' });
     fetchDeals();
   };
+
+  const handleAddRoute = async () => {
+    if(newRoute.price <= 0) {
+        toast({ title: 'Invalid Price', description: 'Price must be greater than 0.', variant: 'destructive'});
+        return;
+    }
+    await addDeliveryRoute(newRoute);
+    toast({ title: 'Route Added', description: `Delivery from ${newRoute.from} to ${newRoute.to} is now ₦${newRoute.price}.`});
+    fetchRoutes();
+    setNewRoute({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
+  };
+
+  const handleDeleteRoute = async (routeId: string) => {
+    await deleteDeliveryRoute(routeId);
+    toast({ title: 'Route Deleted', description: 'The delivery route has been removed.', variant: 'destructive'});
+    fetchRoutes();
+  };
+
 
   const formatCategoryName = (slug: string) => {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -554,6 +581,55 @@ export default function AdminDashboard() {
                     </Tabs>
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5" /> Location Settings</CardTitle>
+                    <CardDescription>Manage delivery routes and prices between campuses.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                             <Select value={newRoute.from} onValueChange={(value: 'Ogbomoso' | 'Iseyin') => setNewRoute(p => ({...p, from: value}))}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent><SelectItem value="Ogbomoso">From: Ogbomoso</SelectItem><SelectItem value="Iseyin">From: Iseyin</SelectItem></SelectContent>
+                             </Select>
+                             <Select value={newRoute.to} onValueChange={(value: 'Ogbomoso' | 'Iseyin') => setNewRoute(p => ({...p, to: value}))}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent><SelectItem value="Ogbomoso">To: Ogbomoso</SelectItem><SelectItem value="Iseyin">To: Iseyin</SelectItem></SelectContent>
+                             </Select>
+                            <Input 
+                                type="number"
+                                placeholder="Price"
+                                value={newRoute.price}
+                                onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber}))}
+                                className="md:col-span-1"
+                             />
+                             <Button onClick={handleAddRoute} className="md:col-span-1">Add Route</Button>
+                        </div>
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                            <h4 className="font-medium text-sm">Current Routes</h4>
+                            {deliveryRoutes.map(route => (
+                                <div key={route.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
+                                    <p className="text-sm font-medium">From {route.from} to {route.to}</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold">₦{route.price.toFixed(2)}</span>
+                                         <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive hover:text-destructive"
+                                            onClick={() => handleDeleteRoute(route.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                            {deliveryRoutes.length === 0 && <p className="text-muted-foreground text-sm text-center py-2">No routes defined.</p>}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
             
             <Card>
                 <CardHeader>
@@ -620,3 +696,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+    

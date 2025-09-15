@@ -19,10 +19,12 @@ import { Loader2, Wallet, Package, Bike } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
-import type { DeliveryMethod } from '@/lib/types';
+import type { DeliveryMethod, DeliveryRoute } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
+import { getDeliveryRoutes } from '@/lib/locations';
+
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -34,14 +36,51 @@ const checkoutSchema = z.object({
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
-  const { cartItems, subTotal, deliveryFee: baseDeliveryFee, clearCart } = useCart();
+  const { cartItems, subTotal, clearCart } = useCart();
   const { user, userProfile, accountBalance, payWithWallet } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery');
+  const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
-  const deliveryFee = deliveryMethod === 'delivery' ? baseDeliveryFee : 0;
+  useEffect(() => {
+    const fetchRoutes = async () => {
+        const routes = await getDeliveryRoutes();
+        setDeliveryRoutes(routes);
+    };
+    fetchRoutes();
+  }, []);
+
+  useEffect(() => {
+    if (deliveryMethod === 'pickup' || !userProfile || cartItems.length === 0) {
+        setDeliveryFee(0);
+        return;
+    }
+
+    const cartCampuses = new Set(cartItems.map(item => item.campus));
+    const userCampus = userProfile.campus;
+    let fee = 0;
+
+    // Check if a delivery to a different campus is required
+    const needsInterCampusDelivery = Array.from(cartCampuses).some(cc => cc !== userCampus);
+
+    if (needsInterCampusDelivery) {
+        const otherCampus = userCampus === 'Ogbomoso' ? 'Iseyin' : 'Ogbomoso';
+        const route = deliveryRoutes.find(r => (r.from === otherCampus && r.to === userCampus) || (r.from === userCampus && r.to === otherCampus));
+        fee = route?.price || 0; // Use route price, or 0 if not found
+    } else {
+        // All items are from the same campus as the user
+        const route = deliveryRoutes.find(r => r.from === userCampus && r.to === userCampus);
+        fee = route?.price || 0;
+    }
+
+    setDeliveryFee(fee);
+
+  }, [deliveryMethod, cartItems, userProfile, deliveryRoutes]);
+
+
   const total = subTotal + deliveryFee;
 
   const form = useForm<CheckoutFormValues>({
@@ -298,3 +337,5 @@ export default function CheckoutForm() {
     </div>
   );
 }
+
+    

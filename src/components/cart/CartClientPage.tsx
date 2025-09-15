@@ -13,7 +13,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CartClientPage() {
-  const { cartItems, updateQuantity, removeFromCart, subTotal, deliveryFee, total, itemCount } = useCart();
+  // The deliveryFee and total are now simplified here, as the final calculation happens at checkout.
+  const { cartItems, updateQuantity, removeFromCart, subTotal, itemCount } = useCart();
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -83,14 +84,14 @@ export default function CartClientPage() {
               <p>Subtotal ({itemCount} items)</p>
               <p>₦{subTotal.toFixed(2)}</p>
             </div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 text-muted-foreground">
               <p>Delivery Fee</p>
-              <p>{deliveryFee > 0 ? `₦${deliveryFee.toFixed(2)}` : 'Free'}</p>
+              <p>Calculated at checkout</p>
             </div>
             <hr className="my-4" />
             <div className="flex justify-between font-bold text-lg mb-6">
-              <p>Total</p>
-              <p>₦{total.toFixed(2)}</p>
+              <p>Total (before delivery)</p>
+              <p>₦{subTotal.toFixed(2)}</p>
             </div>
             <Button onClick={handleCheckout} className="w-full" size="lg">
               Proceed to Checkout
@@ -102,3 +103,5 @@ export default function CartClientPage() {
     </div>
   );
 }
+
+    

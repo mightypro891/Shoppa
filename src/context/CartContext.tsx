@@ -13,7 +13,8 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
   subTotal: number;
-  deliveryFee: number;
+  // deliveryFee is now calculated in the checkout component
+  // deliveryFee: number;
   total: number;
   itemCount: number;
 }
@@ -100,22 +101,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   
-  const deliveryFee = React.useMemo(() => {
-    if (!userProfile || cartItems.length === 0) {
-      return 0;
-    }
-    
-    const fees = cartItems.map(item => {
-      if (item.campus === userProfile.campus) {
-        return item.intraCampusFee || 0;
-      } else {
-        return item.interCampusFee || 0;
-      }
-    });
-
-    // Return the highest delivery fee among all items in the cart
-    return Math.max(...fees);
-  }, [cartItems, userProfile]);
+  // Delivery fee is now handled in the checkout component based on the new location settings
+  // The logic here is removed.
+  const deliveryFee = 0;
 
   const total = subTotal + deliveryFee;
 
@@ -126,10 +114,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     removeFromCart,
     clearCart,
     subTotal,
-    deliveryFee,
+    // deliveryFee,
     total,
     itemCount,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
+
+    

@@ -10,8 +10,9 @@ export interface Product {
   tags?: string[];
   vendorId?: string; // To associate product with a "Normal Admin"
   campus: 'Ogbomoso' | 'Iseyin';
-  intraCampusFee?: number; // Delivery fee within the same campus
-  interCampusFee?: number; // Delivery fee to the other campus
+  // These are now deprecated in favor of the new location-based system
+  intraCampusFee?: number; 
+  interCampusFee?: number;
 }
 
 export interface DeletedProduct {
@@ -95,3 +96,12 @@ export interface DealSubmission {
     submittedAt: string;
     status: DealStatus;
 }
+
+export interface DeliveryRoute {
+    id: string;
+    from: 'Ogbomoso' | 'Iseyin';
+    to: 'Ogbomoso' | 'Iseyin';
+    price: number;
+}
+
+    
