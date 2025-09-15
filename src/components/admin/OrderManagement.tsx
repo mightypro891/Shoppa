@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, Package, Bike } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
@@ -32,6 +32,7 @@ const statusColors: Record<OrderStatus, string> = {
     'Preparing': 'bg-yellow-500',
     'Out for Delivery': 'bg-orange-500',
     'Delivered': 'bg-green-500',
+    'Ready for Pickup': 'bg-purple-500',
 }
 
 
@@ -89,6 +90,7 @@ export default function OrderManagement() {
                         <TableHead>Order ID</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Customer</TableHead>
+                        <TableHead>Method</TableHead>
                         <TableHead>Total</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -102,6 +104,12 @@ export default function OrderManagement() {
                                 <TableCell className="font-mono text-sm">#{order.id.substring(0, 5)}</TableCell>
                                 <TableCell>{format(parseISO(order.createdAt), "MMM d, yyyy")}</TableCell>
                                 <TableCell>{order.customer.name}</TableCell>
+                                 <TableCell>
+                                    <Badge variant={order.deliveryMethod === 'delivery' ? 'default' : 'secondary'} className="capitalize">
+                                        {order.deliveryMethod === 'delivery' ? <Bike className="mr-1 h-3 w-3" /> : <Package className="mr-1 h-3 w-3" />}
+                                        {order.deliveryMethod}
+                                    </Badge>
+                                </TableCell>
                                 <TableCell>₦{order.total.toFixed(2)}</TableCell>
                                 <TableCell>
                                     <Badge className={`text-white ${statusColors[order.status]}`}>{order.status}</Badge>
@@ -120,7 +128,7 @@ export default function OrderManagement() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                                            {(['Order Placed', 'Preparing', 'Out for Delivery', 'Delivered'] as OrderStatus[]).map(status => (
+                                            {(['Order Placed', 'Preparing', 'Out for Delivery', 'Ready for Pickup', 'Delivered'] as OrderStatus[]).map(status => (
                                                 <DropdownMenuItem 
                                                     key={status} 
                                                     onClick={() => handleStatusChange(order.id, status)}
@@ -137,7 +145,13 @@ export default function OrderManagement() {
                              <DialogContent className="max-w-2xl">
                                 <DialogHeader>
                                     <DialogTitle>Order Details</DialogTitle>
-                                    <p className="text-sm text-muted-foreground">Order ID: {order.id}</p>
+                                    <div className="flex justify-between items-center text-sm">
+                                      <p className="text-muted-foreground">Order ID: {order.id}</p>
+                                      <Badge variant={order.deliveryMethod === 'delivery' ? 'default' : 'secondary'} className="capitalize">
+                                        {order.deliveryMethod === 'delivery' ? <Bike className="mr-1 h-3 w-3" /> : <Package className="mr-1 h-3 w-3" />}
+                                        {order.deliveryMethod}
+                                      </Badge>
+                                    </div>
                                 </DialogHeader>
                                 <div className="grid grid-cols-2 gap-4 py-4">
                                     <div>
@@ -146,11 +160,13 @@ export default function OrderManagement() {
                                         <p>{order.customer.email}</p>
                                         <p>{order.customer.phone}</p>
                                     </div>
-                                     <div>
-                                        <h4 className="font-semibold">Delivery Address</h4>
-                                        <p>{order.customer.address}</p>
-                                        <p>{order.customer.city}</p>
-                                    </div>
+                                     {order.deliveryMethod === 'delivery' && (
+                                        <div>
+                                            <h4 className="font-semibold">Delivery Address</h4>
+                                            <p>{order.customer.address}</p>
+                                            <p>{order.customer.city}</p>
+                                        </div>
+                                     )}
                                 </div>
                                 <div className="space-y-2">
                                      <h4 className="font-semibold">Items</h4>

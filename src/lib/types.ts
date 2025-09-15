@@ -24,7 +24,7 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-export type OrderStatus = 'Order Placed' | 'Preparing' | 'Out for Delivery' | 'Delivered';
+export type OrderStatus = 'Order Placed' | 'Preparing' | 'Out for Delivery' | 'Delivered' | 'Ready for Pickup';
 
 export interface CustomerDetails {
   name: string;
@@ -33,6 +33,8 @@ export interface CustomerDetails {
   address: string;
   city: string;
 }
+
+export type DeliveryMethod = 'delivery' | 'pickup';
 
 export interface Order {
   id: string;
@@ -43,6 +45,7 @@ export interface Order {
   total: number;
   status: OrderStatus;
   createdAt: string;
+  deliveryMethod: DeliveryMethod;
 }
 
 export interface UserProfile {

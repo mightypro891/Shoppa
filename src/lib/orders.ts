@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Order, OrderStatus } from './types';
+import type { Order, OrderStatus, DeliveryMethod } from './types';
 import { db } from './firebase';
 import { 
     collection, 
@@ -51,9 +51,10 @@ export async function getOrderByUserEmail(email: string): Promise<Order | undefi
 
 
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
+  const initialStatus = orderData.deliveryMethod === 'pickup' ? 'Ready for Pickup' : 'Order Placed';
   const orderPayload = {
       ...orderData,
-      status: 'Order Placed' as OrderStatus,
+      status: initialStatus as OrderStatus,
       createdAt: new Date().toISOString(),
   };
   const docRef = await addDoc(ordersCollection, orderPayload);

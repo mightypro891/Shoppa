@@ -15,10 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 import { sendOrderConfirmationAction } from '@/app/actions';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2, Wallet, Package, Bike } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
+import type { DeliveryMethod } from '@/lib/types';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { cn } from '@/lib/utils';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -30,11 +33,15 @@ const checkoutSchema = z.object({
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutForm() {
-  const { cartItems, subTotal, deliveryFee, total, clearCart } = useCart();
+  const { cartItems, subTotal, deliveryFee: baseDeliveryFee, clearCart } = useCart();
   const { user, userProfile, accountBalance, payWithWallet } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery');
+
+  const deliveryFee = deliveryMethod === 'delivery' ? baseDeliveryFee : 0;
+  const total = subTotal + deliveryFee;
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -76,6 +83,7 @@ export default function CheckoutForm() {
             subTotal,
             deliveryFee,
             total,
+            deliveryMethod,
         });
         
         await sendOrderConfirmationAction({
@@ -113,10 +121,7 @@ export default function CheckoutForm() {
 
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsSubmitting(true);
-    const success = payWithWallet(total);
-    if (success) {
-        await handleOrderPlacement(data);
-    } else {
+    if (accountBalance < total) {
         toast({
             title: 'Insufficient Balance',
             description: (
@@ -130,88 +135,120 @@ export default function CheckoutForm() {
             variant: 'destructive',
         });
         setIsSubmitting(false);
+        return;
+    }
+
+    const success = payWithWallet(total);
+    if (success) {
+        await handleOrderPlacement(data);
+    } else {
+        // This case should be rare due to the check above, but it's good practice
+        toast({ title: "Payment failed", description: "Could not process wallet payment.", variant: "destructive" });
+        setIsSubmitting(false);
     }
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-      <Card>
-        <CardHeader>
-          <CardTitle>Delivery Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+      <div className="space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Delivery Method</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <RadioGroup value={deliveryMethod} onValueChange={(value: DeliveryMethod) => setDeliveryMethod(value)} className="grid grid-cols-2 gap-4">
+                     <Label htmlFor="delivery" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", deliveryMethod === 'delivery' && "border-primary")}>
+                         <RadioGroupItem value="delivery" id="delivery" className="sr-only" />
+                        <Bike className="mb-3 h-6 w-6" />
+                        Delivery
+                    </Label>
+                    <Label htmlFor="pickup" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground", deliveryMethod === 'pickup' && "border-primary")}>
+                         <RadioGroupItem value="pickup" id="pickup" className="sr-only" />
+                        <Package className="mb-3 h-6 w-6" />
+                        Pickup
+                    </Label>
+                </RadioGroup>
+                {deliveryMethod === 'pickup' && (
+                    <p className="text-sm text-muted-foreground mt-4 text-center">You will be notified when your order is ready for pickup at the campus vendor location.</p>
                 )}
-              />
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <Input disabled value={user?.email || 'No email associated'} />
-              </FormItem>
+            </CardContent>
+        </Card>
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+        <Card>
+            <CardHeader>
+                <CardTitle>Delivery Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <Form {...form}>
+                <form id="checkout-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter your full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <Input disabled value={user?.email || 'No email associated'} />
+                </FormItem>
+
+                <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Your phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                {deliveryMethod === 'delivery' && (
+                    <>
+                    <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Street Address</FormLabel>
+                            <FormControl>
+                            <Textarea placeholder="123 Main St" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Your city" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Street Address</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="123 Main St" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your city" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" size="lg" className="w-full mt-6" disabled={isSubmitting || cartItems.length === 0}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{total.toFixed(2)})
-              </Button>
-               <div className="text-center text-sm text-muted-foreground">
-                Your balance: ₦{accountBalance.toFixed(2)}
-               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                </form>
+            </Form>
+            </CardContent>
+        </Card>
+      </div>
       
-      <Card>
+      <Card className="sticky top-24 self-start">
         <CardHeader>
           <CardTitle>Order Summary</CardTitle>
         </CardHeader>
@@ -248,6 +285,13 @@ export default function CheckoutForm() {
               <p>₦{total.toFixed(2)}</p>
             </div>
           </div>
+            <Button type="submit" form="checkout-form" size="lg" className="w-full mt-6" disabled={isSubmitting || cartItems.length === 0}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Wallet className="mr-2 h-5 w-5" /> Pay with Wallet (₦{total.toFixed(2)})
+            </Button>
+            <div className="text-center text-sm text-muted-foreground mt-2">
+                Your balance: ₦{accountBalance.toFixed(2)}
+            </div>
         </CardContent>
       </Card>
     </div>
