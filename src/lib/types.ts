@@ -10,9 +10,6 @@ export interface Product {
   tags?: string[];
   vendorId?: string; // To associate product with a "Normal Admin"
   campus: 'Ogbomoso' | 'Iseyin';
-  // These are now deprecated in favor of the new location-based system
-  intraCampusFee?: number; 
-  interCampusFee?: number;
 }
 
 export interface DeletedProduct {

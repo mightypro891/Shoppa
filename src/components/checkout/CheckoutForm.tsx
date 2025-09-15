@@ -19,7 +19,7 @@ import { Loader2, Wallet, Package, Bike } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
-import type { DeliveryMethod, DeliveryRoute } from '@/lib/types';
+import type { DeliveryMethod, DeliveryRoute, Order } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
@@ -104,17 +104,15 @@ export default function CheckoutForm() {
     }
   }, [user, userProfile, form]);
 
-  const handleOrderPlacement = async (data: CheckoutFormValues) => {
+  const handleOrderPlacement = async (data: CheckoutFormValues): Promise<Order | null> => {
      if (!user || !user.email) {
       toast({
         title: 'Error',
         description: 'You must be logged in to place an order.',
         variant: 'destructive',
       });
-      return;
+      return null;
     }
-    
-    setIsSubmitting(true);
     
     try {
         const newOrder = await createOrder({
@@ -126,6 +124,7 @@ export default function CheckoutForm() {
             deliveryMethod,
         });
         
+        // This is now part of the successful flow
         await sendOrderConfirmationAction({
             orderId: newOrder.id,
             customer: {
@@ -138,23 +137,16 @@ export default function CheckoutForm() {
             total,
         });
 
-        toast({
-            title: 'Order Placed!',
-            description: 'Your order has been successfully placed. A confirmation has been sent to your email.',
-        });
-        
-        clearCart();
-        router.push(`/order/${newOrder.id}`);
+        return newOrder;
 
     } catch (error) {
         console.error("Order placement error:", error);
         toast({
             title: 'Order Failed',
-            description: 'There was an issue placing your order. Please try again.',
+            description: 'There was an issue creating your order. Your wallet has not been charged.',
             variant: 'destructive',
         });
-    } finally {
-        setIsSubmitting(false);
+        return null;
     }
   }
 
@@ -178,14 +170,34 @@ export default function CheckoutForm() {
         return;
     }
 
-    const success = payWithWallet(total);
-    if (success) {
-        await handleOrderPlacement(data);
-    } else {
-        // This case should be rare due to the check above, but it's good practice
-        toast({ title: "Payment failed", description: "Could not process wallet payment.", variant: "destructive" });
-        setIsSubmitting(false);
+    // 1. Attempt to create the order first
+    const newOrder = await handleOrderPlacement(data);
+
+    // 2. If order creation is successful, then debit the wallet
+    if (newOrder) {
+        const paymentSuccess = payWithWallet(total);
+        if (paymentSuccess) {
+            toast({
+                title: 'Order Placed!',
+                description: 'Your order has been successfully placed. A confirmation has been sent to your email.',
+            });
+            clearCart();
+            router.push(`/order/${newOrder.id}`);
+        } else {
+            // This is a failsafe, but it's a critical error if it happens.
+            // It means the order was created but payment failed. Manual intervention would be needed.
+            console.error(`CRITICAL: Order ${newOrder.id} created but payment failed.`);
+            toast({
+                title: "Payment Failed",
+                description: "Your order was created, but we couldn't process the payment from your wallet. Please contact support immediately.",
+                variant: "destructive",
+                duration: Infinity,
+            });
+        }
     }
+    // If newOrder is null, handleOrderPlacement already showed a toast.
+    
+    setIsSubmitting(false);
   };
 
   return (
