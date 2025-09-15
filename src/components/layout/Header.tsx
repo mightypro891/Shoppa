@@ -9,7 +9,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -23,34 +22,17 @@ import { Skeleton } from '../ui/skeleton';
 import { ModeToggle } from './ModeToggle';
 import { Input } from '../ui/input';
 import { useEffect, useState, useRef } from 'react';
-import { getProducts } from '@/lib/data';
-import type { Product } from '@/lib/types';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '../ui/navigation-menu';
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { mainCategories, type Category } from '@/lib/categories';
 
 export default function Header() {
   const { itemCount } = useCart();
   const { user, isAdmin, loading, accountBalance, logOut } = useAuth();
   const router = useRouter();
-  const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
-  const [productsByCategory, setProductsByCategory] = useState<Record<string, Product[]>>({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const prods = await getProducts();
-      
-      const byCategory: Record<string, Product[]> = {};
-      categories.forEach(category => {
-        byCategory[category] = prods.filter(p => p.tags?.includes(category));
-      });
-      setProductsByCategory(byCategory);
-    };
-    fetchProducts();
-  }, []);
   
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -78,6 +60,34 @@ export default function Header() {
     }
   };
 
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a">
+  >(({ className, title, children, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <a
+            ref={ref}
+            className={cn(
+              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
+            )}
+            {...props}
+          >
+            <div className="text-sm font-medium leading-none">{title}</div>
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          </a>
+        </NavigationMenuLink>
+      </li>
+    )
+  })
+  ListItem.displayName = "ListItem"
+
+  const allCategorySlugs = mainCategories.flatMap(cat => [cat.slug, ...(cat.subcategories?.map(sub => sub.slug) || [])]);
+
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
@@ -99,33 +109,24 @@ export default function Header() {
                 <NavigationMenuItem>
                     <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <div className="grid grid-cols-3 gap-x-8 gap-y-4 p-6 w-[700px] lg:w-[800px]">
-                        {categories.map((category) => (
-                          <div key={category} className="flex flex-col">
+                      <div className="grid grid-cols-3 gap-x-6 gap-y-4 p-6 w-[750px] lg:w-[900px]">
+                        {mainCategories.map((category) => (
+                          <div key={category.slug} className="flex flex-col space-y-2">
                             <NavigationMenuLink asChild>
-                                <Link href={`/products/category/${category}`} className="font-semibold text-lg mb-3 pb-1 border-b border-primary/50 hover:text-primary transition-colors">
-                                    {formatCategoryName(category)}
+                                <Link href={`/products/category/${category.slug}`} className="font-semibold text-base mb-1 pb-1 border-b border-primary/50 hover:text-primary transition-colors">
+                                    {category.name}
                                 </Link>
                             </NavigationMenuLink>
-                            <ul className="flex flex-col gap-2">
-                                {productsByCategory[category]?.slice(0, 5).map(product => (
-                                    <li key={product.id}>
+                            <ul className="flex flex-col gap-1.5">
+                                {category.subcategories?.map(subcategory => (
+                                    <li key={subcategory.slug}>
                                         <NavigationMenuLink asChild>
-                                            <Link href={`/products/${product.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                                {product.name}
+                                            <Link href={`/products/category/${subcategory.slug}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                                {subcategory.name}
                                             </Link>
                                         </NavigationMenuLink>
                                     </li>
                                 ))}
-                                  {productsByCategory[category]?.length > 5 && (
-                                    <li>
-                                          <NavigationMenuLink asChild>
-                                              <Link href={`/products/category/${category}`} className="text-sm font-semibold text-primary hover:underline">
-                                                  View all...
-                                              </Link>
-                                          </NavigationMenuLink>
-                                    </li>
-                                  )}
                             </ul>
                           </div>
                         ))}
@@ -170,9 +171,9 @@ export default function Header() {
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      {categories.map((category) => (
-                         <DropdownMenuItem key={category} asChild>
-                             <Link href={`/products/category/${category}`}>{formatCategoryName(category)}</Link>
+                      {mainCategories.map((category) => (
+                         <DropdownMenuItem key={category.slug} asChild>
+                             <Link href={`/products/category/${category.slug}`}>{category.name}</Link>
                          </DropdownMenuItem>
                       ))}
                     </DropdownMenuSubContent>

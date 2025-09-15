@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAllReviews } from '@/lib/reviews';
 import { useAuth } from '@/context/AuthContext';
+import { mainCategories } from '@/lib/categories';
 
 export default function Home() {
   const { userProfile } = useAuth();
@@ -43,7 +44,7 @@ export default function Home() {
     fetchProducts();
   }, [userProfile]);
   
-  const categories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
+  const categories = mainCategories.map(c => c.slug);
 
   const productsByCategory: { [key: string]: Product[] } = {};
 
@@ -63,7 +64,8 @@ export default function Home() {
 
   // Helper to format category names for display
   const formatCategoryName = (slug: string) => {
-    return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const category = mainCategories.find(c => c.slug === slug);
+    return category ? category.name : slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   return (

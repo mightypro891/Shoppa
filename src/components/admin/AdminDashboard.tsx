@@ -42,6 +42,7 @@ import {
   AlertDialogTrigger,
 } from '../ui/alert-dialog';
 import { addDeliveryRoute, getDeliveryRoutes, deleteDeliveryRoute } from '@/lib/locations';
+import { allCategories } from '@/lib/categories';
 
 
 export default function AdminDashboard() {
@@ -73,8 +74,6 @@ export default function AdminDashboard() {
   const [dealSubmissions, setDealSubmissions] = useState<DealSubmission[]>([]);
   const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
   const [newRoute, setNewRoute] = useState({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
-
-  const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
 
   const fetchRoutes = async () => {
     const routes = await getDeliveryRoutes();
@@ -696,5 +695,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-    

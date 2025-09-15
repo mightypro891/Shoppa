@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useState } from 'react';
 import { Separator } from '../ui/separator';
+import { allCategories } from '@/lib/categories';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -52,7 +53,6 @@ export default function ProductForm({ product }: ProductFormProps) {
   const isEditing = !!product;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allCategories = ['food', 'skin-care', 'gadgets', 'kitchen-utensils', 'beddings', 'home-decors', 'intimate-apparel'];
   const availableCategories = adminRole === 'Normal Admin' ? (managedCategories || []) : allCategories;
 
 
@@ -336,5 +336,3 @@ export default function ProductForm({ product }: ProductFormProps) {
     </Card>
   );
 }
-
-    
