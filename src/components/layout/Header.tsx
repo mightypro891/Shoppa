@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Soup, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart, X, Info } from 'lucide-react';
+import { ShoppingCart, Menu, LogOut, User as UserIcon, Shield, Settings, Wallet, Search, Heart, X, Info } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,8 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { mainCategories, type Category } from '@/lib/categories';
+import StoreLogo from './StoreLogo';
+
 
 export default function Header() {
   const { itemCount } = useCart();
@@ -94,9 +96,9 @@ export default function Header() {
       <div className="container mx-auto flex items-center justify-between h-16 px-4 gap-4">
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <Soup className="h-7 w-7 text-primary" />
+            <StoreLogo className="h-7 w-auto" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Naija Shoppa
+              Lautech Shoppa
             </span>
           </Link>
            <nav className="hidden md:flex">
@@ -134,6 +136,11 @@ export default function Header() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
+                 <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/about" className={navigationMenuTriggerStyle()}>About Us</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </nav>

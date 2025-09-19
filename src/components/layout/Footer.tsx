@@ -1,6 +1,6 @@
 
-import { Soup } from "lucide-react";
 import Link from "next/link";
+import StoreLogo from "./StoreLogo";
 
 export default function Footer() {
   return (
@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <Soup className="h-6 w-6 text-primary" />
+            <StoreLogo className="h-7 w-auto" />
             <span className="font-bold text-lg font-headline">Lautech Shoppa</span>
           </div>
           <p className="text-sm text-muted-foreground">
