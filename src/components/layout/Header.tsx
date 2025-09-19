@@ -175,6 +175,9 @@ export default function Header() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                </DropdownMenuSub>
+               <DropdownMenuItem asChild>
+                  <Link href="/about"><Info className="mr-2 h-4 w-4" />About Us</Link>
+              </DropdownMenuItem>
               {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
