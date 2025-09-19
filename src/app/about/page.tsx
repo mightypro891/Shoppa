@@ -38,13 +38,13 @@ const team = [
     },
     {
         name: "Adedoyin Adunni",
-        role: "Head of Operations",
+        role: "Lead, Vendor Relations",
         image: "https://picsum.photos/seed/102/200",
         dataAiHint: "female portrait"
     },
     {
         name: "Tamara Adedolapo",
-        role: "Lead, Vendor Relations",
+        role: "Head of Operations",
         image: "https://picsum.photos/seed/103/200",
         dataAiHint: "female professional"
     }
