@@ -190,7 +190,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const emailSignUp = async (name: string, email: string, password: string): Promise<{user: User; isNewUser: boolean}> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
-    updateUserState(userCredential.user);
+    // This will trigger the onAuthStateChanged listener which handles the rest.
+    // We return isNewUser: true to ensure correct redirection.
     return { user: userCredential.user, isNewUser: true };
   };
 
