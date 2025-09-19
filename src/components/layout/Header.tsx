@@ -269,9 +269,6 @@ export default function Header() {
                     <DropdownMenuItem asChild>
                         <Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />My Wishlist</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/about"><Info className="mr-2 h-4 w-4" />About Us</Link>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
