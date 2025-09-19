@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Phone } from "lucide-react";
+import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Phone, Twitter, Instagram, Facebook } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -75,6 +75,27 @@ export default function AboutPage() {
                                     <div>
                                         <p className="font-semibold">Phone Support</p>
                                         <p className="text-sm text-muted-foreground">(+234) 000-000-000</p>
+                                    </div>
+                                </a>
+                                <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                    <Twitter className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">Twitter / X</p>
+                                        <p className="text-sm text-muted-foreground">@LautechShoppa</p>
+                                    </div>
+                                </a>
+                                <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                    <Instagram className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">Instagram</p>
+                                        <p className="text-sm text-muted-foreground">@LautechShoppa</p>
+                                    </div>
+                                </a>
+                                <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                    <Facebook className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">Facebook</p>
+                                        <p className="text-sm text-muted-foreground">/LautechShoppa</p>
                                     </div>
                                 </a>
                             </div>
