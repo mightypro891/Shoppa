@@ -9,10 +9,10 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
             <StoreLogo className="h-7 w-auto" />
-            <span className="font-bold text-lg font-headline">Lautech Shoppa</span>
+            <span className="font-bold text-lg font-headline">Shoppa</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Lautech Shoppa. All Rights Reserved.
+            © {new Date().getFullYear()} Shoppa. All Rights Reserved.
           </p>
         </div>
       </div>
