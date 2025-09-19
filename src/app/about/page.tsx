@@ -128,7 +128,6 @@ export default function AboutPage() {
                                         <AvatarFallback>{formatName(member.email).split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                     </Avatar>
                                     <h3 className="text-xl font-bold">{formatName(member.email)}</h3>
-                                    <p className="text-primary font-medium">{member.role}</p>
                                 </div>
                             ))}
                         </div>
