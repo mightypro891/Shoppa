@@ -81,10 +81,10 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 tracking-tight text-primary-foreground drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 tracking-tight text-white drop-shadow-lg">
             Your One-Stop Campus Shop
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-primary-foreground/90">
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-neutral-200">
             From foodstuffs to gadgets, get everything you need at <span className="font-bold text-primary">{userProfile?.campus || 'your campus'}</span>, delivered to your doorstep.
           </p>
           <HeroButton />
