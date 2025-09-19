@@ -96,7 +96,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Soup className="h-7 w-7 text-primary" />
             <span className="font-bold text-xl font-headline tracking-tight hidden sm:inline">
-              Lautech Shoppa
+              Naija Shoppa
             </span>
           </Link>
            <nav className="hidden md:flex">
@@ -134,11 +134,6 @@ export default function Header() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                        <Link href="/about" className={navigationMenuTriggerStyle()}>About Us</Link>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </nav>
@@ -180,10 +175,6 @@ export default function Header() {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                </DropdownMenuSub>
-                <DropdownMenuItem asChild>
-                    <Link href="/about">About Us</Link>
-                </DropdownMenuItem>
-
               {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -268,6 +259,9 @@ export default function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         <Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />My Wishlist</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/about"><Info className="mr-2 h-4 w-4" />About Us</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
