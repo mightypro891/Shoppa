@@ -2,8 +2,16 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye } from "lucide-react";
+import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Phone } from "lucide-react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 
 const features = [
@@ -41,11 +49,38 @@ export default function AboutPage() {
                     We are dedicated to simplifying the lives of students and the entire campus community by providing easy access to essential goods, from fresh foodstuffs to everyday necessities.
                 </p>
                 <div className="flex justify-center gap-4">
-                    <Button asChild size="lg">
-                        <a href="mailto:support@lautechshoppa.com">
-                            <Mail className="mr-2 h-5 w-5" /> Contact Us
-                        </a>
-                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                             <Button size="lg">
+                                <Mail className="mr-2 h-5 w-5" /> Contact Us
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Contact Us</DialogTitle>
+                                <DialogDescription>
+                                    We'd love to hear from you! Here's how you can reach our team.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                                <a href="mailto:support@lautechshoppa.com" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                    <Mail className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">Email Support</p>
+                                        <p className="text-sm text-muted-foreground">support@lautechshoppa.com</p>
+                                    </div>
+                                </a>
+                                 <a href="tel:+234000000000" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                    <Phone className="h-6 w-6 text-primary" />
+                                    <div>
+                                        <p className="font-semibold">Phone Support</p>
+                                        <p className="text-sm text-muted-foreground">(+234) 000-000-000</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
                     <Button asChild variant="outline" size="lg">
                         <Link href="#staff">
                             <Users className="mr-2 h-5 w-5" /> Meet Our Staff
