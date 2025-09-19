@@ -1,15 +1,13 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+'use client';
+
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye } from "lucide-react";
-import { Metadata } from "next";
+import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Loader2 } from "lucide-react";
 import Link from "next/link";
-
-export const metadata: Metadata = {
-    title: "About Us - Lautech Shoppa",
-    description: "Learn more about Lautech Shoppa, your one-stop campus shop for quality products and fast delivery.",
-};
+import { useAuth } from "@/context/AuthContext";
+import type { AdminUser } from "@/lib/types";
 
 const features = [
     {
@@ -29,28 +27,28 @@ const features = [
     }
 ];
 
-const team = [
-    {
-        name: "Promise Oye",
-        role: "Founder & CEO",
-        image: "https://picsum.photos/seed/101/200",
-        dataAiHint: "male portrait"
-    },
-    {
-        name: "Adedoyin Adunni",
-        role: "Lead, Vendor Relations",
-        image: "https://picsum.photos/seed/102/200",
-        dataAiHint: "female portrait"
-    },
-    {
-        name: "Tamara Adedolapo",
-        role: "Head of Operations",
-        image: "https://picsum.photos/seed/103/200",
-        dataAiHint: "female professional"
-    }
-];
-
 export default function AboutPage() {
+    const { admins, loading } = useAuth();
+
+    // Helper function to format name from email
+    const formatName = (email: string) => {
+        const namePart = email.split('@')[0];
+        return namePart
+            .replace(/[._-]/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+    };
+    
+    // Helper function to generate a consistent seed for avatars from email
+    const getSeedFromEmail = (email: string) => {
+        let hash = 0;
+        for (let i = 0; i < email.length; i++) {
+            const char = email.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
+    }
+
     return (
         <div className="bg-background">
             {/* Hero Section */}
@@ -117,18 +115,24 @@ export default function AboutPage() {
             <div id="staff" className="bg-secondary/30 py-16 md:py-24 scroll-mt-20">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-12">Meet Our Team</h2>
-                    <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-                        {team.map((member) => (
-                            <div key={member.name} className="flex flex-col items-center text-center">
-                                <Avatar className="w-32 h-32 mb-4 border-4 border-primary/20">
-                                    <AvatarImage src={member.image} alt={member.name} data-ai-hint={member.dataAiHint} />
-                                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <h3 className="text-xl font-bold">{member.name}</h3>
-                                <p className="text-primary font-medium">{member.role}</p>
-                            </div>
-                        ))}
-                    </div>
+                    {loading ? (
+                         <div className="flex justify-center items-center h-32">
+                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+                            {admins.map((member: AdminUser) => (
+                                <div key={member.email} className="flex flex-col items-center text-center">
+                                    <Avatar className="w-32 h-32 mb-4 border-4 border-primary/20">
+                                        <AvatarImage src={`https://picsum.photos/seed/${getSeedFromEmail(member.email)}/200`} alt={member.email} data-ai-hint="professional portrait" />
+                                        <AvatarFallback>{formatName(member.email).split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                    </Avatar>
+                                    <h3 className="text-xl font-bold">{formatName(member.email)}</h3>
+                                    <p className="text-primary font-medium">{member.role}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
