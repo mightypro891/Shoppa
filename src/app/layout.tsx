@@ -10,7 +10,10 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { GeistSans } from 'geist/font/sans';
 
 export const metadata: Metadata = {
-  title: 'Naija Shoppa',
+  title: {
+    default: 'Lautech Shoppa',
+    template: '%s | Lautech Shoppa',
+  },
   description: 'Your one-stop shop for Nigerian foodstuffs, designed for students.',
 };
 

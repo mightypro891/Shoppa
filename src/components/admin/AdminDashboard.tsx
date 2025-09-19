@@ -42,7 +42,7 @@ import {
   AlertDialogTrigger,
 } from '../ui/alert-dialog';
 import { addDeliveryRoute, getDeliveryRoutes, deleteDeliveryRoute } from '@/lib/locations';
-import { allCategories } from '@/lib/categories';
+import { mainCategories } from '@/lib/categories';
 
 
 export default function AdminDashboard() {
@@ -74,6 +74,9 @@ export default function AdminDashboard() {
   const [dealSubmissions, setDealSubmissions] = useState<DealSubmission[]>([]);
   const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
   const [newRoute, setNewRoute] = useState({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
+
+  const allCategorySlugs = mainCategories.flatMap(cat => [cat.slug, ...(cat.subcategories?.map(sub => sub.slug) || [])]);
+
 
   const fetchRoutes = async () => {
     const routes = await getDeliveryRoutes();
@@ -129,7 +132,8 @@ export default function AdminDashboard() {
 
 
   const formatCategoryName = (slug: string) => {
-    return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const category = mainCategories.find(c => c.slug === slug) || mainCategories.flatMap(c => c.subcategories || []).find(s => s.slug === slug);
+    return category ? category.name : slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   const handleAddAdmin = () => {
@@ -220,7 +224,7 @@ export default function AdminDashboard() {
                                         <CommandList>
                                             <CommandEmpty>No results found.</CommandEmpty>
                                             <CommandGroup>
-                                                {allCategories.map((option) => (
+                                                {allCategorySlugs.map((option) => (
                                                     <CommandItem
                                                         key={option}
                                                         onSelect={() => {
@@ -310,7 +314,7 @@ export default function AdminDashboard() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Products</SelectItem>
-                            {allCategories.map(cat => (
+                            {allCategorySlugs.map(cat => (
                                 <SelectItem key={cat} value={cat}>{formatCategoryName(cat)}</SelectItem>
                             ))}
                         </SelectContent>
@@ -397,7 +401,7 @@ export default function AdminDashboard() {
                                                 <CommandList>
                                                     <CommandEmpty>No results found.</CommandEmpty>
                                                     <CommandGroup>
-                                                        {allCategories.map((option) => (
+                                                        {allCategorySlugs.map((option) => (
                                                             <CommandItem
                                                                 key={option}
                                                                 onSelect={() => {
