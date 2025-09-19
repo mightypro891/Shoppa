@@ -4,7 +4,7 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Phone, Twitter, Instagram, Facebook, Loader2 } from "lucide-react";
+import { Leaf, ShieldCheck, Truck, Users, Mail, Target, Eye, Phone, Twitter, Instagram, Facebook } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useAuth } from "@/context/AuthContext";
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -52,21 +51,34 @@ const features = [
     }
 ];
 
-export default function AboutPageClient() {
-    const { admins, loading } = useAuth();
-    
-    // Helper to format email prefix into a name
-    const formatNameFromEmail = (email: string) => {
-        const namePart = email.split('@')[0];
-        // Replace numbers and capitalize
-        return namePart.replace(/\d+/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
-    };
+const teamMembers = [
+    {
+        name: "Promise Oye",
+        role: "Founder & CEO",
+        image: "https://picsum.photos/seed/101/200",
+        aiHint: "professional portrait"
+    },
+    {
+        name: "Adedoyin Adunni",
+        role: "Lead, Vendor Relations",
+        image: "https://picsum.photos/seed/102/200",
+        aiHint: "professional portrait"
+    },
+    {
+        name: "Tamara Adedolapo",
+        role: "Head of Operations",
+        image: "https://picsum.photos/seed/103/200",
+        aiHint: "professional portrait"
+    }
+];
 
+
+export default function AboutPageClient() {
     return (
         <div className="bg-background">
             {/* Hero Section */}
             <div className="container mx-auto px-4 py-16 md:py-24 text-center">
-                <h1 className="text-4xl md:text-5xl font-bold font-headline mb-4">About Lautech Shoppa</h1>
+                <h1 className="text-4xl md:text-5xl font-bold font-headline mb-4">About Shoppa</h1>
                 <p className="max-w-3xl mx-auto text-lg text-muted-foreground mb-8">
                     We are dedicated to simplifying the lives of students and the entire campus community by providing easy access to essential goods, from fresh foodstuffs to everyday necessities.
                 </p>
@@ -85,11 +97,11 @@ export default function AboutPageClient() {
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
-                                <a href="mailto:support@lautechshoppa.com" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
+                                <a href="mailto:support@shoppa.com" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
                                     <Mail className="h-6 w-6 text-primary" />
                                     <div>
                                         <p className="font-semibold">Email Support</p>
-                                        <p className="text-sm text-muted-foreground">support@lautechshoppa.com</p>
+                                        <p className="text-sm text-muted-foreground">support@shoppa.com</p>
                                     </div>
                                 </a>
                                  <a href="tel:+2349019805819" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
@@ -110,21 +122,21 @@ export default function AboutPageClient() {
                                     <Twitter className="h-6 w-6 text-primary" />
                                     <div>
                                         <p className="font-semibold">Twitter / X</p>
-                                        <p className="text-sm text-muted-foreground">@LautechShoppa</p>
+                                        <p className="text-sm text-muted-foreground">@shoppa</p>
                                     </div>
                                 </a>
                                 <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
                                     <Instagram className="h-6 w-6 text-primary" />
                                     <div>
                                         <p className="font-semibold">Instagram</p>
-                                        <p className="text-sm text-muted-foreground">@LautechShoppa</p>
+                                        <p className="text-sm text-muted-foreground">@shoppa</p>
                                     </div>
                                 </a>
                                 <a href="#" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors">
                                     <Facebook className="h-6 w-6 text-primary" />
                                     <div>
                                         <p className="font-semibold">Facebook</p>
-                                        <p className="text-sm text-muted-foreground">/LautechShoppa</p>
+                                        <p className="text-sm text-muted-foreground">/shoppa</p>
                                     </div>
                                 </a>
                             </div>
@@ -166,7 +178,7 @@ export default function AboutPageClient() {
             {/* Why Choose Us Section */}
             <div className="py-16 md:py-24">
                  <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-12">Why Choose Lautech Shoppa?</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-12">Why Choose Shoppa?</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {features.map((feature, index) => (
                             <Card key={index} className="text-center p-6 flex flex-col items-center border-2 hover:border-primary transition-all duration-300 shadow-md hover:shadow-lg">
@@ -183,28 +195,18 @@ export default function AboutPageClient() {
             <div id="staff" className="bg-secondary/30 py-16 md:py-24 scroll-mt-20">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-12">Meet Our Team</h2>
-                     {loading ? (
-                        <div className="flex justify-center">
-                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-                            {admins.map((member) => {
-                                const name = formatNameFromEmail(member.email);
-                                return (
-                                    <div key={member.email} className="flex flex-col items-center text-center">
-                                        <Avatar className="w-32 h-32 mb-4 border-4 border-primary/20">
-                                            {/* Using email as seed for consistent placeholder images */}
-                                            <AvatarImage src={`https://picsum.photos/seed/${member.email}/200`} alt={name} data-ai-hint="professional portrait" />
-                                            <AvatarFallback>{name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                        </Avatar>
-                                        <h3 className="text-xl font-bold">{name}</h3>
-                                        <p className="text-muted-foreground">{member.role}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                    <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+                        {teamMembers.map((member) => (
+                            <div key={member.name} className="flex flex-col items-center text-center">
+                                <Avatar className="w-32 h-32 mb-4 border-4 border-primary/20">
+                                    <AvatarImage src={member.image} alt={member.name} data-ai-hint={member.aiHint} />
+                                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <h3 className="text-xl font-bold">{member.name}</h3>
+                                <p className="text-muted-foreground">{member.role}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
