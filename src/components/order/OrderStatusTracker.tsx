@@ -3,20 +3,27 @@
 
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
-import { Package, CookingPot, Bike, Home } from "lucide-react";
+import { Package, CookingPot, Bike, Home, CheckCircle } from "lucide-react";
 import type { OrderStatus } from "@/lib/types";
 
-const statusConfig: { name: OrderStatus, icon: JSX.Element }[] = [
+const deliveryStatusConfig: { name: OrderStatus, icon: JSX.Element }[] = [
   { name: 'Order Placed', icon: <Package className="h-5 w-5" /> },
   { name: 'Preparing', icon: <CookingPot className="h-5 w-5" /> },
   { name: 'Out for Delivery', icon: <Bike className="h-5 w-5" /> },
   { name: 'Delivered', icon: <Home className="h-5 w-5" /> },
 ];
 
+const pickupStatusConfig: { name: OrderStatus, icon: JSX.Element }[] = [
+  { name: 'Order Placed', icon: <Package className="h-5 w-5" /> },
+  { name: 'Ready for Pickup', icon: <CheckCircle className="h-5 w-5" /> },
+];
+
+
 const statusIndexes: Record<OrderStatus, number> = {
   'Order Placed': 0,
   'Preparing': 1,
   'Out for Delivery': 2,
+  'Ready for Pickup': 1,
   'Delivered': 3,
 };
 
@@ -26,6 +33,10 @@ interface OrderStatusTrackerProps {
 }
 
 export default function OrderStatusTracker({ currentStatus }: OrderStatusTrackerProps) {
+  
+  const isPickup = currentStatus === 'Ready for Pickup';
+  const statusConfig = isPickup ? pickupStatusConfig : deliveryStatusConfig;
+
   const currentStatusIndex = statusIndexes[currentStatus];
   const progressValue = (currentStatusIndex / (statusConfig.length - 1)) * 100;
 

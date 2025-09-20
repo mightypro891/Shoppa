@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { addReview } from '@/lib/reviews';
 import StarRating from './StarRating';
+import Link from 'next/link';
 
 const reviewSchema = z.object({
   rating: z.number().min(1, 'Please select a rating.'),
@@ -50,12 +51,12 @@ export default function ReviewForm({ productId }: ReviewFormProps) {
     });
 
     toast({
-      title: 'Review Submitted',
-      description: 'Thank you for your feedback!',
+      title: 'Review Submitted for Approval',
+      description: 'Thank you! Your feedback will be visible after it has been approved by an admin.',
     });
 
     form.reset();
-    router.refresh(); // Refresh the page to show the new review
+    // No longer need to router.refresh() since reviews won't show up immediately.
   };
 
   if (!user) {

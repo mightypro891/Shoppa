@@ -5,7 +5,7 @@ import type { Review } from '@/lib/types';
 import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { User } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import StarRating from './StarRating';
 
 interface ReviewListProps {
@@ -35,7 +35,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
             <div className="flex items-center justify-between">
                 <p className="font-semibold">{review.authorName}</p>
                 <span className="text-xs text-muted-foreground">
-                    {review.createdAt ? format(new Date(review.createdAt), 'MMM d, yyyy') : ''}
+                    {review.createdAt ? format(parseISO(review.createdAt), 'MMM d, yyyy') : ''}
                 </span>
             </div>
             <div className="my-2">

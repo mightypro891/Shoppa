@@ -73,6 +73,7 @@ export interface Review {
   rating: number; // 1 to 5
   text: string;
   createdAt: string;
+  isApproved: boolean;
 }
 
 export interface CelebrationPopupConfig {

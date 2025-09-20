@@ -465,7 +465,7 @@ export default function AdminDashboard() {
         )}
 
        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
@@ -495,6 +495,22 @@ export default function AdminDashboard() {
                     </CardDescription>
                     <Button asChild className="mt-4">
                         <Link href="/admin/orders">Go to Orders</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                    Review Management
+                    </CardTitle>
+                    <Star className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <CardDescription>
+                    Approve and manage customer reviews.
+                    </CardDescription>
+                    <Button asChild className="mt-4">
+                        <Link href="/admin/reviews">Go to Reviews</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -673,29 +689,6 @@ export default function AdminDashboard() {
             </Card>
           </div>
        )}
-
-
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-         <Card>
-           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Star className="mr-2 h-5 w-5" />
-              Review Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-                Approve and manage customer reviews.
-            </CardDescription>
-             <Button variant="secondary" disabled className="mt-4">
-                Post Reviews
-            </Button>
-             <Button variant="destructive" disabled className="mt-4 ml-2">
-                Delete Review
-            </Button>
-          </CardContent>
-        </Card>
-       </div>
     </div>
   );
 }
