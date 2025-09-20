@@ -73,7 +73,7 @@ export default function AdminDashboard() {
   });
   const [dealSubmissions, setDealSubmissions] = useState<DealSubmission[]>([]);
   const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
-  const [newRoute, setNewRoute] = useState({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
+  const [newRoute, setNewRoute] = useState({ from: '', to: '', price: 0 });
 
   const allCategorySlugs = mainCategories.flatMap(cat => [cat.slug, ...(cat.subcategories?.map(sub => sub.slug) || [])]);
 
@@ -114,14 +114,14 @@ export default function AdminDashboard() {
   };
 
   const handleAddRoute = async () => {
-    if(newRoute.price <= 0) {
-        toast({ title: 'Invalid Price', description: 'Price must be greater than 0.', variant: 'destructive'});
+    if(newRoute.price <= 0 || !newRoute.from || !newRoute.to) {
+        toast({ title: 'Invalid Route', description: 'Please fill out all location fields and set a valid price.', variant: 'destructive'});
         return;
     }
     await addDeliveryRoute(newRoute);
     toast({ title: 'Route Added', description: `Delivery from ${newRoute.from} to ${newRoute.to} is now ₦${newRoute.price}.`});
     fetchRoutes();
-    setNewRoute({ from: 'Ogbomoso', to: 'Iseyin', price: 0 });
+    setNewRoute({ from: '', to: '', price: 0 });
   };
 
   const handleDeleteRoute = async (routeId: string) => {
@@ -604,19 +604,21 @@ export default function AdminDashboard() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5" /> Location Settings</CardTitle>
-                    <CardDescription>Manage delivery routes and prices between campuses.</CardDescription>
+                    <CardDescription>Manage delivery routes and prices between specific locations.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                             <Select value={newRoute.from} onValueChange={(value: 'Ogbomoso' | 'Iseyin') => setNewRoute(p => ({...p, from: value}))}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent><SelectItem value="Ogbomoso">From: Ogbomoso</SelectItem><SelectItem value="Iseyin">From: Iseyin</SelectItem></SelectContent>
-                             </Select>
-                             <Select value={newRoute.to} onValueChange={(value: 'Ogbomoso' | 'Iseyin') => setNewRoute(p => ({...p, to: value}))}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent><SelectItem value="Ogbomoso">To: Ogbomoso</SelectItem><SelectItem value="Iseyin">To: Iseyin</SelectItem></SelectContent>
-                             </Select>
+                             <Input 
+                                placeholder="From Location"
+                                value={newRoute.from}
+                                onChange={(e) => setNewRoute(p => ({...p, from: e.target.value}))}
+                             />
+                             <Input 
+                                placeholder="To Location"
+                                value={newRoute.to}
+                                onChange={(e) => setNewRoute(p => ({...p, to: e.target.value}))}
+                             />
                             <Input 
                                 type="number"
                                 placeholder="Price"

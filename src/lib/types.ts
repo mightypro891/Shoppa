@@ -98,7 +98,7 @@ export interface DealSubmission {
 
 export interface DeliveryRoute {
     id: string;
-    from: 'Ogbomoso' | 'Iseyin';
-    to: 'Ogbomoso' | 'Iseyin';
+    from: string;
+    to: string;
     price: number;
 }

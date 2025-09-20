@@ -59,20 +59,21 @@ export default function CheckoutForm() {
         return;
     }
 
+    // This is a simplified logic. A real app would need a more robust way to match
+    // product locations to user's address to find the correct route.
+    // For now, we'll keep the inter-campus logic as a placeholder.
     const cartCampuses = new Set(cartItems.map(item => item.campus));
     const userCampus = userProfile.campus;
     let fee = 0;
 
-    // Check if a delivery to a different campus is required
     const needsInterCampusDelivery = Array.from(cartCampuses).some(cc => cc !== userCampus);
 
     if (needsInterCampusDelivery) {
-        const otherCampus = userCampus === 'Ogbomoso' ? 'Iseyin' : 'Ogbomoso';
-        const route = deliveryRoutes.find(r => (r.from === otherCampus && r.to === userCampus) || (r.from === userCampus && r.to === otherCampus));
-        fee = route?.price || 0; // Use route price, or 0 if not found
+        const route = deliveryRoutes.find(r => r.from.includes('Ogbomoso') && r.to.includes('Iseyin') || r.from.includes('Iseyin') && r.to.includes('Ogbomoso'));
+        fee = route?.price || 0; // Use route price, or a default if not found
     } else {
-        // All items are from the same campus as the user
-        const route = deliveryRoutes.find(r => r.from === userCampus && r.to === userCampus);
+        // Intra-campus delivery. Find a route that starts and ends in the same campus city.
+        const route = deliveryRoutes.find(r => r.from.includes(userCampus) && r.to.includes(userCampus));
         fee = route?.price || 0;
     }
 
