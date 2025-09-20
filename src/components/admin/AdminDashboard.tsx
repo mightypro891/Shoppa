@@ -44,6 +44,29 @@ import {
 import { addDeliveryRoute, getDeliveryRoutes, deleteDeliveryRoute } from '@/lib/locations';
 import { mainCategories } from '@/lib/categories';
 
+const locations = {
+    Ogbomoso: [
+        "Under G",
+        "Adenike",
+        "Yoaco",
+        "Stadium",
+        "General",
+        "LAUTECH Campus Gate",
+        "Taki",
+        "Aralopin",
+    ],
+    Iseyin: [
+        "Koso",
+        "Isalu",
+        "Ato",
+        "Iseyin Campus Gate",
+        "Oja-Agbe",
+        "Custom Barracks",
+    ]
+};
+
+const allLocations = [...locations.Ogbomoso.map(l => `${l}, Ogbomoso`), ...locations.Iseyin.map(l => `${l}, Iseyin`)];
+
 
 export default function AdminDashboard() {
   const { 
@@ -608,25 +631,36 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                             <Input 
-                                placeholder="From Location"
-                                value={newRoute.from}
-                                onChange={(e) => setNewRoute(p => ({...p, from: e.target.value}))}
-                             />
-                             <Input 
-                                placeholder="To Location"
-                                value={newRoute.to}
-                                onChange={(e) => setNewRoute(p => ({...p, to: e.target.value}))}
-                             />
-                            <Input 
-                                type="number"
-                                placeholder="Price"
-                                value={newRoute.price || ''}
-                                onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber || 0}))}
-                                className="md:col-span-1"
-                             />
-                             <Button onClick={handleAddRoute} className="md:col-span-1">Add Route</Button>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="from-location">From</Label>
+                                <Select value={newRoute.from} onValueChange={(value) => setNewRoute(p => ({...p, from: value}))}>
+                                    <SelectTrigger id="from-location"><SelectValue placeholder="Select location" /></SelectTrigger>
+                                    <SelectContent>
+                                        {allLocations.map(loc => <SelectItem key={`from-${loc}`} value={loc}>{loc}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="to-location">To</Label>
+                                <Select value={newRoute.to} onValueChange={(value) => setNewRoute(p => ({...p, to: value}))}>
+                                    <SelectTrigger id="to-location"><SelectValue placeholder="Select location" /></SelectTrigger>
+                                    <SelectContent>
+                                        {allLocations.map(loc => <SelectItem key={`to-${loc}`} value={loc}>{loc}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="route-price">Price</Label>
+                                <Input 
+                                    id="route-price"
+                                    type="number"
+                                    placeholder="Price"
+                                    value={newRoute.price || ''}
+                                    onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber || 0}))}
+                                />
+                            </div>
+                             <Button onClick={handleAddRoute}>Add Route</Button>
                         </div>
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                             <h4 className="font-medium text-sm">Current Routes</h4>
