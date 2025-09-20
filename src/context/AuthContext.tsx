@@ -13,7 +13,10 @@ import {
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     updateProfile,
-    User
+    User,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    updatePassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
@@ -54,6 +57,7 @@ interface AuthContextType {
   emailSignUp: (name:string, email:string, password:string) => Promise<{user: User; isNewUser: boolean}>;
   emailSignIn: (email:string, password:string) => Promise<User | null>;
   sendPasswordReset: (email: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   selectedRole: SelectedRole;
   selectRole: (role: SelectedRole) => Promise<void>;
   hasSelectedRole: boolean;
@@ -199,6 +203,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await sendPasswordResetEmail(auth, email);
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user || !user.email) {
+      throw new Error('You must be logged in to change your password.');
+    }
+
+    try {
+      // Re-authenticate the user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // If re-authentication is successful, update the password
+      await updatePassword(user, newPassword);
+    } catch (error: any) {
+        if (error.code === 'auth/wrong-password') {
+            throw new Error('The current password you entered is incorrect.');
+        }
+        throw new Error('An error occurred. Please try again.');
+    }
+  };
+
   const logOut = async () => {
     await signOut(auth);
     await selectRole(null);
@@ -275,6 +299,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     emailSignUp,
     emailSignIn,
     sendPasswordReset,
+    changePassword,
     selectedRole,
     selectRole,
     hasSelectedRole,

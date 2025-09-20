@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Wallet, History } from 'lucide-react';
+import { Loader2, User, Wallet, History, Lock } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -307,7 +307,11 @@ export default function ProfileClientPage() {
                     <CardDescription>Change your password.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button disabled variant="secondary">Change Password (Disabled)</Button>
+                     <Button asChild>
+                       <Link href="/profile/change-password">
+                            <Lock className="mr-2 h-4 w-4" /> Change Password
+                        </Link>
+                    </Button>
                 </CardContent>
             </Card>
         </div>
