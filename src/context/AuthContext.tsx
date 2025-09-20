@@ -18,7 +18,7 @@ import {
     reauthenticateWithCredential,
     updatePassword
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc, query } from 'firebase/firestore';
 
 
 const INITIAL_ADMINS: AdminUser[] = [
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
-  const [admins, setAdmins] = useState<AdminUser[]>(INITIAL_ADMINS);
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0); 
@@ -110,11 +110,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }
 
-  const updateUserState = (currentUser: User | null) => {
+  const updateUserState = (currentUser: User | null, currentAdmins: AdminUser[]) => {
       setUser(currentUser);
       
       if (currentUser) {
-          const adminInfo = admins.find(admin => admin.email === currentUser.email);
+          const adminInfo = currentAdmins.find(admin => admin.email === currentUser.email);
           const userIsAdmin = !!adminInfo;
           
           setRawIsAdmin(userIsAdmin);
@@ -146,13 +146,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
   }
   
+  // Listen for admin list changes
+  useEffect(() => {
+    const adminsCollection = collection(db, 'admins');
+    
+    const unsubscribe = onSnapshot(adminsCollection, (snapshot) => {
+      if (snapshot.empty) {
+        // If the collection is empty, seed it with initial admins
+        const batch = setDoc(doc(adminsCollection), {}); // Ensure collection exists
+        INITIAL_ADMINS.forEach(admin => {
+          setDoc(doc(adminsCollection, admin.email), admin);
+        });
+        setAdmins(INITIAL_ADMINS);
+      } else {
+        const adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
+        setAdmins(adminList);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+  
+  // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setLoading(true);
-        updateUserState(currentUser);
+        updateUserState(currentUser, admins);
     });
     return () => unsubscribe();
   }, [admins]);
+  
+  // Listen for total users
+  useEffect(() => {
+      const profilesCollection = collection(db, 'profiles');
+      const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
+          setTotalUsers(snapshot.size);
+      });
+      return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -229,15 +260,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
-    setAdmins(prev => [...prev, { email, role, managedCategories: categories }]);
+    const adminsCollection = collection(db, 'admins');
+    await setDoc(doc(adminsCollection, email), { email, role, managedCategories: categories });
   };
   
   const removeAdmin = async (email: string) => {
-    setAdmins(prev => prev.filter(admin => admin.email !== email));
+    const adminDocRef = doc(db, 'admins', email);
+    await deleteDoc(adminDocRef);
   };
 
   const updateAdminRole = async (email: string, role: AdminRole, categories: string[] = []) => {
-    setAdmins(prev => prev.map(admin => admin.email === email ? { ...admin, role, managedCategories: categories } : admin));
+    const adminDocRef = doc(db, 'admins', email);
+    await setDoc(adminDocRef, { email, role, managedCategories: categories }, { merge: true });
   };
 
   const saveUserProfile = async (profileData: Omit<UserProfile, 'balance' | 'isComplete'>) => {
