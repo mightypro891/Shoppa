@@ -620,8 +620,8 @@ export default function AdminDashboard() {
                             <Input 
                                 type="number"
                                 placeholder="Price"
-                                value={newRoute.price}
-                                onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber}))}
+                                value={newRoute.price || ''}
+                                onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber || 0}))}
                                 className="md:col-span-1"
                              />
                              <Button onClick={handleAddRoute} className="md:col-span-1">Add Route</Button>
