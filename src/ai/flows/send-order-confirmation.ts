@@ -11,6 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { firebaseAuth } from '@genkit-ai/next';
 
 const OrderConfirmationInputSchema = z.object({
     orderId: z.string().describe('The unique identifier for the order.'),
@@ -29,8 +30,7 @@ const OrderConfirmationInputSchema = z.object({
         tags: z.array(z.string()).optional(),
         vendorId: z.string().optional(), // This is the vendor's email
         campus: z.enum(['Ogbomoso', 'Iseyin']),
-        intraCampusFee: z.number().optional(),
-        interCampusFee: z.number().optional(),
+        salePrice: z.number().optional(),
     })).describe('The items in the order.'),
     subTotal: z.number().describe('The subtotal price of the items.'),
     deliveryFee: z.number().describe('The calculated delivery fee for the order.'),
@@ -112,6 +112,11 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     name: 'sendOrderConfirmationFlow',
     inputSchema: OrderConfirmationInputSchema,
     outputSchema: z.void(),
+    auth: firebaseAuth((user) => {
+        if (!user) {
+            throw new Error('Authentication required.');
+        }
+    }),
   },
   async (input) => {
     
@@ -217,7 +222,7 @@ const sendOrderConfirmationFlow = ai.defineFlow(
             if (vendorEmail !== superAdminEmail) {
                 try {
                      await transporter.sendMail({
-                        from: `"Lautecha Shoppa System" <${senderEmail}>`,
+                        from: `"Lautech Shoppa System" <${senderEmail}>`,
                         to: superAdminEmail,
                         subject: `Failed to notify vendor for order #${orderId}`,
                         text: `The system failed to send an order notification to ${vendorEmail} for order #${orderId}. Please notify them manually. Error: ${error instanceof Error ? error.message : String(error)}`,

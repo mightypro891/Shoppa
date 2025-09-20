@@ -59,23 +59,10 @@ export default function CheckoutForm() {
         return;
     }
 
-    // This is a simplified logic. A real app would need a more robust way to match
-    // product locations to user's address to find the correct route.
-    // For now, we'll keep the inter-campus logic as a placeholder.
-    const cartCampuses = new Set(cartItems.map(item => item.campus));
     const userCampus = userProfile.campus;
-    let fee = 0;
-
-    const needsInterCampusDelivery = Array.from(cartCampuses).some(cc => cc !== userCampus);
-
-    if (needsInterCampusDelivery) {
-        const route = deliveryRoutes.find(r => r.from.includes('Ogbomoso') && r.to.includes('Iseyin') || r.from.includes('Iseyin') && r.to.includes('Ogbomoso'));
-        fee = route?.price || 0; // Use route price, or a default if not found
-    } else {
-        // Intra-campus delivery. Find a route that starts and ends in the same campus city.
-        const route = deliveryRoutes.find(r => r.from.includes(userCampus) && r.to.includes(userCampus));
-        fee = route?.price || 0;
-    }
+    
+    const route = deliveryRoutes.find(r => r.from.includes(userCampus) && r.to.includes(userCampus));
+    const fee = route?.price || 0;
 
     setDeliveryFee(fee);
 
@@ -126,14 +113,13 @@ export default function CheckoutForm() {
             deliveryMethod,
         });
         
-        // This is now part of the successful flow
         await sendOrderConfirmationAction({
             orderId: newOrder.id,
             customer: {
                 name: data.name,
                 email: user.email,
             },
-            cartItems: cartItems, // Pass the full cart items
+            cartItems: cartItems,
             subTotal,
             deliveryFee,
             total,
@@ -186,8 +172,6 @@ export default function CheckoutForm() {
             clearCart();
             router.push(`/order/${newOrder.id}`);
         } else {
-            // This is a failsafe, but it's a critical error if it happens.
-            // It means the order was created but payment failed. Manual intervention would be needed.
             console.error(`CRITICAL: Order ${newOrder.id} created but payment failed.`);
             toast({
                 title: "Payment Failed",
@@ -197,7 +181,6 @@ export default function CheckoutForm() {
             });
         }
     }
-    // If newOrder is null, handleOrderPlacement already showed a toast.
     
     setIsSubmitting(false);
   };

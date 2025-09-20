@@ -5,6 +5,7 @@ import { suggestRecipes, type RecipeSuggestionsInput, type RecipeSuggestionsOutp
 import { sendOrderConfirmation, type OrderConfirmationInput } from '@/ai/flows/send-order-confirmation';
 import { askSupportAgent, type SupportChatInput, type SupportChatOutput } from '@/ai/flows/support-chat-flow';
 import { generateStory, type StoryGenerationInput, type StoryGenerationOutput } from '@/ai/flows/story-generation-flow';
+import { headers } from 'next/headers';
 
 
 export async function getRecipeSuggestionsAction(
@@ -24,6 +25,7 @@ export async function sendOrderConfirmationAction(
   input: OrderConfirmationInput
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Authenticated flows are called directly. The auth context is handled automatically.
     await sendOrderConfirmation(input);
     return { success: true };
   } catch (error) {
