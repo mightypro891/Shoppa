@@ -1,46 +1,61 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow public read access to products, reviews, and routes
+    // --- DEFAULT RULES ---
+    // By default, deny all reads and writes.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PUBLIC-READ COLLECTIONS ---
+    // Products, reviews, and routes can be read by anyone.
     match /products/{productId} {
       allow read: if true;
-      allow write: if false; // Writes should be done via server-side functions
+      // Allow only admins to write. We'll check the custom claim.
+      allow write: if request.auth.token.isAdmin == true;
+    }
+    
+    match /deletedProductsLog/{logId} {
+        allow read, write: if request.auth.token.isAdmin == true;
     }
 
     match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if request.auth != null; // Only logged-in users can create reviews
-      allow update, delete: if false; // Only admins (via server-side) can update/delete
+      allow read: if resource.data.isApproved == true;
+      allow create: if request.auth != null; // Any logged-in user can create a review
+      // Only admins can approve or delete reviews
+      allow update, delete: if request.auth.token.isAdmin == true;
+    }
+    
+    match /dealSubmissions/{submissionId} {
+        allow read, write: if request.auth.token.isAdmin == true;
     }
 
     match /deliveryRoutes/{routeId} {
         allow read: if true;
-        allow write: if false; // Only admins (via server-side) can manage routes
+        allow write: if request.auth.token.isAdmin == true;
     }
     
-    // Secure user profiles
+    // Admins list can be read by any authenticated user to determine roles.
+    match /admins/{adminId} {
+      allow read: if request.auth != null;
+      // Only super admins can change the admin list.
+      allow write: if request.auth.token.isSuperAdmin == true;
+    }
+
+    // --- USER-SPECIFIC DATA ---
+    // Users can manage their own profile.
+    // Authenticated users can read all profiles for counting purposes.
     match /profiles/{userId} {
-      allow read, update: if request.auth.uid == userId; // Users can only access their own profile
-      allow create: if request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // Secure orders
+    
+    // Users can create orders for themselves.
+    // Users can only read their own orders.
     match /orders/{orderId} {
-      allow read: if request.auth.uid == resource.data.userId; // Users can only read their own orders
-      allow create: if request.auth.uid == request.resource.data.userId; // Users can only create orders for themselves
-      allow update, delete: if false; // Order updates are handled server-side by admins
-    }
-
-    // Secure other admin-only collections
-    match /deletedProductsLog/{logId} {
-      allow read, write: if false;
-    }
-
-    match /dealSubmissions/{submissionId} {
-      allow read, write: if false;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.token.isAdmin == true);
     }
   }
 }
