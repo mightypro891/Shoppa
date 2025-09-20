@@ -120,9 +120,7 @@ export default function CheckoutForm() {
                 email: user.email,
             },
             cartItems: cartItems,
-            subTotal,
             deliveryFee,
-            total,
         });
 
         return newOrder;

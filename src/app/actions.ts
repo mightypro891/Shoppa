@@ -25,7 +25,6 @@ export async function sendOrderConfirmationAction(
   input: OrderConfirmationInput
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Calling the flow directly. The client-side logic ensures the user is authenticated.
     await sendOrderConfirmation(input);
     return { success: true };
   } catch (error) {

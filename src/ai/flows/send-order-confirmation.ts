@@ -11,6 +11,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Product } from '@/lib/types';
+
 
 const OrderConfirmationInputSchema = z.object({
     orderId: z.string().describe('The unique identifier for the order.'),
@@ -21,7 +25,7 @@ const OrderConfirmationInputSchema = z.object({
     cartItems: z.array(z.object({
         id: z.string(),
         name: z.string(),
-        price: z.number(),
+        price: z.number(), // This price is from the client, we will verify it.
         quantity: z.number(),
         image: z.string(),
         description: z.string(),
@@ -31,9 +35,7 @@ const OrderConfirmationInputSchema = z.object({
         campus: z.enum(['Ogbomoso', 'Iseyin']),
         salePrice: z.number().optional(),
     })).describe('The items in the order.'),
-    subTotal: z.number().describe('The subtotal price of the items.'),
     deliveryFee: z.number().describe('The calculated delivery fee for the order.'),
-    total: z.number().describe('The total price of the order including delivery.'),
 });
 
 export type OrderConfirmationInput = z.infer<typeof OrderConfirmationInputSchema>;
@@ -114,7 +116,38 @@ const sendOrderConfirmationFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const { orderId, customer, cartItems, subTotal, deliveryFee, total } = input;
+    const { orderId, customer, cartItems: clientCartItems, deliveryFee } = input;
+    
+    // --- SECURITY: Server-side validation of prices and totals ---
+    let verifiedSubTotal = 0;
+    const verifiedCartItems = [];
+
+    for (const item of clientCartItems) {
+        const productRef = doc(db, 'products', item.id);
+        const productSnap = await getDoc(productRef);
+
+        if (productSnap.exists()) {
+            const productData = productSnap.data() as Product;
+            const priceToUse = productData.salePrice || productData.price;
+            
+            verifiedSubTotal += priceToUse * item.quantity;
+
+            // Use verified data for the rest of the flow
+            verifiedCartItems.push({
+                ...item,
+                price: priceToUse, // Overwrite with server price
+                salePrice: productData.salePrice,
+            });
+        } else {
+            console.error(`Product with ID ${item.id} not found. Skipping from order confirmation.`);
+            // Optionally, throw an error to halt the process if a product is missing
+            // throw new Error(`Invalid product ID in cart: ${item.id}`);
+        }
+    }
+
+    const verifiedTotal = verifiedSubTotal + deliveryFee;
+    // --- End of Security Validation ---
+
     const transporter = await createTransporter();
     
     if (!transporter) {
@@ -140,13 +173,13 @@ const sendOrderConfirmationFlow = ai.defineFlow(
                 </tr>
             </thead>
             <tbody>
-                ${cartItems.map(item => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>₦${(item.price * item.quantity).toFixed(2)}</td></tr>`).join('')}
+                ${verifiedCartItems.map(item => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>₦${(item.price * item.quantity).toFixed(2)}</td></tr>`).join('')}
             </tbody>
         </table>
         <div style="text-align: right; margin-top: 20px;">
-          <p>Subtotal: ₦${subTotal.toFixed(2)}</p>
+          <p>Subtotal: ₦${verifiedSubTotal.toFixed(2)}</p>
           <p>Delivery Fee: ₦${deliveryFee.toFixed(2)}</p>
-          <p class="total">Total: ₦${total.toFixed(2)}</p>
+          <p class="total">Total: ₦${verifiedTotal.toFixed(2)}</p>
         </div>
         <p>We'll notify you again once your order is out for delivery.</p>
         <p>Thanks,<br/>The Lautech Shoppa Team</p>
@@ -167,9 +200,9 @@ const sendOrderConfirmationFlow = ai.defineFlow(
 
 
     // 2. Group items by vendor
-    const itemsByVendor = new Map<string, typeof cartItems>();
+    const itemsByVendor = new Map<string, typeof verifiedCartItems>();
 
-    for (const item of cartItems) {
+    for (const item of verifiedCartItems) {
       const vendorId = item.vendorId || superAdminEmail; // Default to super admin if no vendor
       if (!itemsByVendor.has(vendorId)) {
         itemsByVendor.set(vendorId, []);
