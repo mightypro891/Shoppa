@@ -18,7 +18,7 @@ import {
     reauthenticateWithCredential,
     updatePassword
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc, query } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc, query, writeBatch } from 'firebase/firestore';
 
 
 const INITIAL_ADMINS: AdminUser[] = [
@@ -150,18 +150,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const adminsCollection = collection(db, 'admins');
     
-    const unsubscribe = onSnapshot(adminsCollection, (snapshot) => {
+    const unsubscribe = onSnapshot(adminsCollection, async (snapshot) => {
+      let adminList: AdminUser[];
       if (snapshot.empty) {
+        console.log("Admins collection is empty, seeding initial data...");
         // If the collection is empty, seed it with initial admins
-        const batch = setDoc(doc(adminsCollection), {}); // Ensure collection exists
+        const batch = writeBatch(db);
         INITIAL_ADMINS.forEach(admin => {
-          setDoc(doc(adminsCollection, admin.email), admin);
+          const adminDocRef = doc(adminsCollection, admin.email);
+          batch.set(adminDocRef, admin);
         });
-        setAdmins(INITIAL_ADMINS);
+        await batch.commit();
+        adminList = INITIAL_ADMINS;
       } else {
-        const adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
-        setAdmins(adminList);
+        adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
       }
+      setAdmins(adminList);
+      // Re-evaluate user state whenever admin list changes
+      updateUserState(auth.currentUser, adminList);
     });
 
     return () => unsubscribe();
@@ -171,7 +177,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setLoading(true);
-        updateUserState(currentUser, admins);
+        // Only update user state if admins list has already been populated
+        if (admins.length > 0) {
+            updateUserState(currentUser, admins);
+        }
     });
     return () => unsubscribe();
   }, [admins]);
