@@ -91,7 +91,7 @@ export default function OrderDetailsClient({ orderId }: OrderDetailsClientProps)
                 </div>
             </CardContent>
         </Card>
-        <OrderStatusTracker currentStatus={order.status} />
+        <OrderStatusTracker currentStatus={order.status} deliveryMethod={order.deliveryMethod} />
     </div>
   );
 }
