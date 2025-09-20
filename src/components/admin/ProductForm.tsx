@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useForm as useSubForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -37,10 +37,16 @@ const formSchema = z.object({
   aiHint: z.string().min(2, 'AI hint must be at least 2 characters.'),
   tags: z.string().min(1, 'Please select a category.'),
   campus: z.enum(['Ogbomoso', 'Iseyin'], { required_error: 'Please select a campus location.' }),
-  dealPrice: z.coerce.number().optional(),
 });
 
+const dealSchema = z.object({
+    dealPrice: z.coerce.number().min(1, "Deal price must be greater than zero.")
+});
+
+
 type ProductFormValues = z.infer<typeof formSchema>;
+type DealFormValues = z.infer<typeof dealSchema>;
+
 
 interface ProductFormProps {
   product?: Product;
@@ -52,6 +58,7 @@ export default function ProductForm({ product }: ProductFormProps) {
   const { user, managedCategories, adminRole, isSuperAdmin } = useAuth();
   const isEditing = !!product;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingDeal, setIsSubmittingDeal] = useState(false);
 
   const availableCategories = adminRole === 'Normal Admin' ? (managedCategories || []) : allCategories;
 
@@ -67,8 +74,14 @@ export default function ProductForm({ product }: ProductFormProps) {
       aiHint: product?.aiHint || '',
       tags: product?.tags?.[0] || '',
       campus: product?.campus || 'Ogbomoso',
-      dealPrice: undefined,
     },
+  });
+
+  const dealForm = useSubForm<DealFormValues>({
+      resolver: zodResolver(dealSchema),
+      defaultValues: {
+          dealPrice: undefined,
+      }
   });
 
   const onSubmit = async (data: ProductFormValues) => {
@@ -97,42 +110,51 @@ export default function ProductForm({ product }: ProductFormProps) {
       vendorId: adminRole === 'Normal Admin' ? user.email : 'admin@example.com',
     };
 
-    let newOrUpdatedProduct = product;
-
     if (isEditing && product) {
-       newOrUpdatedProduct = await updateProduct(product.id, productData);
+       await updateProduct(product.id, productData);
        toast({
         title: 'Product Updated',
         description: `The product "${data.name}" has been saved.`,
       });
     } else {
-      newOrUpdatedProduct = await addProduct(productData);
+      await addProduct(productData);
       toast({
         title: 'Product Created',
         description: `The product "${data.name}" has been saved.`,
       });
     }
-
-    if (isEditing && data.dealPrice && data.dealPrice > 0 && data.dealPrice < data.price) {
-        await submitDeal({
-            productId: product.id,
-            productName: data.name,
-            productImage: imageUrl,
-            originalPrice: data.price,
-            proposedPrice: data.dealPrice,
-            submittedBy: user.email,
-        });
-        toast({
-            title: 'Deal Submitted',
-            description: `Your deal for "${data.name}" has been submitted for approval.`,
-        });
-    }
-
+    
     setIsSubmitting(false);
     router.push('/admin/products');
     router.refresh(); 
   };
   
+  const onDealSubmit = async (data: DealFormValues) => {
+    if (!isEditing || !product || !user?.email) return;
+
+    if (data.dealPrice >= product.price) {
+        dealForm.setError('dealPrice', { type: 'manual', message: 'Deal price must be less than the regular price.' });
+        return;
+    }
+    setIsSubmittingDeal(true);
+
+     await submitDeal({
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image,
+        originalPrice: product.price,
+        proposedPrice: data.dealPrice,
+        submittedBy: user.email,
+    });
+    toast({
+        title: 'Deal Submitted',
+        description: `Your deal for "${product.name}" has been submitted for approval.`,
+    });
+
+    setIsSubmittingDeal(false);
+    dealForm.reset();
+  };
+
   const formatCategoryName = (slug: string) => {
     return slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
@@ -311,22 +333,25 @@ export default function ProductForm({ product }: ProductFormProps) {
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold">Submit for "Today's Deals"</h3>
                         <p className="text-sm text-muted-foreground">Propose a sale price for this item. A Super Admin will need to approve it before it goes live.</p>
-                         <Form {...form}>
-                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                         <Form {...dealForm}>
+                             <form onSubmit={dealForm.handleSubmit(onDealSubmit)} className="space-y-4">
                                 <FormField
-                                    control={form.control}
+                                    control={dealForm.control}
                                     name="dealPrice"
                                     render={({ field }) => (
                                         <FormItem>
                                         <FormLabel>Proposed Deal Price</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" placeholder={`e.g. ${product.price * 0.9}`} {...field} />
+                                            <Input type="number" step="0.01" placeholder={`Current price: ₦${product.price}`} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit" variant="secondary" disabled={isSubmitting}>Submit Deal for Approval</Button>
+                                <Button type="submit" variant="secondary" disabled={isSubmittingDeal}>
+                                    {isSubmittingDeal && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    Submit Deal for Approval
+                                </Button>
                             </form>
                         </Form>
                     </div>

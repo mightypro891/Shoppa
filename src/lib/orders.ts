@@ -65,10 +65,9 @@ export async function getOrderByUserEmail(email: string): Promise<Order | undefi
 
 
 export async function createOrder(orderData: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<Order> {
-  const initialStatus = orderData.deliveryMethod === 'pickup' ? 'Ready for Pickup' : 'Order Placed';
   const orderPayload = {
       ...orderData,
-      status: initialStatus as OrderStatus,
+      status: 'Order Placed' as OrderStatus,
       createdAt: new Date().toISOString(),
   };
   const docRef = await addDoc(ordersCollection, orderPayload);

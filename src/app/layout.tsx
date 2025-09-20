@@ -11,8 +11,8 @@ import { GeistSans } from 'geist/font/sans';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Lautech Shoppa',
-    template: '%s | Lautech Shoppa',
+    default: 'Shoppa',
+    template: '%s | Shoppa',
   },
   description: 'Your one-stop shop for Nigerian foodstuffs, designed for students.',
 };
