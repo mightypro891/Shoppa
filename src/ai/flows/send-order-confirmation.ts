@@ -11,7 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
-import { firebaseAuth } from '@genkit-ai/next';
 
 const OrderConfirmationInputSchema = z.object({
     orderId: z.string().describe('The unique identifier for the order.'),
@@ -112,11 +111,6 @@ const sendOrderConfirmationFlow = ai.defineFlow(
     name: 'sendOrderConfirmationFlow',
     inputSchema: OrderConfirmationInputSchema,
     outputSchema: z.void(),
-    auth: firebaseAuth((user) => {
-        if (!user) {
-            throw new Error('Authentication required.');
-        }
-    }),
   },
   async (input) => {
     
