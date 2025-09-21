@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -15,41 +14,42 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const isAuthPage = pathname.startsWith('/auth');
 
   useEffect(() => {
-    if (loading) {
+    // Wait until initial auth and profile loading is complete
+    if (loading || profileLoading) {
       setIsChecking(true);
       return;
     }
     
-    // Once initial auth is done, if there's no user, we can show the page.
-    if (!user) {
-      setIsChecking(false);
-      return;
-    }
-
-    // If there is a user, we wait for their profile to load too.
-    if (profileLoading) {
-      setIsChecking(true);
-      return;
-    }
-
-    // At this point, `loading` and `profileLoading` are false, and `user` is present.
-    // We can now safely check their state.
+    // If we are on an auth page already, let it render.
     if (isAuthPage) {
         setIsChecking(false);
         return;
     }
-    
-    let redirectPath: string | null = null;
-    
-    if (rawIsAdmin && !hasSelectedRole) {
-        redirectPath = '/auth/select-role';
-    } else if (userProfile && !userProfile.isComplete) {
-        redirectPath = '/auth/welcome';
-    }
-    
-    if (redirectPath && pathname !== redirectPath) {
-        router.push(redirectPath);
+
+    // If a user is logged in, check if they need to be redirected.
+    if (user) {
+        let redirectPath: string | null = null;
+        
+        // If they are an admin but haven't chosen a role for this session
+        if (rawIsAdmin && !hasSelectedRole) {
+            redirectPath = '/auth/select-role';
+        } 
+        // If their profile is incomplete (e.g., new user)
+        else if (userProfile && !userProfile.isComplete) {
+            redirectPath = '/auth/welcome';
+        }
+        
+        // If a redirect is needed and we aren't already there, redirect.
+        if (redirectPath && pathname !== redirectPath) {
+            router.push(redirectPath);
+            // Keep showing the loader while redirecting
+            setIsChecking(true); 
+        } else {
+            // No redirect needed, show the content.
+            setIsChecking(false);
+        }
     } else {
+        // No user, not loading, so just show the content.
         setIsChecking(false);
     }
   }, [user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole, router, pathname, isAuthPage]);

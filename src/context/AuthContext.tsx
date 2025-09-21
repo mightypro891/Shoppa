@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -87,8 +86,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       message: 'Thanks for trying out the prototype. All items are 10% off!',
       isActive: false,
   });
-  const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
-  const [hasSelectedRole, setHasSelectedRole] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>(() => {
+    if (typeof window !== 'undefined') {
+        return sessionStorage.getItem('selectedRole') as SelectedRole;
+    }
+    return null;
+  });
+  const [hasSelectedRole, setHasSelectedRole] = useState(!!selectedRole);
 
   const loading = authLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
@@ -119,6 +123,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRawIsAdmin(false);
         setAdminRole(null);
         setUserProfile(null);
+        // Clear role selection on logout
+        selectRole(null);
       }
     });
     return () => unsubscribe();
@@ -144,6 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setHasSelectedRole(false);
           }
         } else {
+          // If the user is not an admin, their role is 'user'
           setAdminRole(null);
           setManagedCategories(null);
           setSelectedRole('user');
@@ -173,9 +180,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const profileDocRef = doc(db, 'profiles', user.uid);
       const unsubscribe = onSnapshot(profileDocRef, (doc) => {
         if (doc.exists()) {
-          setUserProfile(doc.data() as UserProfile);
+          const profileData = doc.data() as UserProfile;
+          // Check if profile is complete
+          const isComplete = !!(profileData.phone && profileData.address && profileData.campus);
+          setUserProfile({ ...profileData, isComplete });
         } else {
-          setUserProfile(null);
+          // New user, profile doesn't exist yet
+          setUserProfile({ isComplete: false, balance: 0, phone: '', address: '', city: '', campus: 'Ogbomoso' });
         }
         setProfileLoading(false);
       });
@@ -214,7 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const result = await signInWithPopup(auth, provider);
     const profileRef = doc(db, 'profiles', result.user.uid);
     const profileSnap = await getDoc(profileRef);
-    return { user: result.user, isNewUser: !profileSnap.exists() };
+    return { user: result.user, isNewUser: !profileSnap.exists() || !profileSnap.data()?.isComplete };
   };
   
   const emailSignIn = async (email: string, password: string): Promise<User | null> => {
@@ -251,7 +262,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logOut = async () => {
     await signOut(auth);
-    await selectRole(null);
   };
   
   const addAdmin = async (email: string, role: AdminRole, categories: string[] = []) => {
