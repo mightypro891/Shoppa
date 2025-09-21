@@ -23,10 +23,6 @@ import { doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc, query,
 
 const INITIAL_ADMINS: AdminUser[] = [
     { email: 'promiseoyedele07@gmail.com', role: 'Super Admin'},
-    { email: 'websiteadmin@example.com', role: 'Website Admin'},
-    { email: 'productsadmin@example.com', role: 'Products Admin'},
-    { email: 'normaladmin@example.com', role: 'Normal Admin', managedCategories: ['food', 'kitchen-utensils'] },
-    { email: 'adedoyinadunni0106@gmail.com', role: 'Products Admin' },
 ];
 
 type SelectedRole = 'admin' | 'user' | null;
@@ -34,6 +30,7 @@ type SelectedRole = 'admin' | 'user' | null;
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  profileLoading: boolean; // New state to track profile fetch
   isAdmin: boolean;
   rawIsAdmin: boolean; // The check without considering selected role
   adminRole: AdminRole | null;
@@ -76,6 +73,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true); // Initialize as true
   const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -142,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setManagedCategories(null);
           setSelectedRole(null);
           setHasSelectedRole(false);
+          setProfileLoading(false);
       }
       setLoading(false);
   }
@@ -196,6 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
+        setProfileLoading(true);
         const profileDocRef = doc(db, 'profiles', user.uid);
         const unsubscribe = onSnapshot(profileDocRef, (doc) => {
             if (doc.exists()) {
@@ -211,10 +211,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     isComplete: false,
                 });
             }
+            setProfileLoading(false);
         });
         return () => unsubscribe();
     } else {
         setUserProfile(null);
+        setProfileLoading(false);
     }
   }, [user]);
 
@@ -319,6 +321,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
+    profileLoading,
     isAdmin,
     rawIsAdmin,
     adminRole,
