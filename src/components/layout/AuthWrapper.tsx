@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -9,11 +10,6 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const { user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-
-  // This is the crucial part of the fix.
-  // The wrapper NO LONGER shows a loading spinner that blocks the entire page.
-  // It renders the children immediately. The useEffect below will handle redirects
-  // for authenticated users *after* the page has already started rendering.
 
   useEffect(() => {
     // Wait until initial auth and profile loading is complete before doing anything.
@@ -42,9 +38,19 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       }
     }
   }, [user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole, router, pathname]);
+  
+   // While waiting for user data, show a loader only on protected pages or setup pages
+   if ((loading || profileLoading) && user) {
+     const isSetupPage = pathname.startsWith('/auth/welcome') || pathname.startsWith('/auth/select-role');
+     if (!isSetupPage) {
+        return (
+          <div className="flex h-screen w-full items-center justify-center">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          </div>
+        );
+     }
+   }
 
-  // Render the page content immediately. Logged-in users might see a brief flash
-  // of a page before being redirected, but the site will never be stuck on a
-  // loading screen for everyone.
+  // Render the page content immediately for public users or once checks are complete for logged-in users.
   return <>{children}</>;
 }

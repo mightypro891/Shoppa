@@ -89,11 +89,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(() => {
     if (typeof window !== 'undefined') {
-        return sessionStorage.getItem('selectedRole') as SelectedRole;
+        const role = sessionStorage.getItem('selectedRole');
+        return role ? (role as SelectedRole) : null;
     }
     return null;
   });
-  const [hasSelectedRole, setHasSelectedRole] = useState(false);
+  const [hasSelectedRole, setHasSelectedRole] = useState(() => {
+      if (typeof window !== 'undefined') {
+        return !!sessionStorage.getItem('selectedRole');
+    }
+    return false;
+  });
 
   const loading = authLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
@@ -115,26 +121,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false); // Set auth loading to false once the check is done.
-      if (!currentUser) {
-        // If no user, all loading is complete for a logged-out visitor.
-        setProfileLoading(false);
-        setAdminsLoading(false); // No need to check admins if not logged in.
-        setRawIsAdmin(false);
-        setAdminRole(null);
-        setUserProfile(null);
-        selectRole(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
+  // Effect to fetch the list of admins
   useEffect(() => {
     const adminsCollection = collection(db, 'admins');
-    
     const unsubscribe = onSnapshot(adminsCollection, async (snapshot) => {
       let adminList: AdminUser[];
       if (snapshot.empty) {
@@ -149,64 +138,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
       }
       setAdmins(adminList);
-      setAdminsLoading(false); // Admins are loaded.
+      setAdminsLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
+  // Effect to handle auth state changes and fetch user-specific data
   useEffect(() => {
-    if (authLoading) return; // Wait for initial auth check
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
 
-    if (user) {
+      if (currentUser) {
+        // User is logged in
         setProfileLoading(true);
-        const profileDocRef = doc(db, 'profiles', user.uid);
+        const profileDocRef = doc(db, 'profiles', currentUser.uid);
         const unsubscribeProfile = onSnapshot(profileDocRef, (doc) => {
-            if (doc.exists()) {
-                const profileData = doc.data() as UserProfile;
-                const isComplete = !!(profileData.phone && profileData.address && profileData.campus);
-                setUserProfile({ ...profileData, isComplete });
-            } else {
-                setUserProfile({ isComplete: false, balance: 0, phone: '', address: '', city: '', campus: 'Ogbomoso' });
-            }
-            setProfileLoading(false); // Profile is loaded.
+          if (doc.exists()) {
+            const profileData = doc.data() as UserProfile;
+            const isComplete = !!(profileData.phone && profileData.address && profileData.campus);
+            setUserProfile({ ...profileData, isComplete });
+          } else {
+            setUserProfile({ isComplete: false, balance: 0, phone: '', address: '', city: '', campus: 'Ogbomoso' });
+          }
+          setProfileLoading(false);
         });
-
-        // Determine admin status after admins are loaded
-        if (!adminsLoading) {
-            const adminInfo = admins.find(admin => admin.email === user.email);
-            const userIsAdmin = !!adminInfo;
-            setRawIsAdmin(userIsAdmin);
-
-            if (userIsAdmin) {
-                setAdminRole(adminInfo.role);
-                setManagedCategories(adminInfo.managedCategories || null);
-                const roleFromSession = sessionStorage.getItem('selectedRole');
-                if (roleFromSession) {
-                    setSelectedRole(roleFromSession as SelectedRole);
-                    setHasSelectedRole(true);
-                } else {
-                    setHasSelectedRole(false);
-                }
-            } else {
-                setAdminRole(null);
-                setManagedCategories(null);
-                setSelectedRole('user'); // Default role for non-admins
-                setHasSelectedRole(true);
-            }
-        }
         return () => unsubscribeProfile();
-    } else {
-        // Clear all user-specific state on logout
+      } else {
+        // User is logged out, reset all user-specific state
         setUserProfile(null);
         setProfileLoading(false);
         setRawIsAdmin(false);
         setAdminRole(null);
         setManagedCategories(null);
-        setSelectedRole(null);
-        setHasSelectedRole(false);
+        selectRole(null);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Effect to determine admin status, depends on user and admins list
+  useEffect(() => {
+    if (!loading && user) {
+      const adminInfo = admins.find(admin => admin.email === user.email);
+      const userIsAdmin = !!adminInfo;
+      setRawIsAdmin(userIsAdmin);
+      if (userIsAdmin) {
+        setAdminRole(adminInfo.role);
+        setManagedCategories(adminInfo.managedCategories || null);
+         const roleFromSession = sessionStorage.getItem('selectedRole');
+        if (roleFromSession) {
+          setSelectedRole(roleFromSession as SelectedRole);
+          setHasSelectedRole(true);
+        } else {
+          setHasSelectedRole(false);
+        }
+      } else {
+        setAdminRole(null);
+        setManagedCategories(null);
+        selectRole('user'); // Auto-select 'user' role for non-admins
+      }
     }
-}, [user, authLoading, admins, adminsLoading]);
+  }, [user, admins, loading]);
+
   
   useEffect(() => {
       const profilesCollection = collection(db, 'profiles');
