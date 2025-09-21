@@ -4,7 +4,6 @@
 import type { CartItem, Product, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -13,9 +12,6 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
   subTotal: number;
-  // deliveryFee is now calculated in the checkout component
-  // deliveryFee: number;
-  total: number;
   itemCount: number;
 }
 
@@ -32,7 +28,6 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
-  const { userProfile } = useAuth();
 
   useEffect(() => {
     try {
@@ -101,12 +96,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   
-  // Delivery fee is now handled in the checkout component based on the new location settings
-  // The logic here is removed.
-  const deliveryFee = 0;
-
-  const total = subTotal + deliveryFee;
-
   const value = {
     cartItems,
     addToCart,
@@ -114,12 +103,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     removeFromCart,
     clearCart,
     subTotal,
-    // deliveryFee,
-    total,
     itemCount,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
-
-    

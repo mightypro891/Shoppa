@@ -14,12 +14,12 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { sendOrderConfirmationAction } from '@/app/actions';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Loader2, Wallet, Package, Bike } from 'lucide-react';
 import { createOrder } from '@/lib/orders';
 import { Textarea } from '../ui/textarea';
 import Link from 'next/link';
-import type { DeliveryMethod, DeliveryRoute, Order } from '@/lib/types';
+import type { DeliveryMethod, DeliveryRoute, Order, UserProfile } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Label } from '../ui/label';
@@ -43,8 +43,7 @@ export default function CheckoutForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery');
   const [deliveryRoutes, setDeliveryRoutes] = useState<DeliveryRoute[]>([]);
-  const [deliveryFee, setDeliveryFee] = useState(0);
-
+  
   useEffect(() => {
     const fetchRoutes = async () => {
         const routes = await getDeliveryRoutes();
@@ -53,19 +52,30 @@ export default function CheckoutForm() {
     fetchRoutes();
   }, []);
 
-  useEffect(() => {
+  const deliveryFee = useMemo(() => {
     if (deliveryMethod === 'pickup' || !userProfile || cartItems.length === 0) {
-        setDeliveryFee(0);
-        return;
+      return 0;
     }
-
+  
     const userCampus = userProfile.campus;
-    
+    const hasOgbomosoItem = cartItems.some(item => item.campus === 'Ogbomoso');
+    const hasIseyinItem = cartItems.some(item => item.campus === 'Iseyin');
+  
+    // Inter-campus delivery
+    if ((userCampus === 'Ogbomoso' && hasIseyinItem) || (userCampus === 'Iseyin' && hasOgbomosoItem)) {
+      const route = deliveryRoutes.find(r => 
+        (r.from.includes('Ogbomoso') && r.to.includes('Iseyin')) || 
+        (r.from.includes('Iseyin') && r.to.includes('Ogbomoso'))
+      );
+      // Fallback to a default inter-campus fee if no route is defined
+      return route?.price || 500; 
+    }
+  
+    // Intra-campus delivery
     const route = deliveryRoutes.find(r => r.from.includes(userCampus) && r.to.includes(userCampus));
-    const fee = route?.price || 0;
-
-    setDeliveryFee(fee);
-
+    // Fallback to a default intra-campus fee if no route is defined
+    return route?.price || 150;
+    
   }, [deliveryMethod, cartItems, userProfile, deliveryRoutes]);
 
 
