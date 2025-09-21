@@ -61,20 +61,18 @@ export default function CheckoutForm() {
     const hasOgbomosoItem = cartItems.some(item => item.campus === 'Ogbomoso');
     const hasIseyinItem = cartItems.some(item => item.campus === 'Iseyin');
   
-    // Inter-campus delivery
+    // Inter-campus delivery: if user's campus and an item's campus don't match
     if ((userCampus === 'Ogbomoso' && hasIseyinItem) || (userCampus === 'Iseyin' && hasOgbomosoItem)) {
       const route = deliveryRoutes.find(r => 
-        (r.from.includes('Ogbomoso') && r.to.includes('Iseyin')) || 
-        (r.from.includes('Iseyin') && r.to.includes('Ogbomoso'))
+        (r.from === 'Ogbomoso' && r.to === 'Iseyin') || 
+        (r.from === 'Iseyin' && r.to === 'Ogbomoso')
       );
-      // Fallback to a default inter-campus fee if no route is defined
-      return route?.price || 500; 
+      return route?.price || 500; // Fallback inter-campus fee
     }
   
-    // Intra-campus delivery
-    const route = deliveryRoutes.find(r => r.from.includes(userCampus) && r.to.includes(userCampus));
-    // Fallback to a default intra-campus fee if no route is defined
-    return route?.price || 150;
+    // Intra-campus delivery: all items are from the user's campus
+    const route = deliveryRoutes.find(r => r.from === userCampus && r.to === userCampus);
+    return route?.price || 150; // Fallback intra-campus fee
     
   }, [deliveryMethod, cartItems, userProfile, deliveryRoutes]);
 
@@ -342,3 +340,5 @@ export default function CheckoutForm() {
     </div>
   );
 }
+
+    

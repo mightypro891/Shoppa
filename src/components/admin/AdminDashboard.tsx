@@ -44,29 +44,7 @@ import {
 import { addDeliveryRoute, getDeliveryRoutes, deleteDeliveryRoute } from '@/lib/locations';
 import { mainCategories } from '@/lib/categories';
 
-const locations = {
-    Ogbomoso: [
-        "Under G",
-        "Adenike",
-        "Yoaco",
-        "Stadium",
-        "General",
-        "LAUTECH Campus Gate",
-        "Taki",
-        "Aralopin",
-    ],
-    Iseyin: [
-        "Koso",
-        "Isalu",
-        "Ato",
-        "Iseyin Campus Gate",
-        "Oja-Agbe",
-        "Custom Barracks",
-    ]
-};
-
-const allLocations = [...locations.Ogbomoso.map(l => `${l}, Ogbomoso`), ...locations.Iseyin.map(l => `${l}, Iseyin`)];
-
+const campusLocations = ['Ogbomoso', 'Iseyin'];
 
 export default function AdminDashboard() {
   const { 
@@ -138,7 +116,7 @@ export default function AdminDashboard() {
 
   const handleAddRoute = async () => {
     if(newRoute.price <= 0 || !newRoute.from || !newRoute.to) {
-        toast({ title: 'Invalid Route', description: 'Please fill out all location fields and set a valid price.', variant: 'destructive'});
+        toast({ title: 'Invalid Route', description: 'Please select both locations and set a valid price.', variant: 'destructive'});
         return;
     }
     await addDeliveryRoute(newRoute);
@@ -626,8 +604,8 @@ export default function AdminDashboard() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5" /> Location Settings</CardTitle>
-                    <CardDescription>Manage delivery routes and prices between specific locations.</CardDescription>
+                    <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5" /> Delivery Routes</CardTitle>
+                    <CardDescription>Manage delivery fees for inter-campus and intra-campus routes.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
@@ -635,18 +613,18 @@ export default function AdminDashboard() {
                             <div className="grid gap-1.5">
                                 <Label htmlFor="from-location">From</Label>
                                 <Select value={newRoute.from} onValueChange={(value) => setNewRoute(p => ({...p, from: value}))}>
-                                    <SelectTrigger id="from-location"><SelectValue placeholder="Select location" /></SelectTrigger>
+                                    <SelectTrigger id="from-location"><SelectValue placeholder="Select campus" /></SelectTrigger>
                                     <SelectContent>
-                                        {allLocations.map(loc => <SelectItem key={`from-${loc}`} value={loc}>{loc}</SelectItem>)}
+                                        {campusLocations.map(loc => <SelectItem key={`from-${loc}`} value={loc}>{loc}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="grid gap-1.5">
                                 <Label htmlFor="to-location">To</Label>
                                 <Select value={newRoute.to} onValueChange={(value) => setNewRoute(p => ({...p, to: value}))}>
-                                    <SelectTrigger id="to-location"><SelectValue placeholder="Select location" /></SelectTrigger>
+                                    <SelectTrigger id="to-location"><SelectValue placeholder="Select campus" /></SelectTrigger>
                                     <SelectContent>
-                                        {allLocations.map(loc => <SelectItem key={`to-${loc}`} value={loc}>{loc}</SelectItem>)}
+                                        {campusLocations.map(loc => <SelectItem key={`to-${loc}`} value={loc}>{loc}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -655,18 +633,20 @@ export default function AdminDashboard() {
                                 <Input 
                                     id="route-price"
                                     type="number"
-                                    placeholder="Price"
+                                    placeholder="e.g. 500"
                                     value={newRoute.price || ''}
                                     onChange={(e) => setNewRoute(p => ({...p, price: e.target.valueAsNumber || 0}))}
                                 />
                             </div>
-                             <Button onClick={handleAddRoute}>Add Route</Button>
+                             <Button onClick={handleAddRoute} className="w-full">Add Route</Button>
                         </div>
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                             <h4 className="font-medium text-sm">Current Routes</h4>
                             {deliveryRoutes.map(route => (
                                 <div key={route.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
-                                    <p className="text-sm font-medium">From {route.from} to {route.to}</p>
+                                    <p className="text-sm font-medium">
+                                        From <Badge variant="outline">{route.from}</Badge> to <Badge variant="outline">{route.to}</Badge>
+                                    </p>
                                     <div className="flex items-center gap-2">
                                         <span className="font-semibold">₦{route.price.toFixed(2)}</span>
                                          <Button
@@ -680,7 +660,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             ))}
-                            {deliveryRoutes.length === 0 && <p className="text-muted-foreground text-sm text-center py-2">No routes defined.</p>}
+                            {deliveryRoutes.length === 0 && <p className="text-muted-foreground text-sm text-center py-2">No routes defined. Add routes for Inter-Campus and Intra-Campus delivery.</p>}
                         </div>
                     </div>
                 </CardContent>
@@ -728,3 +708,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+    
