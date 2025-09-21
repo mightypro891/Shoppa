@@ -30,10 +30,10 @@ type SelectedRole = 'admin' | 'user' | null;
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  profileLoading: boolean; // Explicitly track profile loading
+  profileLoading: boolean; 
   userProfile: UserProfile | null;
   isAdmin: boolean;
-  rawIsAdmin: boolean; // The check without considering selected role
+  rawIsAdmin: boolean; 
   adminRole: AdminRole | null;
   isSuperAdmin: boolean;
   admins: AdminUser[];
@@ -72,9 +72,10 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
+  const [adminsLoading, setAdminsLoading] = useState(true);
+  const [rawIsAdmin, setRawIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -89,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
+  const loading = authLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
   const isAdmin = rawIsAdmin && selectedRole === 'admin';
   const isSuperAdmin = adminRole === 'Super Admin' && selectedRole === 'admin';
@@ -111,9 +113,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
       if (!currentUser) {
-        setLoading(false); // Auth is done, no user
-        setProfileLoading(false); // No profile to load
+        setProfileLoading(false);
         setRawIsAdmin(false);
         setAdminRole(null);
         setUserProfile(null);
@@ -123,6 +125,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    if (authLoading || adminsLoading) return;
+
     if (admins.length > 0 && user) {
         const adminInfo = admins.find(admin => admin.email === user.email);
         const userIsAdmin = !!adminInfo;
@@ -145,12 +149,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSelectedRole('user');
           setHasSelectedRole(true);
         }
+    } else if (!user) {
+        // Handle logged-out state explicitly
+        setRawIsAdmin(false);
+        setAdminRole(null);
+        setManagedCategories(null);
+        setSelectedRole(null);
+        setHasSelectedRole(false);
     }
-     // This loading state is now only about the user object itself, profile has its own state
-    if (user !== undefined) {
-        setLoading(false);
-    }
-  }, [user, admins]);
+  }, [user, admins, authLoading, adminsLoading]);
   
   useEffect(() => {
       const profilesCollection = collection(db, 'profiles');
@@ -196,6 +203,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
       }
       setAdmins(adminList);
+      setAdminsLoading(false);
     });
 
     return () => unsubscribe();
