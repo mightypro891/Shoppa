@@ -48,9 +48,7 @@ const campusLocations = ['Ogbomoso', 'Iseyin'];
 
 export default function AdminDashboard() {
   const { 
-    isAdmin, 
     isSuperAdmin, 
-    loading, 
     admins, 
     addAdmin, 
     removeAdmin, 
@@ -60,7 +58,6 @@ export default function AdminDashboard() {
     celebrationPopupConfig,
     updateCelebrationPopupConfig 
   } = useAuth();
-  const router = useRouter();
   const { toast } = useToast();
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<AdminRole>('Normal Admin');
@@ -85,9 +82,6 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
-      router.push('/auth/signin');
-    }
      if (celebrationPopupConfig) {
       setPopupSettings(celebrationPopupConfig);
     }
@@ -95,7 +89,7 @@ export default function AdminDashboard() {
         fetchDeals();
         fetchRoutes();
     }
-  }, [isAdmin, loading, router, celebrationPopupConfig, isSuperAdmin]);
+  }, [celebrationPopupConfig, isSuperAdmin]);
   
   const fetchDeals = async () => {
     const submissions = await getDealSubmissions();
@@ -251,26 +245,6 @@ export default function AdminDashboard() {
         </Popover>
     );
 };
-
-  if (loading) {
-    return <div className="text-center p-10">Loading...</div>;
-  }
-
-  if (!isAdmin) {
-    return (
-        <div className="container mx-auto py-12 md:py-24 flex justify-center">
-            <Card className="w-full max-w-lg text-center">
-                <CardHeader>
-                    <ShieldAlert className="mx-auto h-16 w-16 text-destructive" />
-                    <CardTitle className="text-2xl">Access Denied</CardTitle>
-                    <CardDescription>
-                        You do not have permission to view this page. Please sign in with an admin account.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-8">
@@ -708,5 +682,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-    

@@ -1,7 +1,6 @@
 
 'use client';
 
-import AppLayout from "@/app/(app)/layout";
 import ProductForm from "@/components/admin/ProductForm";
 import { getProductById } from "@/lib/data";
 import { Loader2 } from "lucide-react";
@@ -32,11 +31,9 @@ export default function EditProductPage() {
 
     if (loading) {
         return (
-            <AppLayout>
-                <div className="flex justify-center items-center h-screen">
-                    <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                </div>
-            </AppLayout>
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
         );
     }
     
@@ -45,10 +42,8 @@ export default function EditProductPage() {
     }
 
     return (
-        <AppLayout>
-            <div className="container mx-auto py-8">
-                <ProductForm product={product} />
-            </div>
-        </AppLayout>
+        <div className="container mx-auto py-8">
+            <ProductForm product={product} />
+        </div>
     )
 }
