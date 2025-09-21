@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -45,6 +44,7 @@ export default function SignInForm() {
   });
   
   const handleSuccessfulLogin = (user: { email?: string | null }, isNewUser: boolean = false) => {
+    // The redirect logic is now handled here, after a successful login.
     const isAdmin = admins.some(admin => admin.email === user.email);
     const redirectUrl = searchParams.get('redirect') || '/';
 
@@ -78,7 +78,11 @@ export default function SignInForm() {
       try {
           const loggedInUser = await emailSignIn(data.email, data.password);
            if(loggedInUser) {
-            handleSuccessfulLogin(loggedInUser, false);
+            // Check if profile exists to determine if user is "new"
+            const profileRef = doc(db, 'profiles', loggedInUser.uid);
+            const profileSnap = await getDoc(profileRef);
+            const isNewUser = !profileSnap.exists() || !profileSnap.data()?.isComplete;
+            handleSuccessfulLogin(loggedInUser, isNewUser);
           }
       } catch (error: any) {
           toast({

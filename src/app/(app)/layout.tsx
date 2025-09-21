@@ -9,7 +9,6 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-
   // All complex auth logic has been moved to AuthWrapper.
   // This layout is now only responsible for the common UI structure.
 

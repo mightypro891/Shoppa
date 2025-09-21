@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -10,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
@@ -45,6 +44,7 @@ export default function SignUpForm() {
   });
 
   const handleSuccessfulLogin = (isNewUser: boolean) => {
+    // Logic is simplified; new users always go to the welcome page.
     if (isNewUser) {
       router.push('/auth/welcome');
     } else {

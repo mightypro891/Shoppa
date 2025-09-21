@@ -2,65 +2,49 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isChecking, setIsChecking] = useState(true);
 
-  const isAuthPage = pathname.startsWith('/auth');
+  // This is the crucial part of the fix.
+  // The wrapper NO LONGER shows a loading spinner that blocks the entire page.
+  // It renders the children immediately. The useEffect below will handle redirects
+  // for authenticated users *after* the page has already started rendering.
 
   useEffect(() => {
-    // Wait until initial auth and profile loading is complete
+    // Wait until initial auth and profile loading is complete before doing anything.
     if (loading || profileLoading) {
-      setIsChecking(true);
       return;
     }
-    
-    // If we are on an auth page already, let it render.
-    if (isAuthPage) {
-        setIsChecking(false);
-        return;
-    }
 
-    // If a user is logged in, check if they need to be redirected.
+    // Only perform redirects if a user is logged in.
     if (user) {
-        let redirectPath: string | null = null;
-        
-        // If they are an admin but haven't chosen a role for this session
-        if (rawIsAdmin && !hasSelectedRole) {
-            redirectPath = '/auth/select-role';
-        } 
-        // If their profile is incomplete (e.g., new user)
-        else if (userProfile && !userProfile.isComplete) {
-            redirectPath = '/auth/welcome';
-        }
-        
-        // If a redirect is needed and we aren't already there, redirect.
-        if (redirectPath && pathname !== redirectPath) {
-            router.push(redirectPath);
-            // Keep showing the loader while redirecting
-            setIsChecking(true); 
-        } else {
-            // No redirect needed, show the content.
-            setIsChecking(false);
-        }
-    } else {
-        // No user, not loading, so just show the content.
-        setIsChecking(false);
+      let redirectPath: string | null = null;
+      
+      const isAuthPage = pathname.startsWith('/auth');
+      
+      // Redirect new users to the welcome page to complete their profile.
+      if (userProfile && !userProfile.isComplete && pathname !== '/auth/welcome') {
+        redirectPath = '/auth/welcome';
+      }
+      // Redirect admins who haven't selected a role to the role selection page.
+      else if (rawIsAdmin && !hasSelectedRole && pathname !== '/auth/select-role') {
+        redirectPath = '/auth/select-role';
+      }
+      
+      // If a redirect is needed, perform it.
+      if (redirectPath) {
+        router.push(redirectPath);
+      }
     }
-  }, [user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole, router, pathname, isAuthPage]);
+  }, [user, loading, userProfile, profileLoading, rawIsAdmin, hasSelectedRole, router, pathname]);
 
-  if (isChecking) {
-     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+  // Render the page content immediately. Logged-in users might see a brief flash
+  // of a page before being redirected, but the site will never be stuck on a
+  // loading screen for everyone.
   return <>{children}</>;
 }
