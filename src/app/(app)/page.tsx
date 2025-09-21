@@ -25,18 +25,25 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // We can proceed once profileLoading is false.
-    // userProfile can be null (for logged-out users), and that's okay.
     if (profileLoading) return; 
     
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Pass user's campus to get filtered products, or undefined if no user/profile
-        const prods = await getProducts(userProfile?.campus);
+        const prods = await getProducts();
         const allReviews = await getAllReviews();
-        setProducts(prods);
-        setReviews(allReviews.filter(r => r.isApproved).slice(0, 4)); // Get latest 4 approved reviews
+
+        let filteredProds = prods;
+        if (userProfile?.campus) {
+            // If user is logged in and has a campus, we can show campus-specific items first or sort them differently
+            // For now, we just show all, but this is where filtering/sorting would happen.
+        } else {
+           // For logged-out users, we might default to a specific campus or just show all
+           // Defaulting to all products is the current behavior of getProducts() without params
+        }
+        
+        setProducts(filteredProds);
+        setReviews(allReviews.filter(r => r.isApproved).slice(0, 4));
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -44,7 +51,7 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, [userProfile, profileLoading]);
+  }, [profileLoading, userProfile]);
   
   const categories = mainCategories.map(c => c.slug);
 
@@ -64,7 +71,6 @@ export default function Home() {
     return d.toISOString();
   }
 
-  // Helper to format category names for display
   const formatCategoryName = (slug: string) => {
     const category = mainCategories.find(c => c.slug === slug);
     return category ? category.name : slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -100,7 +106,6 @@ export default function Home() {
       ) : (
         <>
 
-          {/* Featured Products Carousel */}
           {featuredProducts.length > 0 && (
             <section id="featured" className="py-12 md:py-16 bg-background">
               <div className="container mx-auto px-4">
@@ -151,8 +156,7 @@ export default function Home() {
             </section>
           )}
           
-            {/* Customer Testimonials Section */}
-          {reviews.length > 0 && (
+            {reviews.length > 0 && (
               <section className="py-12 md:py-16 bg-secondary/30">
                   <div className="container mx-auto px-4">
                       <h2 className="text-3xl md:text-4xl font-bold font-headline text-center mb-10">What Our Customers Say</h2>

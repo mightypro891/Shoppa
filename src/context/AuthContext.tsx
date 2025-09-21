@@ -31,7 +31,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   profileLoading: boolean; // Explicitly track profile loading
-  userProfile: UserProfile | null; // No longer `undefined` - will be null if not loaded or doesn't exist
+  userProfile: UserProfile | null;
   isAdmin: boolean;
   rawIsAdmin: boolean; // The check without considering selected role
   adminRole: AdminRole | null;
@@ -108,28 +108,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }
 
-  // Effect for handling auth state changes from Firebase
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setLoading(true); // Set loading true on any auth change
       setUser(currentUser);
       if (!currentUser) {
-        // If user is logged out, all loading is done.
-        setLoading(false);
-        setProfileLoading(false);
-        setUserProfile(null);
+        setLoading(false); // Auth is done, no user
+        setProfileLoading(false); // No profile to load
         setRawIsAdmin(false);
         setAdminRole(null);
+        setUserProfile(null);
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // Effect for handling profile and admin status once user object is available
   useEffect(() => {
-    if (!user) return; // Only run for logged-in users
-
-    const checkUserStatus = () => {
+    if (admins.length > 0 && user) {
         const adminInfo = admins.find(admin => admin.email === user.email);
         const userIsAdmin = !!adminInfo;
         
@@ -151,16 +145,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSelectedRole('user');
           setHasSelectedRole(true);
         }
-        setLoading(false); // Auth part of loading is done
-    };
-
-    if (admins.length > 0) { // Ensure admins are loaded before checking
-        checkUserStatus();
+    }
+     // This loading state is now only about the user object itself, profile has its own state
+    if (user !== undefined) {
+        setLoading(false);
     }
   }, [user, admins]);
-
   
-  // Listen for total users
   useEffect(() => {
       const profilesCollection = collection(db, 'profiles');
       const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
@@ -169,7 +160,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return () => unsubscribe();
   }, []);
 
-  // Listen to profile changes for the logged-in user
   useEffect(() => {
     if (user) {
       setProfileLoading(true);
@@ -185,11 +175,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return () => unsubscribe();
     } else {
       setUserProfile(null);
-      setProfileLoading(false); // No user, so no profile to load
+      setProfileLoading(false);
     }
   }, [user]);
 
-  // Listen for admin list changes
   useEffect(() => {
     const adminsCollection = collection(db, 'admins');
     
