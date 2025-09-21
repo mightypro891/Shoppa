@@ -1,7 +1,7 @@
 
 'use client';
 
-import { deleteProduct, getProducts, getDeletedProducts, resetAllProducts } from '@/lib/data';
+import { deleteProduct, getAllProductsForAdmin, getDeletedProducts, resetAllProducts } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -47,7 +47,7 @@ export default function ProductManagement() {
     setLoading(true);
     try {
         // Fetch all products regardless of campus for the admin view
-        const prods = await getProducts(); 
+        const prods = await getAllProductsForAdmin(); 
         const deletedProds = await getDeletedProducts();
         setProducts(prods);
         setDeletedProducts(deletedProds);

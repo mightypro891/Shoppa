@@ -19,22 +19,24 @@ import { useAuth } from '@/context/AuthContext';
 import { mainCategories } from '@/lib/categories';
 
 export default function Home() {
-  const { userProfile } = useAuth();
+  const { userProfile, profileLoading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // We can proceed once profileLoading is false.
+    // userProfile can be null (for logged-out users), and that's okay.
+    if (profileLoading) return; 
+    
     const fetchProducts = async () => {
-      if (!userProfile && userProfile !== null) return; // Wait for profile to be loaded or confirmed null
-      
       setLoading(true);
       try {
-        // Pass user's campus to get filtered products, or undefined if no user
+        // Pass user's campus to get filtered products, or undefined if no user/profile
         const prods = await getProducts(userProfile?.campus);
         const allReviews = await getAllReviews();
         setProducts(prods);
-        setReviews(allReviews.slice(0, 4)); // Get latest 4 reviews
+        setReviews(allReviews.filter(r => r.isApproved).slice(0, 4)); // Get latest 4 approved reviews
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -42,7 +44,7 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, [userProfile]);
+  }, [userProfile, profileLoading]);
   
   const categories = mainCategories.map(c => c.slug);
 
@@ -132,7 +134,7 @@ export default function Home() {
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                   <div className='text-center md:text-left'>
                     <h2 className="text-3xl md:text-4xl font-bold font-headline capitalize text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                       <Zap className="h-8 w-8"/> Today's Deals
+                       <Zap className="mr-2 h-8 w-8"/> Today's Deals
                     </h2>
                     <p className="text-muted-foreground">Don't miss out on these amazing prices!</p>
                   </div>

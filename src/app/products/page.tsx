@@ -20,7 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 function ProductsPageComponent() {
   const searchParams = useSearchParams();
   const searchTerm = searchParams.get('q') || '';
-  const { userProfile } = useAuth();
+  const { userProfile, profileLoading } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ function ProductsPageComponent() {
   }, [products]);
 
   useEffect(() => {
-    if (!userProfile && userProfile !== null) return;
+    if (profileLoading) return;
     
     const fetchProducts = async () => {
       setLoading(true);
@@ -44,7 +44,7 @@ function ProductsPageComponent() {
       setLoading(false);
     };
     fetchProducts();
-  }, [userProfile]);
+  }, [userProfile, profileLoading]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev => 
@@ -166,7 +166,7 @@ function ProductsPageComponent() {
             <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Filter className="h-5 w-5" />
+                  <Filter className="mr-2 h-5 w-5"/>
                   Filters
                 </CardTitle>
               </CardHeader>

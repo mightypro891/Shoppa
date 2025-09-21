@@ -24,7 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const { userProfile } = useAuth();
+  const { userProfile, profileLoading } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -33,7 +33,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || profileLoading) return;
 
     const fetchProductData = async () => {
       setLoading(true);
@@ -63,7 +63,7 @@ export default function ProductDetailPage() {
     };
 
     fetchProductData();
-  }, [id, userProfile]);
+  }, [id, userProfile, profileLoading]);
 
   if (loading) {
     return (

@@ -15,12 +15,12 @@ import { useAuth } from '@/context/AuthContext';
 export default function CategoryPage() {
   const params = useParams();
   const category = params.category as string;
-  const { userProfile } = useAuth();
+  const { userProfile, profileLoading } = useAuth();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!category || !userProfile && userProfile !== null) return;
+    if (!category || profileLoading) return;
 
     const fetchProducts = async () => {
       setLoading(true);
@@ -37,7 +37,7 @@ export default function CategoryPage() {
     };
 
     fetchProducts();
-  }, [category, userProfile]);
+  }, [category, userProfile, profileLoading]);
   
   const formattedCategory = category ? decodeURIComponent(category).replace(/-/g, ' ') : '';
 

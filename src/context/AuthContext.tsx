@@ -31,7 +31,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   profileLoading: boolean; // Explicitly track profile loading
-  userProfile: UserProfile | null | undefined; // undefined means it's still loading
+  userProfile: UserProfile | null; // No longer `undefined` - will be null if not loaded or doesn't exist
   isAdmin: boolean;
   rawIsAdmin: boolean; // The check without considering selected role
   adminRole: AdminRole | null;
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0); 
   const [onlineUsers, setOnlineUsers] = useState(1);
@@ -111,19 +111,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Effect for handling auth state changes from Firebase
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setLoading(true); // Set loading true on any auth change
       setUser(currentUser);
-      setLoading(false); // Auth check is done
+      if (!currentUser) {
+        // If user is logged out, all loading is done.
+        setLoading(false);
+        setProfileLoading(false);
+        setUserProfile(null);
+        setRawIsAdmin(false);
+        setAdminRole(null);
+      }
     });
     return () => unsubscribe();
   }, []);
 
   // Effect for handling profile and admin status once user object is available
   useEffect(() => {
-    if (loading || admins.length === 0) return; // Wait for auth and initial admin list
+    if (!user) return; // Only run for logged-in users
 
-    const checkUserStatus = (currentUser: User | null) => {
-      if (currentUser) {
-        const adminInfo = admins.find(admin => admin.email === currentUser.email);
+    const checkUserStatus = () => {
+        const adminInfo = admins.find(admin => admin.email === user.email);
         const userIsAdmin = !!adminInfo;
         
         setRawIsAdmin(userIsAdmin);
@@ -144,17 +151,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSelectedRole('user');
           setHasSelectedRole(true);
         }
-      } else {
-        setRawIsAdmin(false);
-        setAdminRole(null);
-        setManagedCategories(null);
-        setSelectedRole(null);
-        setHasSelectedRole(false);
-      }
+        setLoading(false); // Auth part of loading is done
     };
 
-    checkUserStatus(user);
-  }, [user, loading, admins]);
+    if (admins.length > 0) { // Ensure admins are loaded before checking
+        checkUserStatus();
+    }
+  }, [user, admins]);
 
   
   // Listen for total users
@@ -182,7 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return () => unsubscribe();
     } else {
       setUserProfile(null);
-      setProfileLoading(false);
+      setProfileLoading(false); // No user, so no profile to load
     }
   }, [user]);
 

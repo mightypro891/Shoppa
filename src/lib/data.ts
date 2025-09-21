@@ -30,15 +30,22 @@ const dealSubmissionsCollection = collection(db, 'dealSubmissions');
 
 
 export async function getProducts(campus?: UserProfile['campus']): Promise<Product[]> {
-    const snapshot = await getDocs(productsCollection);
-    const allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+    let productsQuery = query(productsCollection);
 
-    if (campus) {
-        return allProducts.filter(p => p.campus === campus);
-    }
+    // If a specific campus is requested, filter by it.
+    // Otherwise (e.g., for logged-out users), default to Ogbomoso.
+    const effectiveCampus = campus || 'Ogbomoso';
+    productsQuery = query(productsCollection, where('campus', '==', effectiveCampus));
     
-    return allProducts;
+    const snapshot = await getDocs(productsQuery);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
 }
+
+export async function getAllProductsForAdmin(): Promise<Product[]> {
+    const snapshot = await getDocs(productsCollection);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+}
+
 
 export async function getProductById(id: string): Promise<Product | undefined> {
     const docRef = doc(db, 'products', id);
