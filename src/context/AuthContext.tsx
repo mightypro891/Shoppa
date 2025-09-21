@@ -30,6 +30,7 @@ type SelectedRole = 'admin' | 'user' | null;
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  profileLoading: boolean; // Explicitly track profile loading
   userProfile: UserProfile | null | undefined; // undefined means it's still loading
   isAdmin: boolean;
   rawIsAdmin: boolean; // The check without considering selected role
@@ -72,6 +73,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -106,42 +108,84 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }
 
-  const updateUserState = (currentUser: User | null, currentAdmins: AdminUser[]) => {
+  // Effect for handling auth state changes from Firebase
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      
+      setLoading(false); // Auth check is done
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Effect for handling profile and admin status once user object is available
+  useEffect(() => {
+    if (loading || admins.length === 0) return; // Wait for auth and initial admin list
+
+    const checkUserStatus = (currentUser: User | null) => {
       if (currentUser) {
-          const adminInfo = currentAdmins.find(admin => admin.email === currentUser.email);
-          const userIsAdmin = !!adminInfo;
-          
-          setRawIsAdmin(userIsAdmin);
-          
-          if (userIsAdmin) {
-              setAdminRole(adminInfo.role);
-              setManagedCategories(adminInfo.managedCategories || null);
-              const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
-              if(roleFromSession) {
-                  setSelectedRole(roleFromSession);
-                  setHasSelectedRole(true);
-              } else {
-                  setHasSelectedRole(false);
-              }
+        const adminInfo = admins.find(admin => admin.email === currentUser.email);
+        const userIsAdmin = !!adminInfo;
+        
+        setRawIsAdmin(userIsAdmin);
+        
+        if (userIsAdmin) {
+          setAdminRole(adminInfo.role);
+          setManagedCategories(adminInfo.managedCategories || null);
+          const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
+          if (roleFromSession) {
+            setSelectedRole(roleFromSession);
+            setHasSelectedRole(true);
           } else {
-              setAdminRole(null);
-              setManagedCategories(null);
-              setSelectedRole('user');
-              setHasSelectedRole(true);
+            setHasSelectedRole(false);
           }
-      } else {
-          setRawIsAdmin(false);
+        } else {
           setAdminRole(null);
-          setUserProfile(null);
           setManagedCategories(null);
-          setSelectedRole(null);
-          setHasSelectedRole(false);
+          setSelectedRole('user');
+          setHasSelectedRole(true);
+        }
+      } else {
+        setRawIsAdmin(false);
+        setAdminRole(null);
+        setManagedCategories(null);
+        setSelectedRole(null);
+        setHasSelectedRole(false);
       }
-      setLoading(false);
-  }
+    };
+
+    checkUserStatus(user);
+  }, [user, loading, admins]);
+
   
+  // Listen for total users
+  useEffect(() => {
+      const profilesCollection = collection(db, 'profiles');
+      const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
+          setTotalUsers(snapshot.size);
+      });
+      return () => unsubscribe();
+  }, []);
+
+  // Listen to profile changes for the logged-in user
+  useEffect(() => {
+    if (user) {
+      setProfileLoading(true);
+      const profileDocRef = doc(db, 'profiles', user.uid);
+      const unsubscribe = onSnapshot(profileDocRef, (doc) => {
+        if (doc.exists()) {
+          setUserProfile(doc.data() as UserProfile);
+        } else {
+          setUserProfile(null);
+        }
+        setProfileLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      setUserProfile(null);
+      setProfileLoading(false);
+    }
+  }, [user]);
+
   // Listen for admin list changes
   useEffect(() => {
     const adminsCollection = collection(db, 'admins');
@@ -149,7 +193,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(adminsCollection, async (snapshot) => {
       let adminList: AdminUser[];
       if (snapshot.empty) {
-        // If the collection is empty, seed it with initial admins
         const batch = writeBatch(db);
         INITIAL_ADMINS.forEach(admin => {
           const adminDocRef = doc(adminsCollection, admin.email);
@@ -161,52 +204,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
       }
       setAdmins(adminList);
-      // Re-evaluate user state whenever admin list changes
-      updateUserState(auth.currentUser, adminList);
     });
 
     return () => unsubscribe();
   }, []);
-  
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setLoading(true);
-        // Only update user state if admins list has already been populated
-        if (admins.length > 0) {
-            updateUserState(currentUser, admins);
-        }
-    });
-    return () => unsubscribe();
-  }, [admins]);
-  
-  // Listen for total users
-  useEffect(() => {
-      const profilesCollection = collection(db, 'profiles');
-      const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
-          setTotalUsers(snapshot.size);
-      });
-      return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-        setUserProfile(undefined); // Set to undefined to indicate loading
-        const profileDocRef = doc(db, 'profiles', user.uid);
-        const unsubscribe = onSnapshot(profileDocRef, (doc) => {
-            if (doc.exists()) {
-                setUserProfile(doc.data() as UserProfile);
-            } else {
-                // For new users, profile is null until they complete it.
-                setUserProfile(null);
-            }
-        });
-        return () => unsubscribe();
-    } else {
-        // No user, so profile is null and not loading.
-        setUserProfile(null);
-    }
-  }, [user]);
 
   const googleSignIn = async (): Promise<{user: User; isNewUser: boolean}> => {
     const provider = new GoogleAuthProvider();
@@ -224,8 +225,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const emailSignUp = async (name: string, email: string, password: string): Promise<{user: User; isNewUser: boolean}> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
-    // This will trigger the onAuthStateChanged listener which handles the rest.
-    // We return isNewUser: true to ensure correct redirection.
     return { user: userCredential.user, isNewUser: true };
   };
 
@@ -239,11 +238,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Re-authenticate the user
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
-
-      // If re-authentication is successful, update the password
       await updatePassword(user, newPassword);
     } catch (error: any) {
         if (error.code === 'auth/wrong-password') {
@@ -310,6 +306,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
+    profileLoading,
     userProfile,
     isAdmin,
     rawIsAdmin,
