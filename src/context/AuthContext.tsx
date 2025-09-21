@@ -30,7 +30,7 @@ type SelectedRole = 'admin' | 'user' | null;
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  profileLoading: boolean; // New state to track profile fetch
+  userProfile: UserProfile | null | undefined; // undefined means it's still loading
   isAdmin: boolean;
   rawIsAdmin: boolean; // The check without considering selected role
   adminRole: AdminRole | null;
@@ -39,7 +39,6 @@ interface AuthContextType {
   addAdmin: (email: string, role: AdminRole, categories?: string[]) => Promise<void>;
   removeAdmin: (email: string) => Promise<void>;
   updateAdminRole: (email: string, role: AdminRole, categories?: string[]) => Promise<void>;
-  userProfile: UserProfile | null;
   saveUserProfile: (profile: Omit<UserProfile, 'balance' | 'isComplete'>) => Promise<void>;
   accountBalance: number;
   fundAccount: (amount: number) => Promise<void>;
@@ -73,11 +72,10 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(true); // Initialize as true
   const [rawIsAdmin, setRawIsAdmin] = useState(false); // The real admin status
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null | undefined>(undefined);
   const [managedCategories, setManagedCategories] = useState<string[] | null>(null);
   const [totalUsers, setTotalUsers] = useState(0); 
   const [onlineUsers, setOnlineUsers] = useState(1);
@@ -140,7 +138,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setManagedCategories(null);
           setSelectedRole(null);
           setHasSelectedRole(false);
-          setProfileLoading(false);
       }
       setLoading(false);
   }
@@ -152,7 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(adminsCollection, async (snapshot) => {
       let adminList: AdminUser[];
       if (snapshot.empty) {
-        console.log("Admins collection is empty, seeding initial data...");
         // If the collection is empty, seed it with initial admins
         const batch = writeBatch(db);
         INITIAL_ADMINS.forEach(admin => {
@@ -195,28 +191,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-        setProfileLoading(true);
+        setUserProfile(undefined); // Set to undefined to indicate loading
         const profileDocRef = doc(db, 'profiles', user.uid);
         const unsubscribe = onSnapshot(profileDocRef, (doc) => {
             if (doc.exists()) {
                 setUserProfile(doc.data() as UserProfile);
             } else {
-                // For new users, create a default profile structure
-                setUserProfile({
-                    phone: '',
-                    address: '',
-                    city: '',
-                    campus: 'Ogbomoso',
-                    balance: 0,
-                    isComplete: false,
-                });
+                // For new users, profile is null until they complete it.
+                setUserProfile(null);
             }
-            setProfileLoading(false);
         });
         return () => unsubscribe();
     } else {
+        // No user, so profile is null and not loading.
         setUserProfile(null);
-        setProfileLoading(false);
     }
   }, [user]);
 
@@ -288,9 +276,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const saveUserProfile = async (profileData: Omit<UserProfile, 'balance' | 'isComplete'>) => {
      if (user) {
          const profileRef = doc(db, 'profiles', user.uid);
+         const currentProfile = userProfile;
          await setDoc(profileRef, { 
              ...profileData, 
-             balance: userProfile?.balance || 0,
+             balance: currentProfile?.balance || 0,
              isComplete: true 
             }, { merge: true });
      }
@@ -321,7 +310,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
-    profileLoading,
+    userProfile,
     isAdmin,
     rawIsAdmin,
     adminRole,
@@ -330,7 +319,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     addAdmin,
     removeAdmin,
     updateAdminRole,
-    userProfile,
     saveUserProfile,
     accountBalance,
     fundAccount,
