@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return null;
   });
-  const [hasSelectedRole, setHasSelectedRole] = useState(!!selectedRole);
+  const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
   const loading = authLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
@@ -117,85 +118,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setAuthLoading(false);
+      setAuthLoading(false); // Set auth loading to false once the check is done.
       if (!currentUser) {
+        // If no user, all loading is complete for a logged-out visitor.
         setProfileLoading(false);
+        setAdminsLoading(false); // No need to check admins if not logged in.
         setRawIsAdmin(false);
         setAdminRole(null);
         setUserProfile(null);
-        // Clear role selection on logout
         selectRole(null);
       }
     });
     return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (authLoading || adminsLoading) return;
-
-    if (admins.length > 0 && user) {
-        const adminInfo = admins.find(admin => admin.email === user.email);
-        const userIsAdmin = !!adminInfo;
-        
-        setRawIsAdmin(userIsAdmin);
-        
-        if (userIsAdmin) {
-          setAdminRole(adminInfo.role);
-          setManagedCategories(adminInfo.managedCategories || null);
-          const roleFromSession = sessionStorage.getItem('selectedRole') as SelectedRole;
-          if (roleFromSession) {
-            setSelectedRole(roleFromSession);
-            setHasSelectedRole(true);
-          } else {
-            setHasSelectedRole(false);
-          }
-        } else {
-          // If the user is not an admin, their role is 'user'
-          setAdminRole(null);
-          setManagedCategories(null);
-          setSelectedRole('user');
-          setHasSelectedRole(true);
-        }
-    } else if (!user) {
-        // Handle logged-out state explicitly
-        setRawIsAdmin(false);
-        setAdminRole(null);
-        setManagedCategories(null);
-        setSelectedRole(null);
-        setHasSelectedRole(false);
-    }
-  }, [user, admins, authLoading, adminsLoading]);
-  
-  useEffect(() => {
-      const profilesCollection = collection(db, 'profiles');
-      const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
-          setTotalUsers(snapshot.size);
-      });
-      return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      setProfileLoading(true);
-      const profileDocRef = doc(db, 'profiles', user.uid);
-      const unsubscribe = onSnapshot(profileDocRef, (doc) => {
-        if (doc.exists()) {
-          const profileData = doc.data() as UserProfile;
-          // Check if profile is complete
-          const isComplete = !!(profileData.phone && profileData.address && profileData.campus);
-          setUserProfile({ ...profileData, isComplete });
-        } else {
-          // New user, profile doesn't exist yet
-          setUserProfile({ isComplete: false, balance: 0, phone: '', address: '', city: '', campus: 'Ogbomoso' });
-        }
-        setProfileLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      setUserProfile(null);
-      setProfileLoading(false);
-    }
-  }, [user]);
 
   useEffect(() => {
     const adminsCollection = collection(db, 'admins');
@@ -214,10 +149,71 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         adminList = snapshot.docs.map(doc => doc.data() as AdminUser);
       }
       setAdmins(adminList);
-      setAdminsLoading(false);
+      setAdminsLoading(false); // Admins are loaded.
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return; // Wait for initial auth check
+
+    if (user) {
+        setProfileLoading(true);
+        const profileDocRef = doc(db, 'profiles', user.uid);
+        const unsubscribeProfile = onSnapshot(profileDocRef, (doc) => {
+            if (doc.exists()) {
+                const profileData = doc.data() as UserProfile;
+                const isComplete = !!(profileData.phone && profileData.address && profileData.campus);
+                setUserProfile({ ...profileData, isComplete });
+            } else {
+                setUserProfile({ isComplete: false, balance: 0, phone: '', address: '', city: '', campus: 'Ogbomoso' });
+            }
+            setProfileLoading(false); // Profile is loaded.
+        });
+
+        // Determine admin status after admins are loaded
+        if (!adminsLoading) {
+            const adminInfo = admins.find(admin => admin.email === user.email);
+            const userIsAdmin = !!adminInfo;
+            setRawIsAdmin(userIsAdmin);
+
+            if (userIsAdmin) {
+                setAdminRole(adminInfo.role);
+                setManagedCategories(adminInfo.managedCategories || null);
+                const roleFromSession = sessionStorage.getItem('selectedRole');
+                if (roleFromSession) {
+                    setSelectedRole(roleFromSession as SelectedRole);
+                    setHasSelectedRole(true);
+                } else {
+                    setHasSelectedRole(false);
+                }
+            } else {
+                setAdminRole(null);
+                setManagedCategories(null);
+                setSelectedRole('user'); // Default role for non-admins
+                setHasSelectedRole(true);
+            }
+        }
+        return () => unsubscribeProfile();
+    } else {
+        // Clear all user-specific state on logout
+        setUserProfile(null);
+        setProfileLoading(false);
+        setRawIsAdmin(false);
+        setAdminRole(null);
+        setManagedCategories(null);
+        setSelectedRole(null);
+        setHasSelectedRole(false);
+    }
+}, [user, authLoading, admins, adminsLoading]);
+  
+  useEffect(() => {
+      const profilesCollection = collection(db, 'profiles');
+      const unsubscribe = onSnapshot(profilesCollection, (snapshot) => {
+          setTotalUsers(snapshot.size);
+      });
+      return () => unsubscribe();
   }, []);
 
   const googleSignIn = async (): Promise<{user: User; isNewUser: boolean}> => {
