@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 const formSchema = z.object({
@@ -33,7 +36,7 @@ const GoogleIcon = () => (
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { googleSignIn, emailSignIn, admins } = useAuth();
+  const { googleSignIn, emailSignIn } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,25 +46,17 @@ export default function SignInForm() {
     defaultValues: { email: '', password: '' },
   });
   
-  const handleSuccessfulLogin = (user: { email?: string | null }, isNewUser: boolean = false) => {
-    // The redirect logic is now handled here, after a successful login.
-    const isAdmin = admins.some(admin => admin.email === user.email);
+  // This function is now simplified. The AuthContext will handle complex redirects.
+  const handleSuccessfulLogin = () => {
     const redirectUrl = searchParams.get('redirect') || '/';
-
-    if (isNewUser) {
-        router.push('/auth/welcome');
-    } else if (isAdmin) {
-        router.push('/auth/select-role');
-    } else {
-        router.push(redirectUrl);
-    }
-  }
+    router.push(redirectUrl);
+  };
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const { user, isNewUser } = await googleSignIn();
-      handleSuccessfulLogin(user, isNewUser);
+      await googleSignIn();
+      handleSuccessfulLogin();
     } catch (error: any) {
        toast({
         title: 'Google Sign-In Failed',
@@ -78,11 +73,7 @@ export default function SignInForm() {
       try {
           const loggedInUser = await emailSignIn(data.email, data.password);
            if(loggedInUser) {
-            // Check if profile exists to determine if user is "new"
-            const profileRef = doc(db, 'profiles', loggedInUser.uid);
-            const profileSnap = await getDoc(profileRef);
-            const isNewUser = !profileSnap.exists() || !profileSnap.data()?.isComplete;
-            handleSuccessfulLogin(loggedInUser, isNewUser);
+            handleSuccessfulLogin();
           }
       } catch (error: any) {
           toast({
