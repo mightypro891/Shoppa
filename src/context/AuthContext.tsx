@@ -146,8 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAuthLoading(true);
       setProfileLoading(true);
       setUser(currentUser);
-      setAuthLoading(false);
-
+      
       if (currentUser) {
         // User is logged in
         const profileDocRef = doc(db, 'profiles', currentUser.uid);
@@ -161,15 +160,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           setProfileLoading(false);
         });
+        setAuthLoading(false);
         return () => unsubscribeProfile();
       } else {
         // User is logged out, reset all user-specific state
         setUserProfile(null);
-        setProfileLoading(false); // *** THIS WAS THE FIX ***
+        setProfileLoading(false);
         setRawIsAdmin(false);
         setAdminRole(null);
         setManagedCategories(null);
         selectRole(null);
+        setAuthLoading(false);
       }
     });
 
