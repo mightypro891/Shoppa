@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
   const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
-  const loading = authLoading || adminsLoading;
+  const loading = authLoading || profileLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
   const isAdmin = rawIsAdmin && selectedRole === 'admin';
   const isSuperAdmin = adminRole === 'Super Admin' && selectedRole === 'admin';
@@ -143,12 +143,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Effect to handle auth state changes and fetch user-specific data
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setAuthLoading(true);
+      setProfileLoading(true);
       setUser(currentUser);
       setAuthLoading(false);
 
       if (currentUser) {
         // User is logged in
-        setProfileLoading(true);
         const profileDocRef = doc(db, 'profiles', currentUser.uid);
         const unsubscribeProfile = onSnapshot(profileDocRef, (doc) => {
           if (doc.exists()) {
@@ -164,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         // User is logged out, reset all user-specific state
         setUserProfile(null);
-        setProfileLoading(false);
+        setProfileLoading(false); // *** THIS WAS THE FIX ***
         setRawIsAdmin(false);
         setAdminRole(null);
         setManagedCategories(null);
