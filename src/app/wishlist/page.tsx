@@ -4,7 +4,7 @@
 import AppLayout from '@/app/(app)/layout';
 import { useWishlist } from '@/context/WishlistContext';
 import { getProducts } from '@/lib/data';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import ProductCard from '@/components/products/ProductCard';
 import { Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 
 function WishlistPageComponent() {
   const { wishlist } = useWishlist();
-  const { user, loading: authLoading, userProfile } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -27,14 +27,13 @@ function WishlistPageComponent() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (!userProfile && userProfile !== null) return;
     const fetchAllProducts = async () => {
-      const prods = await getProducts(userProfile?.campus);
+      const prods = await getProducts();
       setAllProducts(prods);
       setLoading(false);
     };
     fetchAllProducts();
-  }, [userProfile]);
+  }, []);
 
   const wishlistProducts = allProducts.filter(p => wishlist.includes(p.id));
 
@@ -76,15 +75,5 @@ function WishlistPageComponent() {
 }
 
 export default function WishlistPage() {
-  return (
-    <Suspense fallback={
-       <AppLayout>
-        <div className="flex justify-center items-center h-screen">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    }>
-      <WishlistPageComponent />
-    </Suspense>
-  )
+    return <WishlistPageComponent />;
 }

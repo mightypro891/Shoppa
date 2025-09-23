@@ -87,19 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       message: 'Thanks for trying out the prototype. All items are 10% off!',
       isActive: false,
   });
-  const [selectedRole, setSelectedRole] = useState<SelectedRole>(() => {
-    if (typeof window !== 'undefined') {
-        const role = sessionStorage.getItem('selectedRole');
-        return role ? (role as SelectedRole) : null;
-    }
-    return null;
-  });
-  const [hasSelectedRole, setHasSelectedRole] = useState(() => {
-      if (typeof window !== 'undefined') {
-        return !!sessionStorage.getItem('selectedRole');
-    }
-    return false;
-  });
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
+  const [hasSelectedRole, setHasSelectedRole] = useState(false);
 
   const loading = authLoading || adminsLoading;
   const accountBalance = userProfile?.balance ?? 0;
@@ -120,6 +109,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setTimeout(resolve, 50);
     });
   }
+  
+  useEffect(() => {
+    const roleFromSession = sessionStorage.getItem('selectedRole');
+    if (roleFromSession) {
+        setSelectedRole(roleFromSession as SelectedRole);
+        setHasSelectedRole(true);
+    }
+  }, [])
 
   // Effect to fetch the list of admins
   useEffect(() => {
@@ -180,27 +177,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to determine admin status, depends on user and admins list
   useEffect(() => {
-    if (!loading && user) {
+    if (!adminsLoading && user) {
       const adminInfo = admins.find(admin => admin.email === user.email);
       const userIsAdmin = !!adminInfo;
       setRawIsAdmin(userIsAdmin);
       if (userIsAdmin) {
         setAdminRole(adminInfo.role);
         setManagedCategories(adminInfo.managedCategories || null);
-         const roleFromSession = sessionStorage.getItem('selectedRole');
-        if (roleFromSession) {
-          setSelectedRole(roleFromSession as SelectedRole);
-          setHasSelectedRole(true);
-        } else {
-          setHasSelectedRole(false);
-        }
       } else {
         setAdminRole(null);
         setManagedCategories(null);
         selectRole('user'); // Auto-select 'user' role for non-admins
       }
+    } else if (!user) {
+        setRawIsAdmin(false);
+        setAdminRole(null);
+        setManagedCategories(null);
     }
-  }, [user, admins, loading]);
+  }, [user, admins, adminsLoading]);
 
   
   useEffect(() => {

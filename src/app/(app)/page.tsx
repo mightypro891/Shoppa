@@ -19,30 +19,19 @@ import { useAuth } from '@/context/AuthContext';
 import { mainCategories } from '@/lib/categories';
 
 export default function Home() {
-  const { userProfile, profileLoading } = useAuth();
+  const { userProfile } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profileLoading) return; 
-    
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const prods = await getProducts();
         const allReviews = await getAllReviews();
-
-        let filteredProds = prods;
-        if (userProfile?.campus) {
-            // If user is logged in and has a campus, we can show campus-specific items first or sort them differently
-            // For now, we just show all, but this is where filtering/sorting would happen.
-        } else {
-           // For logged-out users, we might default to a specific campus or just show all
-           // Defaulting to all products is the current behavior of getProducts() without params
-        }
         
-        setProducts(filteredProds);
+        setProducts(prods);
         setReviews(allReviews.filter(r => r.isApproved).slice(0, 4));
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -51,7 +40,7 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, [profileLoading, userProfile]);
+  }, []);
   
   const categories = mainCategories.map(c => c.slug);
 

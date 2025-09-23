@@ -24,7 +24,6 @@ import { useAuth } from '@/context/AuthContext';
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const { userProfile, profileLoading } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -33,7 +32,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id || profileLoading) return;
+    if (!id) return;
 
     const fetchProductData = async () => {
       setLoading(true);
@@ -49,7 +48,7 @@ export default function ProductDetailPage() {
         const reviewData = await getReviewsForProduct(id);
         setReviews(reviewData);
         
-        const allProducts = await getProducts(userProfile?.campus);
+        const allProducts = await getProducts();
         const related = allProducts
           .filter(p => p.tags?.some(tag => productData.tags?.includes(tag)) && p.id !== productData.id)
           .slice(0, 4);
@@ -63,7 +62,7 @@ export default function ProductDetailPage() {
     };
 
     fetchProductData();
-  }, [id, userProfile, profileLoading]);
+  }, [id]);
 
   if (loading) {
     return (

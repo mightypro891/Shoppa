@@ -14,8 +14,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 
 const formSchema = z.object({
@@ -36,7 +34,7 @@ const GoogleIcon = () => (
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { googleSignIn, emailSignIn } = useAuth();
+  const { googleSignIn, emailSignIn, rawIsAdmin } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -46,25 +44,20 @@ export default function SignInForm() {
     defaultValues: { email: '', password: '' },
   });
   
-  // This function is now simplified. The AuthContext will handle complex redirects.
-  const handleSuccessfulLogin = () => {
-    const redirectUrl = searchParams.get('redirect') || '/';
-    router.push(redirectUrl);
-  };
+  const handleSuccessfulLogin = async (isNewUser: boolean, isAdmin: boolean) => {
+    const redirectUrl = searchParams.get('redirect');
 
-  const handleGoogleSignIn = async () => {
-    setIsSubmitting(true);
-    try {
-      await googleSignIn();
-      handleSuccessfulLogin();
-    } catch (error: any) {
-       toast({
-        title: 'Google Sign-In Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
+    if (redirectUrl) {
+      router.push(redirectUrl);
+      return;
+    }
+
+    if (isNewUser) {
+      router.push('/auth/welcome');
+    } else if (isAdmin) {
+      router.push('/auth/select-role');
+    } else {
+      router.push('/');
     }
   };
   
@@ -73,7 +66,8 @@ export default function SignInForm() {
       try {
           const loggedInUser = await emailSignIn(data.email, data.password);
            if(loggedInUser) {
-            handleSuccessfulLogin();
+            // Re-check admin status after login
+            await handleSuccessfulLogin(false, rawIsAdmin);
           }
       } catch (error: any) {
           toast({
@@ -84,6 +78,22 @@ export default function SignInForm() {
       } finally {
         setIsSubmitting(false);
       }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true);
+    try {
+      const { isNewUser } = await googleSignIn();
+      await handleSuccessfulLogin(isNewUser, rawIsAdmin);
+    } catch (error: any) {
+       toast({
+        title: 'Google Sign-In Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

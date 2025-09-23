@@ -45,6 +45,7 @@ export default function ProductBarChart({ category }: ProductBarChartProps) {
   const [data, setData] = useState<{ name: string, total: number }[]>([]);
 
   useEffect(() => {
+    // Generate data on the client side to avoid hydration mismatch
     setData(generateData(category));
   }, [category]);
   

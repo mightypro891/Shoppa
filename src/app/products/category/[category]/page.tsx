@@ -10,22 +10,20 @@ import type { Product } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
 
 export default function CategoryPage() {
   const params = useParams();
   const category = params.category as string;
-  const { userProfile, profileLoading } = useAuth();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!category || profileLoading) return;
+    if (!category) return;
 
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const allProducts = await getProducts(userProfile?.campus);
+        const allProducts = await getProducts();
         const decodedCategory = decodeURIComponent(category).toLowerCase();
         const prods = allProducts.filter(p => p.tags?.includes(decodedCategory));
         setFilteredProducts(prods);
@@ -37,7 +35,7 @@ export default function CategoryPage() {
     };
 
     fetchProducts();
-  }, [category, userProfile, profileLoading]);
+  }, [category]);
   
   const formattedCategory = category ? decodeURIComponent(category).replace(/-/g, ' ') : '';
 

@@ -8,7 +8,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import CelebrationPopup from '@/components/layout/CelebrationPopup';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { GeistSans } from 'geist/font/sans';
-import AuthWrapper from '@/components/layout/AuthWrapper';
 
 export const metadata: Metadata = {
   title: {
@@ -35,9 +34,7 @@ export default function RootLayout({
             <AuthProvider>
             <CartProvider>
             <WishlistProvider>
-                <AuthWrapper>
-                  {children}
-                </AuthWrapper>
+                {children}
                 <CelebrationPopup />
                 <Toaster />
             </WishlistProvider>
