@@ -1,0 +1,57 @@
+
+'use client';
+
+import Image from 'next/image';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Product } from '@/lib/types';
+import Link from 'next/link';
+import { AddToCartButton } from './AddToCartButton';
+import WishlistButton from '../wishlist/WishlistButton';
+import TiltCard from '@/components/ui/tilt-card';
+
+interface ProductCardProps {
+  product: Product;
+}
+
+export default function ProductCard({ product }: ProductCardProps) {
+  const displayPrice = product.salePrice || product.price;
+
+  return (
+    <TiltCard className="h-full rounded-xl" maxTilt={7} lift={4}>
+      <Card className="flex flex-col h-full overflow-hidden bg-card border-2 border-transparent hover:border-primary transition-colors duration-300 shadow-md group relative">
+        <WishlistButton productId={product.id} className="absolute top-2 right-2 z-10" />
+         <Link href={`/product?id=${product.id}`} className="flex flex-col flex-grow">
+          <CardHeader className="p-0">
+            <div className="relative aspect-video overflow-hidden">
+              <Image
+                src={product.image}
+                alt={product.name}
+                data-ai-hint={product.aiHint}
+                fill
+                sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 flex-grow">
+            <CardTitle className="text-lg font-bold font-headline mb-1">{product.name}</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</CardDescription>
+          </CardContent>
+        </Link>
+        <CardFooter className="p-4 flex justify-between items-center">
+          <div className="flex flex-col">
+              {product.salePrice && (
+                  <p className="text-sm font-medium text-muted-foreground line-through">
+                      ₦{product.price.toFixed(2)}
+                  </p>
+              )}
+              <p className="text-xl font-bold text-primary">
+                  ₦{displayPrice.toFixed(2)}
+              </p>
+          </div>
+          <AddToCartButton product={product} />
+        </CardFooter>
+      </Card>
+    </TiltCard>
+  );
+}

@@ -1,0 +1,133 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    // Products can be read by anyone, but only managed by admins
+
+    match /products/{productId} {
+
+      allow read: if true;
+
+      // Allow write only if user is an admin
+
+      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+    }
+
+    // Reviews can be read by anyone
+
+    // Users can create their own reviews, but cannot update or delete them (for simplicity)
+
+    match /reviews/{reviewId} {
+
+      allow read: if true;
+
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if false; // Prevent users from editing reviews for now
+
+    }
+
+    // Orders can only be read by the user who created them or an admin.
+    // Only admins can modify an order after it's created (status, totals, etc.) —
+    // customers must never be able to edit their own order via the client SDK.
+
+    match /orders/{orderId} {
+
+        allow read: if request.auth != null && (
+
+            resource.data.customer.email == request.auth.token.email ||
+
+            get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin']
+
+        );
+
+        allow create: if request.auth != null; // Any authenticated user can create an order
+
+        allow update, delete: if request.auth != null &&
+
+            get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+    }
+
+    // User profiles can only be accessed and modified by the user themselves.
+    // The wallet `balance` field is explicitly protected from client-side writes —
+    // it must only ever change through a trusted, server-verified path (see note
+    // in FundWalletClient.tsx: wallet funding is not yet connected to a real
+    // payment gateway, so this field should be treated as untrusted until it is).
+
+    match /profiles/{userId} {
+
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin']
+      );
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && (!('balance' in request.resource.data) || request.resource.data.balance == 0)
+        && (!('email' in request.resource.data) || request.resource.data.email == request.auth.token.email);
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.balance == resource.data.balance
+        && (!('email' in request.resource.data) || request.resource.data.email == request.auth.token.email);
+
+    }
+
+    // Admin roles can only be read by admins and modified by Super Admins
+
+    match /admins/{email} {
+
+      allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == 'Super Admin';
+
+    }
+
+    
+
+    // Deleted products log can only be read by admins.
+    // NOTE: matches the actual collection name used in code (deletedProductsLog).
+
+    match /deletedProductsLog/{deletedId} {
+
+      allow read: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+      allow write: if false; // Only written via server logic, not direct client
+
+    }
+
+    // Delivery routes: publicly readable (shown during checkout to any
+    // customer), but only admins can add/edit/remove routes.
+
+    match /deliveryRoutes/{routeId} {
+
+      allow read: if true;
+
+      allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+    }
+
+    // Deal submissions: an admin proposes a sale price for approval by a
+    // higher-level admin. Entirely admin-to-admin — never customer-facing.
+
+    match /dealSubmissions/{submissionId} {
+
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role in ['Super Admin', 'Products Admin', 'Normal Admin'];
+
+    }
+
+    // Site-wide configuration can be read by anyone, but only written by a Super Admin
+
+    match /config/{configId} {
+
+        allow read: if true;
+
+        allow write: if request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.token.email)).data.role == 'Super Admin';
+
+    }
+
+  }
+
+}

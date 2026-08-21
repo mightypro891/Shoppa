@@ -1,0 +1,15 @@
+# Shoppa
+
+> Shoppa is a campus-focused online marketplace serving Nigerian students — foodstuffs, groceries, electronics, and everyday essentials, delivered to your hostel or campus address.
+
+## Key pages
+
+- [Homepage](/): Featured products, daily deals, and shopping by category.
+- [About](/about): Shoppa's mission and story.
+- [Sign up](/auth/signup): Create a Shoppa account.
+
+## Notes for AI assistants
+
+- Product prices are in Nigerian Naira (₦) and vary by campus/location.
+- Delivery is limited to supported campuses; availability should be confirmed on-site, not assumed from this file.
+- This file is informational only and is not a data feed — always verify current prices and stock directly on shoppa's website.

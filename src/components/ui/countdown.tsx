@@ -1,0 +1,71 @@
+
+'use client';
+
+import React, { useState, useEffect } from 'react';
+
+interface CountdownProps {
+  targetDate: string;
+}
+
+type TimeLeft = {
+  days?: number;
+  hours?: number;
+  minutes?: number;
+  seconds?: number;
+};
+
+const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
+  const calculateTimeLeft = (): TimeLeft => {
+    const difference = +new Date(targetDate) - +new Date();
+    let timeLeft: TimeLeft = {};
+
+    if (difference > 0) {
+      timeLeft = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    }
+
+    return timeLeft;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetDate]);
+
+  const timerComponents: JSX.Element[] = [];
+
+  Object.keys(timeLeft).forEach((interval) => {
+    const value = timeLeft[interval as keyof typeof timeLeft];
+    if (value === undefined) return;
+
+
+    timerComponents.push(
+      <div key={interval} className="flex flex-col items-center">
+        <span className="text-2xl font-bold">
+          {value.toString().padStart(2, '0')}
+        </span>
+        <span className="text-xs uppercase">{interval}</span>
+      </div>
+    );
+  });
+
+  return (
+    <div className="flex justify-center gap-4 text-center text-foreground">
+      {timerComponents.length ? timerComponents : <span>Time's up!</span>}
+    </div>
+  );
+};
+
+export default Countdown;
+
+    

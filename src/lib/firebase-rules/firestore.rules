@@ -1,0 +1,75 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request_resource().auth != null;
+    }
+
+    function isSuperAdmin() {
+      return request_resource().auth.token.role == 'Super Admin';
+    }
+
+    function isProductsAdmin() {
+      return request_resource().auth.token.role == 'Products Admin';
+    }
+
+    function isNormalAdmin() {
+        return request_resource().auth.token.role == 'Normal Admin';
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || isProductsAdmin() || isNormalAdmin();
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Allow reading products for everyone
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isSignedIn(); // Simplified for now, can be restricted to admins
+    }
+    
+    // Allow reading logs for admins
+    match /deletedProductsLog/{logId} {
+        allow read, write: if isSignedIn() && isAdmin();
+    }
+    
+    // Allow authenticated users to manage their profile
+    match /profiles/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Allow authenticated users to add reviews, anyone to read
+    match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+    }
+
+    // Allow anyone to read delivery routes, admins to write
+    match /deliveryRoutes/{routeId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isSuperAdmin();
+    }
+
+    // Allow super admins to manage deal submissions
+    match /dealSubmissions/{submissionId} {
+        allow read, write: if isSignedIn() && (isSuperAdmin() || isNormalAdmin());
+    }
+
+    // Allow users to create orders and read their own. Admins can manage all.
+    match /orders/{orderId} {
+      allow create: if isSignedIn();
+      allow read: if (isSignedIn() && request_resource().data.customer.email == request.auth.email) || (isSignedIn() && isAdmin());
+      allow update: if isSignedIn() && isAdmin();
+      allow delete: if false; // Orders should not be deleted
+    }
+  }
+}
